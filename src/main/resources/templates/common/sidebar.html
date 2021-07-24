@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<meta charset="UTF-8">
+<div th:fragment="mySidebar" id="sidebar" class="sidebar responsive">
+    <ul class="nav nav-list">
+        <li class="active">
+            <a th:href="@{/toIndex}">
+                <i class="menu-icon fa fa-tachometer"></i>
+                <span class="menu-text"> Console </span>
+            </a>
+            <b class="arrow"></b>
+        </li>
+        <!-- System Modeling -->
+        <li class="">
+            <a href="#" class="dropdown-toggle">
+                <i class="menu-icon fa fa-users"></i>
+                <span class="menu-text"> System Modeling </span>
+                <b class="arrow fa fa-angle-down"></b>
+            </a>
+            <b class="arrow"></b>
+            <ul class="submenu">
+                <li class="">
+                    <a th:href="@{#}" class="dropdown-toggle">
+                        <i class="menu-icon fa fa-caret-right"></i>
+                        Structural Diagrams
+                        <b class="arrow fa fa-angle-down"></b>
+                    </a>
+                    <!--                    <b class="arrow"></b>-->
+                    <!--                    <ul class="submenu">-->
+                    <!--                        <li class="">-->
+                    <!--                            <a th:href="@{#}">-->
+                    <!--                                <i class="menu-icon fa fa-circle"></i>-->
+                    <!--                                State Diagram-->
+                    <!--                            </a>-->
+                    <!--                            <b class="arrow"></b>-->
+                    <!--                        </li>-->
+                    <!--                    </ul>-->
+                </li>
+                <li class="">
+                    <a th:href="@{#}" class="dropdown-toggle">
+                        <i class="menu-icon fa fa-caret-right"></i>
+                        Behavioural Diagrams
+                        <b class="arrow fa fa-angle-down"></b>
+                    </a>
+                    <b class="arrow"></b>
+                    <ul class="submenu">
+                        <li class="">
+                            <a th:href="@{#}">
+                                <i class="menu-icon fa fa-circle"></i>
+                                Use Case Diagrams
+                            </a>
+                            <b class="arrow"></b>
+                        </li>
+                        <li class="">
+                            <a th:href="@{/UML/stateDiagramEditor}">
+                                <i class="menu-icon fa fa-circle"></i>
+                                State Diagrams
+                            </a>
+                            <b class="arrow"></b>
+                        </li>
+                        <li class="">
+                            <a th:href="@{#}">
+                                <i class="menu-icon fa fa-circle"></i>
+                                Activity Diagrams
+                            </a>
+                            <b class="arrow"></b>
+                        </li>
+                        <li class="">
+                            <a th:href="@{#}">
+                                <i class="menu-icon fa fa-circle"></i>
+                                Communication Diagrams
+                            </a>
+                            <b class="arrow"></b>
+                        </li>
+                        <li class="">
+                            <a th:href="@{#}">
+                                <i class="menu-icon fa fa-circle"></i>
+                                Sequence Diagrams
+                            </a>
+                            <b class="arrow"></b>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Game-Strategy -->
+        <li class="">
+            <a href="#" class="dropdown-toggle">
+                <i class="menu-icon fa fa-list"></i>
+                <span class="menu-text"> Game-Strategy </span>
+                <b class="arrow fa fa-angle-down"></b>
+            </a>
+            <b class="arrow"></b>
+            <ul class="submenu">
+                <li class="">
+                    <a th:href="@{#}">
+                        <i class="menu-icon fa fa-caret-right"></i>
+                        Game
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Simulator -->
+        <li class="">
+            <a href="#" class="dropdown-toggle">
+                <i class="menu-icon fa fa-pencil-square-o"></i>
+                <span class="menu-text"> Simulator </span>
+                <b class="arrow fa fa-angle-down"></b>
+            </a>
+            <b class="arrow"></b>
+            <ul class="submenu">
+                <li class="">
+                    <a th:href="@{#}">
+                        <i class="menu-icon fa fa-caret-right"></i>
+                        uppaal
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+                <li class="">
+                    <a th:href="@{#}">
+                        <i class="menu-icon fa fa-caret-right"></i>
+                        prism
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+                <li class="">
+                    <a th:href="@{#}">
+                        <i class="menu-icon fa fa-caret-right"></i>
+                        modelica
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+                <li class="">
+                    <a th:href="@{#}">
+                        <i class="menu-icon fa fa-caret-right"></i>
+                        simulink
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+                <li class="">
+                    <a th:href="@{#}">
+                        <i class="menu-icon fa fa-caret-right"></i>
+                        uppaal&modelica
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+                <li class="">
+                    <a th:href="@{#}">
+                        <i class="menu-icon fa fa-caret-right"></i>
+                        prism&modelica
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Checker -->
+        <li class="">
+            <a href="#" class="dropdown-toggle">
+                <i class="menu-icon fa fa-pencil-square-o"></i>
+                <span class="menu-text"> Checker </span>
+                <b class="arrow fa fa-angle-down"></b>
+            </a>
+            <b class="arrow"></b>
+            <ul class="submenu">
+                <li class="">
+                    <a th:href="@{#}">
+                        <i class="menu-icon fa fa-caret-right"></i>
+                        BIE
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+                <li class="">
+                    <a th:href="@{#}">
+                        <i class="menu-icon fa fa-caret-right"></i>
+                        APMC
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+                <li class="">
+                    <a th:href="@{#}">
+                        <i class="menu-icon fa fa-caret-right"></i>
+                        BHT
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+                <li class="">
+                    <a th:href="@{#}">
+                        <i class="menu-icon fa fa-caret-right"></i>
+                        SPRT
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+                <li class="">
+                    <a th:href="@{#}">
+                        <i class="menu-icon fa fa-caret-right"></i>
+                        AL-SMC
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+                <li class="">
+                    <a th:href="@{#}">
+                        <i class="menu-icon fa fa-caret-right"></i>
+                        DAL-SMC
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Trace-Analyse -->
+        <li class="">
+            <a href="#" class="dropdown-toggle">
+                <i class="menu-icon fa fa-pencil-square-o"></i>
+                <span class="menu-text"> Trace-Analyse </span>
+                <b class="arrow fa fa-angle-down"></b>
+            </a>
+            <b class="arrow"></b>
+            <ul class="submenu">
+                <li class="">
+                    <a th:href="@{#}">
+                        <i class="menu-icon fa fa-caret-right"></i>
+                        Trace-Sim
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+                <li class="">
+                    <a th:href="@{#}">
+                        <i class="menu-icon fa fa-caret-right"></i>
+                        SMC-Prob
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+            </ul>
+        </li>
+
+        <li class="">
+            <a href="#" class="dropdown-toggle">
+                <i class="menu-icon fa fa-pencil-square-o"></i>
+                <span class="menu-text"> About Us </span>
+            </a>
+            <b class="arrow"></b>
+        </li>
+    </ul>
+    <div class="sidebar-toggle sidebar-collapse" id="sidebar-collapse">
+        <i class="ace-icon fa fa-angle-double-left" data-icon1="ace-icon fa fa-angle-double-left"
+           data-icon2="ace-icon fa fa-angle-double-right"></i>
+    </div>
+</div>
+</html>

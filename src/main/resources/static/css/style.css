@@ -1,0 +1,18 @@
+.welcome-info {
+    width: 80%;
+    margin: 0 auto;
+    text-align: center;
+    position: absolute;
+    top: 45%;
+}
+
+.state-diagram-editor-content {
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
+}
+
+#myDiagramDiv {
+    background-color: #F8F8F8;
+    border: 1px solid #aaa;
+}

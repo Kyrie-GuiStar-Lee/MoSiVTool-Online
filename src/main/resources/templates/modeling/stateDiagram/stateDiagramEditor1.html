@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+    <title>System Modeling</title>
+    <link rel="stylesheet" href="../../../static/css/bootstrap.min.css"
+          th:href="@{/css/bootstrap.min.css}">
+    <link rel="stylesheet" href="../../../static/css/font-awesome.min.css"
+          th:href="@{/css/font-awesome.min.css}">
+    <link rel="stylesheet" href="../../../static/css/ace.min.css"
+          th:href="@{/css/ace.min.css}">
+    <link rel="stylesheet" href="../../../static/css/joint.css"
+          th:href="@{/css/joint.css}">
+    <link rel="stylesheet" href="../../../static/css/style.css"
+          th:href="@{/css/style.css}">
+</head>
+<body class="no-skin">
+<div id="app">
+    <!--header部分开始-->
+    <div th:replace="common/header::myHeader"></div>
+    <!--header部分结束-->
+    <!--main-container部分开始-->
+    <div class="main-container" id="main-container">
+        <!--sidebar部分开始-->
+        <div th:replace="common/sidebar::mySidebar"></div>
+        <!--sidebar部分结束-->
+        <div class="main-content">
+            <!--breadcrumbs部分开始-->
+            <div class="breadcrumbs" id="breadcrumbs">
+                <ul class="breadcrumb">
+                    <li>
+                        <i class="ace-icon fa fa-home home-icon"></i>
+                        <a th:href="@{/toIndex}">MoSiV-Online</a>
+                    </li>
+                    <li class="active">System Modeling</li>
+                    <li class="active">Behavioural Diagrams</li>
+                    <li class="active">State Diagrams</li>
+                </ul>
+            </div>
+
+            <div style="width: 100%; display: flex;">
+                <div id="myPalette" style="border: solid 1px #000000; margin-right: 2px; cursor: auto;"></div>
+                <div id="myDiagram" style="width: 100%; border: solid 1px #000000;"></div>
+            </div>
+        </div>
+        <!--footer部分开始-->
+        <div class="footer">
+            <div class="footer-inner">
+                <div class="footer-content">
+                    <span class="bigger-120">
+                         &copy; 2021 MoSiV-Online
+                    </span>
+                </div>
+            </div>
+        </div>
+        <a href="#" id="btn-scroll-up" class="btn-scroll-up btn btn-sm btn-inverse">
+            <i class="ace-icon fa fa-angle-double-up icon-only bigger-110"></i>
+        </a>
+        <!--footer部分结束-->
+    </div>
+    <!--main-container部分结束-->
+</div>
+</body>
+<script src="../../../static/js/jquery-3.6.0.js" th:src="@{/js/jquery-3.6.0.js}"></script>
+<script src="../../../static/js/lodash.js" th:src="@{/js/lodash.js}"></script>
+<script src="../../../static/js/backbone.js" th:src="@{/js/backbone.js}"></script>
+<script src="../../../static/js/joint.js" th:src="@{/js/joint.js}"></script>
+<script src="../../../static/js/bootstrap.min.js" th:src="@{/js/bootstrap.min.js}"></script>
+<script src="../../../static/js/ace.min.js" th:src="@{/js/ace.min.js}"></script>
+<script src="../../../static/js/ace-extra.min.js" th:src="@{/js/ace-extra.min.js}"></script>
+<script src="../../../static/js/vue.min.js" th:src="@{/js/vue.min.js}"></script>
+<script>
+    let ul = $('ul.nav-list').children();
+    ul.eq(0).removeClass("active");
+    ul.eq(1).addClass("active open");
+    ul.eq(1).children().eq(2).children().eq(1).addClass("active open");
+    ul.eq(1).children().eq(2).children().eq(1).children().eq(2).children().eq(1).addClass("active")
+
+    let myPalette_graph = new joint.dia.Graph;
+
+    let paper = new joint.dia.Paper({
+        el: document.getElementById('myPalette'),
+        model: myPalette_graph,
+        width: 120,
+        height: 700,
+        gridSize: 1,
+        interactive: false,
+        background: {
+            color: 'whitesmoke'
+        }
+    });
+
+    let uml = joint.shapes.uml;
+
+    // 开始状态的建模元素
+    let startState = new uml.StartState({
+        position: {x: 35, y: 20},
+        size: {width: 50, height: 50},
+        attrs: {
+            'circle': {
+                fill: '#4b4a67',
+                stroke: 'none'
+            }
+        },
+    });
+    myPalette_graph.addCell(startState);
+
+    // 结束状态的建模元素
+    let endState = new uml.EndState({
+        position: {x: 35, y: 120},
+        size: {width: 50, height: 50},
+        attrs: {
+            'circle': {
+                fill: '#4b4a67',
+                stroke: 'none'
+            }
+        },
+    });
+    myPalette_graph.addCell(endState);
+
+    // 普通状态的建模元素
+    let state = new uml.State({
+        position: {x: 25, y: 220},
+        size: {width: 70, height: 50},
+    });
+    myPalette_graph.addCell(state);
+
+    let link = new joint.shapes.standard.Link();
+    link.source(new g.Point(10, 320));
+    link.target(new g.Point(105, 320));
+    link.attr({
+        line: {
+            stroke: '#000000'
+        }
+    });
+    link.addTo(myPalette_graph)
+
+    let myDiagram_graph = new joint.dia.Graph;
+    let myDiagram_paper = new joint.dia.Paper({
+        el: document.getElementById('myDiagram'),
+        model: myDiagram_graph,
+        width: 1200,
+        height: 700,
+        gridSize: 10,
+        drawGrid: true,
+        background: {
+            color: 'whitesmoke'
+        }
+    });
+</script>
+</html>
