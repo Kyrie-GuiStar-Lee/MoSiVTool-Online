@@ -96,9 +96,10 @@
         });
 
         // 建模元素
+        // TODO 有待优化
         let startState = new StartState(40, 64, 50);
-        let endState = new EndState();
-        let state = new State();
+        let endState = new EndState(40, 64, 50 + 40*2 + 10);
+        let state = new State(64 - 40, 130 + 40*2 - 40 + 20, 80, 80);
         let link = new Link();
 
         // 添加进建模元素工具栏
@@ -106,6 +107,25 @@
         palette.add(endState);
         palette.add(state);
         palette.add(link);
+
+        let cvs = $('#myPalette')
+        cvs.on('mousedown', (e) => {
+            let x = e.clientX
+            let y = e.clientY
+            let rect = cvs[0].getBoundingClientRect()
+            x -= rect.left
+            y -= rect.top
+            console.log(x, y)
+            console.log(startState.contain(x, y))
+        })
+
+        cvs.on('mousedown', (e) => {
+
+        })
+
+        cvs.on('mouseup', (e) => {
+            console.log(1)
+        })
 
         palette.draw();
     });

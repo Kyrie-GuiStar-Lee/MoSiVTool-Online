@@ -13,7 +13,7 @@ spring:
       #基本属性
       url: jdbc:mysql://localhost:3306/mosiv?serverTimezone=Asia/Shanghai
       username: root
-      password: 19980203
+      password: root@localhost
       #配置初始化大小/最大/最小
       initial-size: 5
       min-idle: 10
