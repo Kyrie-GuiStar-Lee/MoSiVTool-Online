@@ -40,7 +40,6 @@
             </div>
 
             <div style="width: 100%; display: flex;">
-                <div id="myPalette" style="border: solid 1px #000000; margin-right: 2px; cursor: auto;"></div>
                 <div id="myDiagram" style="width: 100%; border: solid 1px #000000;"></div>
             </div>
         </div>
@@ -71,82 +70,100 @@
 <script src="../../../static/js/ace-extra.min.js" th:src="@{/js/ace-extra.min.js}"></script>
 <script src="../../../static/js/vue.min.js" th:src="@{/js/vue.min.js}"></script>
 <script>
-    let ul = $('ul.nav-list').children();
-    ul.eq(0).removeClass("active");
-    ul.eq(1).addClass("active open");
-    ul.eq(1).children().eq(2).children().eq(1).addClass("active open");
-    ul.eq(1).children().eq(2).children().eq(1).children().eq(2).children().eq(1).addClass("active")
+    $(function () {
+        let ul = $('ul.nav-list').children();
+        ul.eq(0).removeClass("active");
+        ul.eq(1).addClass("active open");
+        ul.eq(1).children().eq(2).children().eq(1).addClass("active open");
+        ul.eq(1).children().eq(2).children().eq(1).children().eq(2).children().eq(1).addClass("active");
 
-    let myPalette_graph = new joint.dia.Graph;
+        let graph = new joint.dia.Graph;
+        let paper = new joint.dia.Paper({
+            el: document.getElementById('myDiagram'),
+            model: graph,
+            width: 2000,
+            height: 700,
+            gridSize: 8,        // 图形元素移动步进像素
+            drawGrid: true,     // 显示步进点
+            background: {       // 画布背景色
+                color: 'rgba(255, 255, 255, 0.1)'
+            },
+            restrictTranslate: true,
+        });
 
-    let paper = new joint.dia.Paper({
-        el: document.getElementById('myPalette'),
-        model: myPalette_graph,
-        width: 120,
-        height: 700,
-        gridSize: 1,
-        interactive: false,
-        background: {
-            color: 'whitesmoke'
-        }
-    });
-
-    let uml = joint.shapes.uml;
-
-    // 开始状态的建模元素
-    let startState = new uml.StartState({
-        position: {x: 35, y: 20},
-        size: {width: 50, height: 50},
-        attrs: {
-            'circle': {
-                fill: '#4b4a67',
-                stroke: 'none'
+        // -------------------自定义建模元素---------------------//
+        // 状态图的初始状态
+        joint.shapes.standard.Circle.define("mosiv.stateDiagram.StartState", {
+            type: 'mosiv.stateDiagram.StartState',
+            size: {
+                width: 40,
+                height: 40,
+            },
+            attrs: {
+                type: 'element',
+                body: {
+                    'fill': '#34495e',
+                    'stroke': '#2c3e50',
+                    'stroke-width': 2,
+                    'rx': 1,
+                },
+                label: {
+                    fill: '#FFFFFF',
+                    text: 'Initial',
+                    fontSize: 13,
+                }
             }
-        },
-    });
-    myPalette_graph.addCell(startState);
+        });
+        // 状态图的结束状态
+        joint.shapes.basic.Circle.define("mosiv.stateDiagram.EndState", {
 
-    // 结束状态的建模元素
-    let endState = new uml.EndState({
-        position: {x: 35, y: 120},
-        size: {width: 50, height: 50},
-        attrs: {
-            'circle': {
-                fill: '#4b4a67',
-                stroke: 'none'
+        });
+        // 初始状态建模元素
+        let startState = new joint.shapes.mosiv.stateDiagram.StartState({
+            position: {
+                x: 30,
+                y: 20,
+            },
+        });
+        // 结束状态建模元素
+        let endState = new joint.shapes.mosiv.stateDiagram.EndState({
+            position: {
+                x: 30,
+                y: 80,
             }
-        },
-    });
-    myPalette_graph.addCell(endState);
+        });
+        // 状态图的普通状态
+        let state = new joint.shapes.uml.State({
+            position: {
+                x: 10,
+                y: 140,
+            },
+            size: {width: 80, height: 50},
+            attrs: {
+                '.uml-state-body': {
+                    fill: 'rgba(48, 208, 198, 0.2)',
+                    stroke: 'rgba(48, 208, 198, 0.5)',
+                    'stroke-width': 1.5,
+                    'rx': 30, 'ry': 30,
+                },
+                '.uml-state-separator': {
+                    stroke: 'rgba(48, 208, 198, 0.4)'
+                }
+            }
+        });
+        startState.addTo(graph);
+        endState.addTo(graph);
+        state.addTo(graph);
+        // 分割线
+        let separator = new joint.shapes.standard.Polyline();
+        separator.resize(3, 700);
+        separator.position(100, 0);
+        separator.addTo(graph);
 
-    // 普通状态的建模元素
-    let state = new uml.State({
-        position: {x: 25, y: 220},
-        size: {width: 70, height: 50},
-    });
-    myPalette_graph.addCell(state);
 
-    let link = new joint.shapes.standard.Link();
-    link.source(new g.Point(10, 320));
-    link.target(new g.Point(105, 320));
-    link.attr({
-        line: {
-            stroke: '#000000'
-        }
-    });
-    link.addTo(myPalette_graph)
+        paper.on({
 
-    let myDiagram_graph = new joint.dia.Graph;
-    let myDiagram_paper = new joint.dia.Paper({
-        el: document.getElementById('myDiagram'),
-        model: myDiagram_graph,
-        width: 1200,
-        height: 700,
-        gridSize: 10,
-        drawGrid: true,
-        background: {
-            color: 'whitesmoke'
-        }
+        });
     });
 </script>
 </html>
