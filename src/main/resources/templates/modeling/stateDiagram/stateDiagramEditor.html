@@ -35,19 +35,19 @@
                 </ul>
             </div>
 
-            <div style="width: 100%; display: flex; justify-content: space-between">
+            <div id="canvas-wrapper" style="width: 100%; display: flex; justify-content: space-between">
                 <div style="width: 105px; margin-right: 2px; background-color: whitesmoke; border: 1px solid black; position: relative; -webkit-tap-highlight-color: rgba(255, 255, 255, 0); cursor: auto;">
-                    <canvas id="myPalette" tabindex="0" width="128" height="772"
-                            style="position: absolute; top: 0px; left: 0px; z-index: 2; user-select: none; width: 103px; height: 618px; cursor: auto;">
+                    <canvas id="myPalette" tabindex="0" width="103" height="618"
+                            style="position: absolute; top: 0px; left: 0px; z-index: 2; user-select: none; cursor: auto;">
                         This text is displayed if your browser does not support the Canvas HTML element.
                     </canvas>
                     <div style="position: absolute; overflow: auto; width: 103px; height: 618px; z-index: 1;">
                         <div style="position: absolute; width: 1px; height: 1px;"></div>
                     </div>
                 </div>
-                <div style="flex-grow: 1; height: 620px; border: 1px solid black; position: relative; -webkit-tap-highlight-color: rgba(255, 255, 255, 0); cursor: auto;">
-                    <canvas id="myDiagram" tabindex="0" width="996" height="772"
-                            style="position: absolute; top: 0px; left: 0px; z-index: 2; user-select: none; width: 100%; height: 618px; cursor: auto;">
+                <div style="width:100%; height: 620px; border: 1px solid black; position: relative; -webkit-tap-highlight-color: rgba(255, 255, 255, 0); cursor: auto;">
+                    <canvas id="myDiagram" tabindex="0" width="996" height="618"
+                            style="position: absolute; top: 0px; left: 0px; z-index: 2; user-select: none; cursor: auto;">
                         This text is displayed if your browser does not support the Canvas HTML element.
                     </canvas>
                     <div style="position: absolute; overflow: auto; width: 797px; height: 618px; z-index: 1;">
@@ -81,6 +81,7 @@
 <script src="../../../static/js/ace.min.js" th:src="@{/js/ace.min.js}"></script>
 <script src="../../../static/js/ace-extra.min.js" th:src="@{/js/ace-extra.min.js}"></script>
 <script src="../../../static/js/vue.min.js" th:src="@{/js/vue.min.js}"></script>
+<script src="../../../static/js/util.js" th:src="@{/js/util.js}"></script>
 <script src="../../../static/js/mosiv.js" th:src="@{/js/mosiv.js}"></script>
 <script>
     $(function () {
@@ -90,6 +91,12 @@
         ul.eq(1).children().eq(2).children().eq(1).addClass("active open");
         ul.eq(1).children().eq(2).children().eq(1).children().eq(2).children().eq(1).addClass("active");
 
+        let diagram = new StateDiagramCanvas({
+            el: "#myDiagram", // canvas 的id
+        });
+
+        $('#myDiagram')[0].width = $('#myDiagram').parent().width();
+
         // 建模元素工具栏
         let palette = new StateDiagramPalette({
             el: "#myPalette", // canvas 的id
@@ -97,9 +104,9 @@
 
         // 建模元素
         // TODO 有待优化
-        let startState = new StartState(40, 64, 50);
-        let endState = new EndState(40, 64, 50 + 40*2 + 10);
-        let state = new State(64 - 40, 130 + 40*2 - 40 + 20, 80, 80);
+        let startState = new StartState(32, 51, 40);
+        let endState = new EndState(32, 51, 40 + 32*2 + 8);
+        let state = new State(51 - 32, 114 + 32*2 - 32 + 16, 64, 64);
         let link = new Link();
 
         // 添加进建模元素工具栏
@@ -108,26 +115,18 @@
         palette.add(state);
         palette.add(link);
 
-        let cvs = $('#myPalette')
-        cvs.on('mousedown', (e) => {
-            let x = e.clientX
-            let y = e.clientY
-            let rect = cvs[0].getBoundingClientRect()
-            x -= rect.left
-            y -= rect.top
-            console.log(x, y)
-            console.log(startState.contain(x, y))
-        })
-
-        cvs.on('mousedown', (e) => {
-
-        })
-
-        cvs.on('mouseup', (e) => {
-            console.log(1)
-        })
-
         palette.draw();
+
+        $('#canvas-wrapper').on('mouseleave', (e) => {
+           component_to_transmit = null;
+           palette.component_chose = null;
+           diagram.component_chose = null;
+        });
+
+        $(window).resize(function() {
+            $('#myDiagram')[0].width = $('#myDiagram').parent().width();
+            diagram.update();
+        });
     });
 </script>
 </html>
