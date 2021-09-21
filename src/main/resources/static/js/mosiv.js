@@ -1,6 +1,8 @@
 // --------------------------状态图建模 -------------------------------//
 let component_to_transmit = null;
 
+// TODO e.which浏览器不兼容
+
 /**
  * 建模元素画布
  */
@@ -44,49 +46,64 @@ class StateDiagramCanvas {
         this.draw();
     }
 
+    /**
+     * 接收来自palette的组件
+     * @param e
+     * @private
+     */
+    _receive(e) {
+        if(component_to_transmit != null) {
+            this.component_chose = component_to_transmit;
+            let mouse_pos = getMousePosition(e);
+            this.component_chose.position = {
+                x: mouse_pos.x + this.component_chose.offset.x,
+                y: mouse_pos.y + this.component_chose.offset.y
+            }
+            this.add(deepCopy(this.component_chose));
+            this.component_chose.draw(this.ctx);
+            component_to_transmit = null;
+        }
+    }
+
+    /**
+     * 选择组件
+     * @param e
+     * @private
+     */
+    _choose(e) {
+        let mouse_pos = getMousePosition(e);
+        this.components.forEach((it) => {
+            if(it.contain(mouse_pos.x, mouse_pos.y)) {
+                // TODO 未考虑重叠，后期修改
+                this.component_chose = it;
+            }
+        })
+
+        if(this.component_chose != null) {
+            this.component_chose.offset = {
+                x: this.component_chose.position.x - mouse_pos.x,
+                y: this.component_chose.position.y - mouse_pos.y
+            }
+        }
+    }
+
+
     _bindEvents() {
-        this.cvs.on('mouseover', (e) => {
-            if(component_to_transmit != null) {
-                this.component_chose = component_to_transmit;
-                this.add(deepCopy(this.component_chose));
-                this.component_chose.draw(this.ctx);
-                component_to_transmit = null;
-            }
-        })
-
-        let offset_x = 0;
-        let offset_y = 0;
-        this.cvs.on('mousedown', (e) => {
-            let mouse_pos = getMousePosition(e)
-            this.components.forEach((it) => {
-                if(it.contain(mouse_pos.x, mouse_pos.y)) {
-                    // 未考虑重叠，后期修改
-                    this.component_chose = it;
-                }
-            })
-            if(this.component_chose != null) {
-                offset_x = this.component_chose.x - mouse_pos.x;
-                offset_y = this.component_chose.y - mouse_pos.y;
-            }
-        })
-
         this.cvs.on('mousemove', (e) => {
-            if(this.component_chose != null && this.component_chose.draggable) {
-                let mouse_pos = getMousePosition(e);
-                this.component_chose.x = mouse_pos.x + offset_x;
-                this.component_chose.y = mouse_pos.y + offset_y;
-                this.update();
+            if(e.which == 1) {
+                if(this.component_chose == null) {
+                    this._receive(e);
+                    this._choose(e);
+                }
+                if (this.component_chose != null && this.component_chose.draggable) {
+                    let mouse_pos = getMousePosition(e);
+                    this.component_chose.drag(mouse_pos.x, mouse_pos.y);
+                    this.update();
+                }
             }
-        })
-
-        this.cvs.on('mouseup', (e) => {
-            this.component_chose = null;
-            this.update();
-        })
-
-        this.cvs.on('mouseout', (e) => {
-            this.component_chose = null;
-            this.update();
+            else {
+                this.component_chose = null;
+            }
         })
     }
 }
@@ -134,45 +151,75 @@ class StateDiagramPalette {
         this.draw();
     }
 
-    _bindEvents() {
-        let offset_x = 0;
-        let offset_y = 0;
-        this.cvs.on('mousedown', (e) => {
-            let mouse_pos = getMousePosition(e)
-            this.components.forEach((it) => {
-                if(it.contain(mouse_pos.x, mouse_pos.y)) {
-                    this.component_chose = it;
-                }
-            })
-            if(this.component_chose != null) {
-                this.component_chose = deepCopy(this.component_chose);
-                this.component_chose.draggable = true;
-                this.add(this.component_chose);
-                this.component_chose.draw(this.ctx);
+    /**
+     * 接收diagram退回的组件
+     * @param e
+     * @private
+     */
+    _receive(e) {
+        if(component_to_transmit != null) {
+            this.component_chose = component_to_transmit;
+            let mouse_pos = getMousePosition(e);
+            this.component_chose.position = {
+                x: mouse_pos.x + this.component_chose.offset.x,
+                y: mouse_pos.y + this.component_chose.offset.y
+            }
+            this.add(deepCopy(this.component_chose));
+            this.component_chose.draw(this.ctx);
+            component_to_transmit = null;
+        }
+    }
 
-                offset_x = this.component_chose.x - mouse_pos.x;
-                offset_y = this.component_chose.y - mouse_pos.y;
+    /**
+     * 选择组件
+     * @param e
+     * @private
+     */
+    _choose(e) {
+        let mouse_pos = getMousePosition(e);
+        this.components.forEach((it) => {
+            if(it.contain(mouse_pos.x, mouse_pos.y)) {
+                this.component_chose = it;
             }
         })
 
+        if(this.component_chose != null) {
+            this.component_chose = deepCopy(this.component_chose);
+            this.component_chose.draggable = true;
+            this.add(this.component_chose);
+            this.component_chose.draw(this.ctx);
+
+            this.component_chose.offset = {
+                x: this.component_chose.position.x - mouse_pos.x,
+                y: this.component_chose.position.y - mouse_pos.y
+            };
+        }
+    }
+
+    _bindEvents() {
         this.cvs.on('mousemove', (e) => {
-            if(this.component_chose != null && this.component_chose.draggable) {
-                let mouse_pos = getMousePosition(e);
-                this.component_chose.x = mouse_pos.x + offset_x;
-                this.component_chose.y = mouse_pos.y + offset_y;
+            if(e.which == 1) {
+                if(this.component_chose == null) {
+                    this._choose(e);
+                }
+                if (this.component_chose != null && this.component_chose.draggable) {
+                    let mouse_pos = getMousePosition(e);
+                    this.component_chose.position = {
+                        x: mouse_pos.x + this.component_chose.offset.x,
+                        y: mouse_pos.y + this.component_chose.offset.y
+                    }
+                    this.update();
+                }
+            }
+            else {
+                remove(this.components, this.component_chose);
+                this.component_chose = null;
                 this.update();
             }
         })
 
-        this.cvs.on('mouseup', (e) => {
-            remove(this.components, this.component_chose);
-            this.component_chose = null;
-            this.update();
-        })
-
         this.cvs.on('mouseout', (e) => {
             if(this.component_chose != null) {
-                this.component_chose.x = -offset_x;
                 component_to_transmit = deepCopy(this.component_chose);
                 remove(this.components, this.component_chose);
                 this.component_chose = null;
@@ -188,6 +235,16 @@ class Component {
      * @type {number}
      */
     type = -1;
+    // 组件起始x, y
+    position = {
+        x: 0,
+        y: 0
+    }
+    // 鼠标点击位置与x, y的偏移
+    offset = {
+        x: 0,
+        y: 0
+    }
     draggable = false;
     upper_layer = []; // 上层component
     z_index = 1; // 层号
@@ -196,7 +253,21 @@ class Component {
 
     }
 
+    /**
+     * 组件是否包含像素点x, y
+     * @param x
+     * @param y
+     */
     contain(x, y) {
+
+    }
+
+    /**
+     * 鼠标点击在mouse_x, mouse_y处拖动
+     * @param mouse_x
+     * @param mouse_yy
+     */
+    drag(mouse_x, mouse_y) {
 
     }
 }
@@ -217,21 +288,30 @@ class StartState extends Component {
         super();
         this.type = 1;
         this.r = r;
-        this.x = x;
-        this.y = y;
+        this.position = {
+            x: x,
+            y: y
+        }
     }
 
     draw(ctx) {
         ctx.save();
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.arc(this.position.x, this.position.y, this.r, 0, Math.PI * 2);
         ctx.fill();
         ctx.closePath();
         ctx.restore();
     }
 
     contain(x, y) {
-        return inCircle(x, y, {x: this.x, y: this.y}, this.r);
+        return inCircle(x, y, {x: this.position.x, y: this.position.y}, this.r);
+    }
+
+    drag(mouse_x, mouse_y) {
+        this.position = {
+            x: mouse_x + this.offset.x,
+            y: mouse_y + this.offset.y
+        }
     }
 }
 
@@ -243,21 +323,30 @@ class EndState extends Component {
         super();
         this.type = 2;
         this.r = r;
-        this.x = x;
-        this.y = y;
+        this.position = {
+            x: x,
+            y: y
+        }
     }
 
     draw(ctx) {
         ctx.save();
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.arc(this.position.x, this.position.y, this.r, 0, Math.PI * 2);
         ctx.fill();
         ctx.closePath();
         ctx.restore();
     }
 
     contain(x, y) {
-        return inCircle(x, y, {x: this.x, y: this.y}, this.r);
+        return inCircle(x, y, {x: this.position.x, y: this.position.y}, this.r);
+    }
+
+    drag(mouse_x, mouse_y) {
+        this.position = {
+            x: mouse_x + this.offset.x,
+            y: mouse_y + this.offset.y
+        }
     }
 }
 
@@ -269,19 +358,21 @@ class State extends Component {
         super();
         this.type = 3;
         // 外接矩形左上角
-        this.x = x;
-        this.y = y;
+        this.position = {
+            x: x,
+            y: y
+        }
         this.r = 15; // 圆角半径
         this.width = width;
         this.height = height;
     }
 
     draw(ctx) {
-        let point_a = {x: this.x + this.r, y: this.y}
-        let point_b = {x: this.x + this.width, y: this.y}
-        let point_c = {x: this.x + this.width, y: this.y + this.height}
-        let point_d = {x: this.x, y: this.y + this.height}
-        let point_e = {x: this.x, y: this.y}
+        let point_a = {x: this.position.x + this.r, y: this.position.y}
+        let point_b = {x: this.position.x + this.width, y: this.position.y}
+        let point_c = {x: this.position.x + this.width, y: this.position.y + this.height}
+        let point_d = {x: this.position.x, y: this.position.y + this.height}
+        let point_e = {x: this.position.x, y: this.position.y}
         ctx.save();
         ctx.beginPath();
         ctx.moveTo(point_a.x, point_a.y);
@@ -296,10 +387,10 @@ class State extends Component {
     }
 
     contain(x, y) {
-        let left_border = this.x;
-        let right_border = this.x + this.width;
-        let top_border = this.y;
-        let bottom_border = this.y + this.height;
+        let left_border = this.position.x;
+        let right_border = this.position.x + this.width;
+        let top_border = this.position.y;
+        let bottom_border = this.position.y + this.height;
 
         let left_top_center = {x: left_border + this.r, y: top_border + this.r};
         let right_top_center = {x: right_border - this.r, y: top_border + this.r};
@@ -335,6 +426,13 @@ class State extends Component {
         }
         return res;
     }
+
+    drag(mouse_x, mouse_y) {
+        this.position = {
+            x: mouse_x + this.offset.x,
+            y: mouse_y + this.offset.y
+        }
+    }
 }
 
 /**
@@ -344,5 +442,15 @@ class Link extends Component {
     constructor() {
         super();
         this.type = 4;
+    }
+}
+
+/**
+ * 调整组件大小
+ */
+class SizeAdapter extends Component {
+    constructor() {
+        super();
+        this.type = 5;
     }
 }

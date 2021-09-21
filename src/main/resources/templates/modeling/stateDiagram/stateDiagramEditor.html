@@ -95,6 +95,7 @@
             el: "#myDiagram", // canvas 的id
         });
 
+        $('#myPalette')[0].width = $('#myPalette').parent().width();
         $('#myDiagram')[0].width = $('#myDiagram').parent().width();
 
         // 建模元素工具栏
@@ -120,11 +121,12 @@
         $('#canvas-wrapper').on('mouseleave', (e) => {
            component_to_transmit = null;
            palette.component_chose = null;
-           diagram.component_chose = null;
         });
 
         $(window).resize(function() {
+            $('#myPalette')[0].width = $('#myPalette').parent().width();
             $('#myDiagram')[0].width = $('#myDiagram').parent().width();
+            palette.update();
             diagram.update();
         });
     });
