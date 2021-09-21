@@ -449,8 +449,47 @@ class Link extends Component {
  * 调整组件大小
  */
 class SizeAdapter extends Component {
-    constructor() {
+    /**
+     *
+     * @param x 中心
+     * @param y 中心
+     * @param parent 父组件
+     */
+    constructor(x, y, parent) {
         super();
         this.type = 5;
+        this.position = {
+            x: x,
+            y: y
+        }
+        this.width = 20;
+        this.parent = parent;
+
+        this.left_top = {
+            x: this.position.x - this.width/2,
+            y: this.position.y - this.width/2
+        }
+    }
+
+    draw(ctx) {
+        ctx.rect(this.left_top.x, this.left_top.y, this.left_top.x + this.width, this.left_top.y + this.width);
+    }
+
+    contain(x, y) {
+        return inRect(x, y,
+            {x: this.left_top.x, y: this.left_top.y},
+            {x: this.left_top.x + this.width, y: this.left_top.y + this.width});
+    }
+
+    drag(mouse_x, mouse_y) {
+        this.position = {
+            x: mouse_x + this.offset.x,
+            y: mouse_y + this.offset.y
+        }
+
+        this.left_top = {
+            x: this.position.x - this.width/2,
+            y: this.position.y - this.width/2
+        }
     }
 }
