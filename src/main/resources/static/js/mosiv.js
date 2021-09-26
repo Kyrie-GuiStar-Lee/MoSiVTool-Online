@@ -270,6 +270,14 @@ class Component {
     drag(mouse_x, mouse_y) {
 
     }
+
+    add_resizer() {
+
+    }
+
+    remove_resizer() {
+
+    }
 }
 
 /**
@@ -448,7 +456,7 @@ class Link extends Component {
 /**
  * 调整组件大小
  */
-class SizeAdapter extends Component {
+class Resizer extends Component {
     /**
      *
      * @param x 中心
