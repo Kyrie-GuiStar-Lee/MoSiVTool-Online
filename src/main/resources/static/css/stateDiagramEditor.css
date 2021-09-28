@@ -1,0 +1,17 @@
+#myPalette {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: 2;
+    user-select: none;
+    cursor: auto;
+}
+
+#myDiagram {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: 2;
+    user-select: none;
+    cursor: auto;
+}

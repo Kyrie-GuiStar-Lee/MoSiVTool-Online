@@ -17,34 +17,34 @@ class StateDiagramCanvas {
     constructor(params) {
         this.cvs = $(params['el'])
         // 获取canvas的画笔
-        this.ctx = this.cvs[0].getContext("2d");
-
-        this._bindEvents()
+        // this.ctx = this.cvs[0].getContext("2d");
+        //
+        // this._bindEvents()
     }
 
-    /**
-     * 将建模元素添加进画布
-     * @param component 建模元素
-     */
-    add(component) {
-        this.components.push(component);
-    }
+    // /**
+    //  * 将建模元素添加进画布
+    //  * @param component 建模元素
+    //  */
+    // add(component) {
+    //     this.components.push(component);
+    // }
 
-    /**
-     * 统一绘制建模元素
-     */
-    draw() {
-        let length = this.components.length;
-        for (let i = 0; i < length; i++) {
-            this.components[i].draw(this.ctx);
-        }
-    }
+    // /**
+    //  * 统一绘制建模元素
+    //  */
+    // draw() {
+    //     let length = this.components.length;
+    //     for (let i = 0; i < length; i++) {
+    //         this.components[i].draw(this.ctx);
+    //     }
+    // }
 
-    update() {
-        //清空画布
-        this.ctx.clearRect(0, 0, this.cvs.width(), this.cvs.height());
-        this.draw();
-    }
+    // update() {
+    //     //清空画布
+    //     this.ctx.clearRect(0, 0, this.cvs.width(), this.cvs.height());
+    //     this.draw();
+    // }
 
     /**
      * 接收来自palette的组件
@@ -122,34 +122,34 @@ class StateDiagramPalette {
     constructor(params) {
         this.cvs = $(params['el'])
         // 获取canvas的画笔
-        this.ctx = this.cvs[0].getContext("2d");
-
-        this._bindEvents();
+        // this.ctx = this.cvs[0].getContext("2d");
+        //
+        // this._bindEvents();
     }
 
-    /**
-     * 将建模元素添加进画板工具栏
-     * @param component 建模元素
-     */
-    add(component) {
-        this.components.push(component);
-    }
+    // /**
+    //  * 将建模元素添加进画板工具栏
+    //  * @param component 建模元素
+    //  */
+    // add(component) {
+    //     this.components.push(component);
+    // }
 
-    /**
-     * 统一绘制建模元素
-     */
-    draw() {
-        let length = this.components.length;
-        for (let i = 0; i < length; i++) {
-            this.components[i].draw(this.ctx);
-        }
-    }
+    // /**
+    //  * 统一绘制建模元素
+    //  */
+    // draw() {
+    //     let length = this.components.length;
+    //     for (let i = 0; i < length; i++) {
+    //         this.components[i].draw(this.ctx);
+    //     }
+    // }
 
-    update() {
-        //清空画布
-        this.ctx.clearRect(0, 0, this.cvs.width(), this.cvs.height());
-        this.draw();
-    }
+    // update() {
+    //     //清空画布
+    //     this.ctx.clearRect(0, 0, this.cvs.width(), this.cvs.height());
+    //     this.draw();
+    // }
 
     /**
      * 接收diagram退回的组件
@@ -240,11 +240,11 @@ class Component {
         x: 0,
         y: 0
     }
-    // 鼠标点击位置与x, y的偏移
-    offset = {
-        x: 0,
-        y: 0
-    }
+    // // 鼠标点击位置与x, y的偏移
+    // offset = {
+    //     x: 0,
+    //     y: 0
+    // }
     draggable = false;
     upper_layer = []; // 上层component
     z_index = 1; // 层号
