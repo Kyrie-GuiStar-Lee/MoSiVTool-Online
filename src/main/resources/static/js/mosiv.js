@@ -16,87 +16,39 @@ class StateDiagramCanvas {
      */
     constructor(params) {
         this.svg = d3.select(params['el'])
-        // 获取canvas的画笔
-        // this.ctx = this.cvs[0].getContext("2d");
-        //
-        // this._bindEvents()
-    }
 
-    // /**
-    //  * 将建模元素添加进画布
-    //  * @param component 建模元素
-    //  */
-    // add(component) {
-    //     this.components.push(component);
-    // }
-
-    draw(component) {
-        component.draw(this.svg)
-    }
-
-    // update() {
-    //     //清空画布
-    //     this.ctx.clearRect(0, 0, this.cvs.width(), this.cvs.height());
-    //     this.draw();
-    // }
-
-    /**
-     * 接收来自palette的组件
-     * @param e
-     * @private
-     */
-    _receive(e) {
-        if(component_to_transmit != null) {
-            this.component_chose = component_to_transmit;
-            let mouse_pos = getMousePosition(e);
-            this.component_chose.position = {
-                x: mouse_pos.x + this.component_chose.offset.x,
-                y: mouse_pos.y + this.component_chose.offset.y
-            }
-            this.add(deepCopy(this.component_chose));
-            this.component_chose.draw(this.ctx);
-            component_to_transmit = null;
-        }
+        this._bindEvents()
     }
 
     /**
-     * 选择组件
-     * @param e
-     * @private
+     * 将建模元素添加进画布
+     * @param component 建模元素
      */
-    _choose(e) {
-        let mouse_pos = getMousePosition(e);
+    add(component) {
+        this.components.push(component);
+    }
+
+    draw() {
         this.components.forEach((it) => {
-            if(it.contain(mouse_pos.x, mouse_pos.y)) {
-                // TODO 未考虑重叠，后期修改
-                this.component_chose = it;
-            }
+            it.draw(this.svg)
         })
-
-        if(this.component_chose != null) {
-            this.component_chose.offset = {
-                x: this.component_chose.position.x - mouse_pos.x,
-                y: this.component_chose.position.y - mouse_pos.y
-            }
-        }
     }
-
 
     _bindEvents() {
-        this.cvs.on('mousemove', (e) => {
-            if(e.which == 1) {
-                if(this.component_chose == null) {
-                    this._receive(e);
-                    this._choose(e);
+        this.svg.on('mouseenter', (event) => {
+            console.log(component_to_transmit)
+            if(component_to_transmit != null) {
+                let datum = d3.select(component_to_transmit).datum()
+                switch (datum.type) {
+                    case 1:
+                        this.component_chose = new StartState(event.offsetX, event.offsetY, datum.r)
+                        break
+                    case 2:
+                        // TODO unimplemented
+                        break
                 }
-                if (this.component_chose != null && this.component_chose.draggable) {
-                    let mouse_pos = getMousePosition(e);
-                    this.component_chose.drag(mouse_pos.x, mouse_pos.y);
-                    this.update();
-                }
-            }
-            else {
-                this.component_chose = null;
+                this.add(this.component_chose)
+                this.component_chose.draw(this.svg)
             }
         })
     }
@@ -142,38 +94,6 @@ class StateDiagramPalette {
                     + d3.event.translate
                     + ")scale(" + d3.event.scale + ")")
             })
-    }
-
-    _bindEvents() {
-        // this.cvs.on('mousemove', (e) => {
-        //     if(e.which == 1) {
-        //         if(this.component_chose == null) {
-        //             this._choose(e);
-        //         }
-        //         if (this.component_chose != null && this.component_chose.draggable) {
-        //             let mouse_pos = getMousePosition(e);
-        //             this.component_chose.position = {
-        //                 x: mouse_pos.x + this.component_chose.offset.x,
-        //                 y: mouse_pos.y + this.component_chose.offset.y
-        //             }
-        //             this.update();
-        //         }
-        //     }
-        //     else {
-        //         remove(this.components, this.component_chose);
-        //         this.component_chose = null;
-        //         this.update();
-        //     }
-        // })
-        //
-        // this.cvs.on('mouseout', (e) => {
-        //     if(this.component_chose != null) {
-        //         component_to_transmit = deepCopy(this.component_chose);
-        //         remove(this.components, this.component_chose);
-        //         this.component_chose = null;
-        //         this.update();
-        //     }
-        // })
     }
 }
 
@@ -223,8 +143,8 @@ class StartStateModel extends Component {
      */
     constructor(x, y, r) {
         super();
-        this.type = 1;
         this.data = {
+            type: 1,
             position: {
                 x: x,
                 y: y
@@ -252,19 +172,20 @@ class StartStateModel extends Component {
 
     dragstart(event, d) {
         d3.select(this).raise()
+        component_to_transmit = this
     }
 
     dragmove(event, d) {
         d3.select(this)
             .attr('cx', event.x)
             .attr('cy', event.y)
-        console.log(event.x)
     }
 
     dragend(event, d) {
         d3.select(this)
             .attr('cx', d.position.x)
             .attr('cy', d.position.y)
+        component_to_transmit = null
     }
 
     bindEvents() {
@@ -324,6 +245,8 @@ class StartState extends StartStateModel {
     dragend(event, d) {}
 }
 
+
+// ################################################################################################################## //
 /**
  * 状态图的中止状态类
  */
