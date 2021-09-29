@@ -15,7 +15,7 @@ class StateDiagramCanvas {
      * @param params 以json形式给出的参数
      */
     constructor(params) {
-        this.cvs = $(params['el'])
+        this.svg = d3.select(params['el'])
         // 获取canvas的画笔
         // this.ctx = this.cvs[0].getContext("2d");
         //
@@ -30,15 +30,9 @@ class StateDiagramCanvas {
     //     this.components.push(component);
     // }
 
-    // /**
-    //  * 统一绘制建模元素
-    //  */
-    // draw() {
-    //     let length = this.components.length;
-    //     for (let i = 0; i < length; i++) {
-    //         this.components[i].draw(this.ctx);
-    //     }
-    // }
+    draw(component) {
+        component.draw(this.svg)
+    }
 
     // update() {
     //     //清空画布
@@ -120,112 +114,66 @@ class StateDiagramPalette {
      * @param params 以json形式给出的参数
      */
     constructor(params) {
-        this.cvs = $(params['el'])
-        // 获取canvas的画笔
-        // this.ctx = this.cvs[0].getContext("2d");
-        //
-        // this._bindEvents();
-    }
-
-    // /**
-    //  * 将建模元素添加进画板工具栏
-    //  * @param component 建模元素
-    //  */
-    // add(component) {
-    //     this.components.push(component);
-    // }
-
-    // /**
-    //  * 统一绘制建模元素
-    //  */
-    // draw() {
-    //     let length = this.components.length;
-    //     for (let i = 0; i < length; i++) {
-    //         this.components[i].draw(this.ctx);
-    //     }
-    // }
-
-    // update() {
-    //     //清空画布
-    //     this.ctx.clearRect(0, 0, this.cvs.width(), this.cvs.height());
-    //     this.draw();
-    // }
-
-    /**
-     * 接收diagram退回的组件
-     * @param e
-     * @private
-     */
-    _receive(e) {
-        if(component_to_transmit != null) {
-            this.component_chose = component_to_transmit;
-            let mouse_pos = getMousePosition(e);
-            this.component_chose.position = {
-                x: mouse_pos.x + this.component_chose.offset.x,
-                y: mouse_pos.y + this.component_chose.offset.y
-            }
-            this.add(deepCopy(this.component_chose));
-            this.component_chose.draw(this.ctx);
-            component_to_transmit = null;
-        }
+        this.svg = d3.select(params['el'])
+        // this.svg.call(this.zoomHandler())
     }
 
     /**
-     * 选择组件
-     * @param e
-     * @private
+     * 将建模元素添加进画板工具栏
+     * @param component 建模元素
      */
-    _choose(e) {
-        let mouse_pos = getMousePosition(e);
+    add(component) {
+        this.components.push(component);
+    }
+
+    draw() {
         this.components.forEach((it) => {
-            if(it.contain(mouse_pos.x, mouse_pos.y)) {
-                this.component_chose = it;
-            }
+            it.draw(this.svg)
         })
+    }
 
-        if(this.component_chose != null) {
-            this.component_chose = deepCopy(this.component_chose);
-            this.component_chose.draggable = true;
-            this.add(this.component_chose);
-            this.component_chose.draw(this.ctx);
-
-            this.component_chose.offset = {
-                x: this.component_chose.position.x - mouse_pos.x,
-                y: this.component_chose.position.y - mouse_pos.y
-            };
-        }
+    zoomHandler() {
+        // TODO unimplemented
+        return d3.zoom()
+            .scaleExtent([1, 1])
+            .translateExtent([-100, 100], this.svg.node().getBoundingClientRect().width, this.svg.node().getBoundingClientRect().height)
+            .on('zoom', () => {
+                this.svg.attr("transform", "translate("
+                    + d3.event.translate
+                    + ")scale(" + d3.event.scale + ")")
+            })
     }
 
     _bindEvents() {
-        this.cvs.on('mousemove', (e) => {
-            if(e.which == 1) {
-                if(this.component_chose == null) {
-                    this._choose(e);
-                }
-                if (this.component_chose != null && this.component_chose.draggable) {
-                    let mouse_pos = getMousePosition(e);
-                    this.component_chose.position = {
-                        x: mouse_pos.x + this.component_chose.offset.x,
-                        y: mouse_pos.y + this.component_chose.offset.y
-                    }
-                    this.update();
-                }
-            }
-            else {
-                remove(this.components, this.component_chose);
-                this.component_chose = null;
-                this.update();
-            }
-        })
-
-        this.cvs.on('mouseout', (e) => {
-            if(this.component_chose != null) {
-                component_to_transmit = deepCopy(this.component_chose);
-                remove(this.components, this.component_chose);
-                this.component_chose = null;
-                this.update();
-            }
-        })
+        // this.cvs.on('mousemove', (e) => {
+        //     if(e.which == 1) {
+        //         if(this.component_chose == null) {
+        //             this._choose(e);
+        //         }
+        //         if (this.component_chose != null && this.component_chose.draggable) {
+        //             let mouse_pos = getMousePosition(e);
+        //             this.component_chose.position = {
+        //                 x: mouse_pos.x + this.component_chose.offset.x,
+        //                 y: mouse_pos.y + this.component_chose.offset.y
+        //             }
+        //             this.update();
+        //         }
+        //     }
+        //     else {
+        //         remove(this.components, this.component_chose);
+        //         this.component_chose = null;
+        //         this.update();
+        //     }
+        // })
+        //
+        // this.cvs.on('mouseout', (e) => {
+        //     if(this.component_chose != null) {
+        //         component_to_transmit = deepCopy(this.component_chose);
+        //         remove(this.components, this.component_chose);
+        //         this.component_chose = null;
+        //         this.update();
+        //     }
+        // })
     }
 }
 
@@ -236,38 +184,20 @@ class Component {
      */
     type = -1;
     // 组件起始x, y
-    position = {
-        x: 0,
-        y: 0
+    node = null
+    data = {
+        position: {
+            x: 0,
+            y: 0
+        }
     }
     // // 鼠标点击位置与x, y的偏移
     // offset = {
     //     x: 0,
     //     y: 0
     // }
-    draggable = false;
-    upper_layer = []; // 上层component
-    z_index = 1; // 层号
 
-    draw(ctx) {
-
-    }
-
-    /**
-     * 组件是否包含像素点x, y
-     * @param x
-     * @param y
-     */
-    contain(x, y) {
-
-    }
-
-    /**
-     * 鼠标点击在mouse_x, mouse_y处拖动
-     * @param mouse_x
-     * @param mouse_yy
-     */
-    drag(mouse_x, mouse_y) {
+    draw(svg) {
 
     }
 
@@ -281,69 +211,140 @@ class Component {
 }
 
 /**
- * 状态图的开始状态类
+ * 开始状态模型
  * type = 1 表示开始状态
  */
-class StartState extends Component {
-
+class StartStateModel extends Component {
     /**
      * 构造函数
      * @param r 半径
      * @param x x坐标
      * @param y y坐标
      */
-    constructor(r, x, y) {
+    constructor(x, y, r) {
         super();
         this.type = 1;
-        this.r = r;
-        this.position = {
-            x: x,
-            y: y
+        this.data = {
+            position: {
+                x: x,
+                y: y
+            },
+            r: r
         }
     }
 
-    draw(ctx) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(this.position.x, this.position.y, this.r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.closePath();
-        ctx.restore();
+    draw(svg) {
+        this.node = svg.datum(this.data)
+            .append('circle')
+            .attr('cx', (d) => {
+                return d.position.x + 'px'
+            })
+            .attr('cy', (d) => {
+                return d.position.y + 'px'
+            })
+            .attr('r', (d) => {
+                return d.r + 'px'
+            })
+            .node()
+
+        this.bindEvents()
     }
 
-    contain(x, y) {
-        return inCircle(x, y, {x: this.position.x, y: this.position.y}, this.r);
+    dragstart(event, d) {
+        d3.select(this).raise()
     }
 
-    drag(mouse_x, mouse_y) {
-        this.position = {
-            x: mouse_x + this.offset.x,
-            y: mouse_y + this.offset.y
-        }
+    dragmove(event, d) {
+        d3.select(this)
+            .attr('cx', event.x)
+            .attr('cy', event.y)
+        console.log(event.x)
     }
+
+    dragend(event, d) {
+        d3.select(this)
+            .attr('cx', d.position.x)
+            .attr('cy', d.position.y)
+    }
+
+    bindEvents() {
+        let drag = d3.drag()
+            .subject(function() {
+                let tmp = d3.select(this);
+                return {
+                    x: tmp.attr('cx'),
+                    y: tmp.attr('cy')
+                }
+            })
+            .on('start', this.dragstart)
+            .on('drag', this.dragmove)
+            .on('end', this.dragend)
+
+        d3.select(this.node).call(drag)
+    }
+}
+
+/**
+ * 状态图的开始状态类
+ */
+class StartState extends StartStateModel {
+    constructor(x, y, r) {
+        super(x, y, r);
+    }
+
+    draw(svg) {
+        this.node = svg.datum(this.data)
+            .append('circle')
+            .attr('cx', (d) => {
+                return d.position.x + 'px'
+            })
+            .attr('cy', (d) => {
+                return d.position.y + 'px'
+            })
+            .attr('r', (d) => {
+                return d.r + 'px'
+            })
+            .on('mousedown', () => {
+                // TODO unimplemented
+                console.log(1)
+            })
+            .node()
+
+        this.bindEvents()
+    }
+
+    dragstart(event, d) {}
+
+    dragmove(event, d) {
+        super.dragmove(event, d)
+        d.position.x = event.x
+        d.position.y = event.y
+    }
+
+    dragend(event, d) {}
 }
 
 /**
  * 状态图的中止状态类
  */
 class EndState extends Component {
-    constructor(r, x, y) {
+    constructor(x, y, r) {
         super();
         this.type = 2;
-        this.r = r;
-        this.position = {
-            x: x,
-            y: y
+        this.data = {
+            position: {
+                x: 0,
+                y: 0
+            },
+            r: r
         }
     }
 
-    draw(ctx) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(this.position.x, this.position.y, this.r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.closePath();
-        ctx.restore();
+    draw(svg) {
+        svg.append('circle')
+            .attr('cx', this.position.x + 'px')
+            .attr('cy', this.position.y + 'px')
+            .attr('r', this.r + 'px')
     }
 
     contain(x, y) {
@@ -366,32 +367,24 @@ class State extends Component {
         super();
         this.type = 3;
         // 外接矩形左上角
-        this.position = {
-            x: x,
-            y: y
+        this.data = {
+            position: {
+                x: 0,
+                y: 0
+            },
+            width: width,
+            height: height,
+            r: r // 圆角半径
         }
-        this.r = 15; // 圆角半径
-        this.width = width;
-        this.height = height;
     }
 
-    draw(ctx) {
-        let point_a = {x: this.position.x + this.r, y: this.position.y}
-        let point_b = {x: this.position.x + this.width, y: this.position.y}
-        let point_c = {x: this.position.x + this.width, y: this.position.y + this.height}
-        let point_d = {x: this.position.x, y: this.position.y + this.height}
-        let point_e = {x: this.position.x, y: this.position.y}
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(point_a.x, point_a.y);
-        ctx.arcTo(point_b.x, point_b.y, point_c.x, point_c.y, this.r);
-        ctx.arcTo(point_c.x, point_c.y, point_d.x, point_d.y, this.r);
-        ctx.arcTo(point_d.x, point_d.y, point_e.x, point_e.y, this.r);
-        ctx.arcTo(point_e.x, point_e.y, point_a.x, point_a.y, this.r);
-        ctx.stroke();
-        ctx.fill();
-        ctx.closePath();
-        ctx.restore();
+    draw(svg) {
+        svg.append('rect')
+            .attr('x', this.position.x)
+            .attr('y', this.position.y)
+            .attr('width', this.width)
+            .attr('height', this.height)
+            .attr('rx', this.r)
     }
 
     contain(x, y) {
