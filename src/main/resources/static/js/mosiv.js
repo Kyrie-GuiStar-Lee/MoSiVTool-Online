@@ -16,7 +16,6 @@ class StateDiagramCanvas {
      */
     constructor(params) {
         this.svg = d3.select(params['el'])
-
         this._bindEvents()
     }
 
@@ -35,65 +34,16 @@ class StateDiagramCanvas {
     }
 
     _bindEvents() {
-        this.svg.on('mouseenter', (event) => {
-            console.log(component_to_transmit)
+        this.svg.on('click', (event) => {
+            console.log(event)
             if(component_to_transmit != null) {
-                let datum = d3.select(component_to_transmit).datum()
-                switch (datum.type) {
-                    case 1:
-                        this.component_chose = new StartState(event.offsetX, event.offsetY, datum.r)
-                        break
-                    case 2:
-                        // TODO unimplemented
-                        break
-                }
-                this.add(this.component_chose)
+                this.component_chose = new component_to_transmit(event.layerX, event.layerY)
+                console.log(this.component_chose)
+                this.components.push(this.component_chose)
                 this.component_chose.draw(this.svg)
+                component_to_transmit = null
             }
         })
-    }
-}
-
-/**
- * 建模元素画板
- */
-class StateDiagramPalette {
-    components = [];
-    component_chose = null;
-
-    /**
-     * 构造函数
-     * @param params 以json形式给出的参数
-     */
-    constructor(params) {
-        this.svg = d3.select(params['el'])
-        // this.svg.call(this.zoomHandler())
-    }
-
-    /**
-     * 将建模元素添加进画板工具栏
-     * @param component 建模元素
-     */
-    add(component) {
-        this.components.push(component);
-    }
-
-    draw() {
-        this.components.forEach((it) => {
-            it.draw(this.svg)
-        })
-    }
-
-    zoomHandler() {
-        // TODO unimplemented
-        return d3.zoom()
-            .scaleExtent([1, 1])
-            .translateExtent([-100, 100], this.svg.node().getBoundingClientRect().width, this.svg.node().getBoundingClientRect().height)
-            .on('zoom', () => {
-                this.svg.attr("transform", "translate("
-                    + d3.event.translate
-                    + ")scale(" + d3.event.scale + ")")
-            })
     }
 }
 
@@ -137,19 +87,19 @@ class Component {
 class StartState extends Component {
     /**
      * 构造函数
-     * @param r 半径
      * @param x x坐标
      * @param y y坐标
      */
-    constructor(x, y, r) {
+    constructor(x, y) {
         super();
+        let default_r = 32
         this.data = {
             type: 1,
             position: {
                 x: x,
                 y: y
             },
-            r: r
+            r: default_r
         }
     }
 

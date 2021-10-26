@@ -101,9 +101,6 @@
         my_diagram.style('width', my_diagram_wrapper.node().getBoundingClientRect().width)
                     .style('height', my_diagram_wrapper.node().getBoundingClientRect().height)
 
-        // let diagram = new StateDiagramCanvas({
-        //     el: "#myDiagram", // canvas 的id
-        // });
 
         let components = [{name: "StartState", obj: StartState}]
 
@@ -122,6 +119,18 @@
                         console.log(d)
                         return d.name
                     })
+                    .on("click", (event, d) => {
+                        if(component_to_transmit == null) {
+                            component_to_transmit = d["obj"]
+                        }
+                        else {
+                            component_to_transmit = null
+                        }
+                    })
+
+        let diagram = new StateDiagramCanvas({
+            el: "#myDiagram", // canvas 的id
+        });
 
         // 建模元素工具栏
         // let palette = new StateDiagramPalette({
