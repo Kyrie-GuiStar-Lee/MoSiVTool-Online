@@ -37,11 +37,9 @@
                 </ul>
             </div>
 
-            <div id="svg-wrapper" style="width: 100%; display: flex; justify-content: space-between">
+            <div style="width: 100%; display: flex; justify-content: space-between">
                 <div style="width: 105px; margin-right: 2px; background-color: whitesmoke; border: 1px solid black; position: relative; -webkit-tap-highlight-color: rgba(255, 255, 255, 0); cursor: auto;">
-                    <svg id="myPalette" tabindex="0" width="103" height="618">
-                        This text is displayed if your browser does not support the Canvas HTML element.
-                    </svg>
+                    <div id="myPalette" style="width: 100%; height: 618px"></div>
                     <div style="position: absolute; overflow: auto; width: 103px; height: 618px; z-index: 1;">
                         <div style="position: absolute; width: 1px; height: 1px;"></div>
                     </div>
@@ -103,29 +101,47 @@
         my_diagram.style('width', my_diagram_wrapper.node().getBoundingClientRect().width)
                     .style('height', my_diagram_wrapper.node().getBoundingClientRect().height)
 
-        let diagram = new StateDiagramCanvas({
-            el: "#myDiagram", // canvas 的id
-        });
+        // let diagram = new StateDiagramCanvas({
+        //     el: "#myDiagram", // canvas 的id
+        // });
+
+        let components = [{name: "StartState", obj: StartState}]
+
+        my_palette.selectAll("div")
+                    .data(components)
+                    .enter()
+                    .append("div")
+
+        my_palette.selectAll("div")
+                    .data(components)
+                    .style("width", "100%")
+                    .style("padding-bottom", "80%")
+                    .style("border", "1px solid black")
+                    .style("cursor", "pointer")
+                    .text((d) => {
+                        console.log(d)
+                        return d.name
+                    })
 
         // 建模元素工具栏
-        let palette = new StateDiagramPalette({
-            el: "#myPalette", // canvas 的id
-        });
+        // let palette = new StateDiagramPalette({
+        //     el: "#myPalette", // canvas 的id
+        // });
 
         // 建模元素
         // TODO 有待优化
-        let start_state_model = new StartStateModel(51, 40, 32);
+        // let start_state_model = new StartStateModel(51, 40, 32);
         // let endState = new EndState(51, 40 + 32*2 + 8, 32);
         // let state = new State(51 - 32, 114 + 32*2 - 32 + 16, 64, 64);
         // let link = new Link();
 
         // 添加进建模元素工具栏
-        palette.add(start_state_model)
+        // palette.add(start_state_model)
         // palette.add(endState);
         // palette.add(state);
         // palette.add(link);
         //
-        palette.draw();
+        // palette.draw();
 
         // $('#canvas-wrapper').on('mouseleave', (e) => {
         //    component_to_transmit = null;

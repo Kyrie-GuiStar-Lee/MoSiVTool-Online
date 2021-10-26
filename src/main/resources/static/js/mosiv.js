@@ -134,7 +134,7 @@ class Component {
  * 开始状态模型
  * type = 1 表示开始状态
  */
-class StartStateModel extends Component {
+class StartState extends Component {
     /**
      * 构造函数
      * @param r 半径
@@ -164,29 +164,25 @@ class StartStateModel extends Component {
             })
             .attr('r', (d) => {
                 return d.r + 'px'
-            })
-            .node()
+            }).node()
 
         this.bindEvents()
     }
 
     dragstart(event, d) {
         d3.select(this).raise()
-        component_to_transmit = this
     }
 
     dragmove(event, d) {
         d3.select(this)
             .attr('cx', event.x)
             .attr('cy', event.y)
+        d.position.x = event.x
+        d.position.y = event.y
     }
 
-    dragend(event, d) {
-        d3.select(this)
-            .attr('cx', d.position.x)
-            .attr('cy', d.position.y)
-        component_to_transmit = null
-    }
+    dragend(event, d) {}
+
 
     bindEvents() {
         let drag = d3.drag()
@@ -204,47 +200,6 @@ class StartStateModel extends Component {
         d3.select(this.node).call(drag)
     }
 }
-
-/**
- * 状态图的开始状态类
- */
-class StartState extends StartStateModel {
-    constructor(x, y, r) {
-        super(x, y, r);
-    }
-
-    draw(svg) {
-        this.node = svg.datum(this.data)
-            .append('circle')
-            .attr('cx', (d) => {
-                return d.position.x + 'px'
-            })
-            .attr('cy', (d) => {
-                return d.position.y + 'px'
-            })
-            .attr('r', (d) => {
-                return d.r + 'px'
-            })
-            .on('mousedown', () => {
-                // TODO unimplemented
-                console.log(1)
-            })
-            .node()
-
-        this.bindEvents()
-    }
-
-    dragstart(event, d) {}
-
-    dragmove(event, d) {
-        super.dragmove(event, d)
-        d.position.x = event.x
-        d.position.y = event.y
-    }
-
-    dragend(event, d) {}
-}
-
 
 // ################################################################################################################## //
 /**
