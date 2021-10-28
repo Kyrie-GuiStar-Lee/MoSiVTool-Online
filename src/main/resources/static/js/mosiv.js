@@ -58,6 +58,7 @@ class Component {
             x: 0,
             y: 0
         },
+        rect: {}, // 外接矩形
         parent: null
     }
 
@@ -100,7 +101,18 @@ class StartState extends Component {
                 x: x,
                 y: y
             },
-            r: default_r
+            r: default_r,
+            rect: {
+                position: {
+                    x: x - this.data.r,
+                    y: y - this.data.r
+                },
+                width: this.data.r,
+                height: this.data.r
+            },
+            min: {
+                r: default_r
+            }
         }
 
         this.add_resizers()
@@ -160,7 +172,7 @@ class StartState extends Component {
     }
 
     add_resizers() {
-        let rect = {
+        this.data.rect = {
             position: {
                 x: this.data.position.x - this.data.r,
                 y: this.data.position.y - this.data.r
@@ -173,10 +185,10 @@ class StartState extends Component {
          * 0 2     00 10     x+0,y+0  x+w,y+0
          * 1 3     01 11     x+0,y+h  x+w,y+w
          */
-        let resizer0 = new Resizer(0, rect.position.x, rect.position.y, this)
-        let resizer1 = new Resizer(1, rect.position.x, rect.position.y + rect.height, this)
-        let resizer2 = new Resizer(2, rect.position.x + rect.width, rect.position.y, this)
-        let resizer3 = new Resizer(3, rect.position.x + rect.width, rect.position.y + rect.height, this)
+        let resizer0 = new Resizer(0, this.data.rect.position.x, this.data.rect.position.y, this)
+        let resizer1 = new Resizer(1, this.data.rect.position.x, this.data.rect.position.y + this.data.rect.height, this)
+        let resizer2 = new Resizer(2, this.data.rect.position.x + this.data.rect.width, this.data.rect.position.y, this)
+        let resizer3 = new Resizer(3, this.data.rect.position.x + this.data.rect.width, this.data.rect.position.y + this.data.rect.height, this)
 
         this.resizers.push(resizer0)
         this.resizers.push(resizer1)
@@ -193,35 +205,36 @@ class StartState extends Component {
             }
         }
 
-        let rect = {
-            width: Math.abs(opposite_resizer.data.position.x - event.sourceEvent.layerX),
-            height: Math.abs(opposite_resizer.data.position.y - event.sourceEvent.layerY),
-        }
-        rect.position = {
-            x: opposite_resizer.data.position.x + ((number >> 1) - 1) * rect.width, // 00 01要-width
-            y: opposite_resizer.data.position.y + ((number&1) - 1) * rect.height // 00 10要-height
-        }
+        // 00 01鼠标在定点左侧
+        this.data.rect.width = Math.max(2*this.data.min.r, ((number >> 1) == 0 ? -1 : 1)*(event.sourceEvent.layerX - opposite_resizer.data.position.x))
+        // 00 10鼠标在定点上侧
+        this.data.rect.height = Math.max(2*this.data.min.r, ((number & 1) == 0 ? -1 : 1)*(event.sourceEvent.layerY - opposite_resizer.data.position.y))
 
         // 修改本身
-        this.data.r = Math.min(rect.width, rect.height)/2
+        this.data.r = Math.max(this.data.min.r, Math.min(this.data.rect.width, this.data.rect.height)/2)
         this.data.position = {
-            x: rect.position.x + this.data.r,
-            y: rect.position.y + this.data.r
+            x: opposite_resizer.data.position.x + ((number >> 1) == 0 ? -1 : 1)*this.data.r, // 00 01 -; 10 11 +
+            y: opposite_resizer.data.position.y + ((number & 1) == 0 ? -1 : 1)*this.data.r  // 00 10 -; 01 11 +
         }
+
         d3.select(this.node)
             .attr('cx', this.data.position.x)
             .attr('cy', this.data.position.y)
             .attr('r', this.data.r)
 
         // 根据本身调整rect
-        rect.width = 2*this.data.r
-        rect.height = 2*this.data.r
+        this.data.rect.width = 2*this.data.r
+        this.data.rect.height = 2*this.data.r
+        this.data.rect.position = {
+            x: opposite_resizer.data.position.x + ((number >> 1) - 1) * this.data.rect.width, // 00 01要-width
+            y: opposite_resizer.data.position.y + ((number & 1) - 1) * this.data.rect.height // 00 10要-height
+        }
 
         // 修改resizer
         this.resizers.forEach((e) => {
             e.data.position = {
-                x: rect.position.x + (e.data.number >> 1) * rect.width,
-                y: rect.position.y + (e.data.number & 1) * rect.height
+                x: this.data.rect.position.x + (e.data.number >> 1) * this.data.rect.width,
+                y: this.data.rect.position.y + (e.data.number & 1) * this.data.rect.height
             }
             e.data.left_top = {
                 x: e.data.position.x - e.data.width / 2,
@@ -246,7 +259,7 @@ class Resizer extends Component {
     constructor(number, x, y, parent) {
         super()
         this.type = 5
-        let default_width = 10
+        let default_width = 12
         this.data = {
             position: {
                 x: x,
