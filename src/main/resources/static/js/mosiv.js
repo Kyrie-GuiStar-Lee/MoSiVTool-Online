@@ -1,7 +1,6 @@
 // --------------------------状态图建模 -------------------------------//
+// 选中的建模元素
 let component_to_transmit = null;
-
-// TODO e.which浏览器不兼容
 
 /**
  * 建模元素画布
@@ -35,7 +34,7 @@ class StateDiagramCanvas {
 
     _bindEvents() {
         this.svg.on('click', (event) => {
-            if(component_to_transmit != null) {
+            if (component_to_transmit != null) {
                 this.component_chose = new component_to_transmit(event.layerX, event.layerY)
                 this.components.push(this.component_chose)
                 this.component_chose.draw(this.svg)
@@ -104,11 +103,11 @@ class StartState extends Component {
             r: default_r,
             rect: {
                 position: {
-                    x: x - this.data.r,
-                    y: y - this.data.r
+                    x: x - default_r,
+                    y: y - default_r
                 },
-                width: this.data.r,
-                height: this.data.r
+                width: 2 * default_r,
+                height: 2 * default_r
             },
             min: {
                 r: default_r
@@ -153,11 +152,12 @@ class StartState extends Component {
         // TODO 拖着resizer一起移动应该可以通过<g>解决
     }
 
-    dragend(event, d) {}
+    dragend(event, d) {
+    }
 
     bindEvents() {
         let drag = d3.drag()
-            .subject(function() {
+            .subject(function () {
                 let tmp = d3.select(this);
                 return {
                     x: tmp.attr('cx'),
@@ -177,8 +177,8 @@ class StartState extends Component {
                 x: this.data.position.x - this.data.r,
                 y: this.data.position.y - this.data.r
             },
-            width: 2*this.data.r,
-            height: 2*this.data.r
+            width: 2 * this.data.r,
+            height: 2 * this.data.r
         }
 
         /*
@@ -198,23 +198,23 @@ class StartState extends Component {
 
     resize(event, number) {
         let opposite_resizer = null // 固定不动
-        for(let i = 0; i <= 3; ++i) {
-            if((number ^ i) === 3) {
+        for (let i = 0; i <= 3; ++i) {
+            if ((number ^ i) === 3) {
                 opposite_resizer = this.resizers[i]
                 break
             }
         }
 
         // 00 01鼠标在定点左侧
-        this.data.rect.width = Math.max(2*this.data.min.r, ((number >> 1) == 0 ? -1 : 1)*(event.sourceEvent.layerX - opposite_resizer.data.position.x))
+        this.data.rect.width = Math.max(2 * this.data.min.r, ((number >> 1) == 0 ? -1 : 1) * (event.sourceEvent.layerX - opposite_resizer.data.position.x))
         // 00 10鼠标在定点上侧
-        this.data.rect.height = Math.max(2*this.data.min.r, ((number & 1) == 0 ? -1 : 1)*(event.sourceEvent.layerY - opposite_resizer.data.position.y))
+        this.data.rect.height = Math.max(2 * this.data.min.r, ((number & 1) == 0 ? -1 : 1) * (event.sourceEvent.layerY - opposite_resizer.data.position.y))
 
         // 修改本身
-        this.data.r = Math.max(this.data.min.r, Math.min(this.data.rect.width, this.data.rect.height)/2)
+        this.data.r = Math.max(this.data.min.r, Math.min(this.data.rect.width, this.data.rect.height) / 2)
         this.data.position = {
-            x: opposite_resizer.data.position.x + ((number >> 1) == 0 ? -1 : 1)*this.data.r, // 00 01 -; 10 11 +
-            y: opposite_resizer.data.position.y + ((number & 1) == 0 ? -1 : 1)*this.data.r  // 00 10 -; 01 11 +
+            x: opposite_resizer.data.position.x + ((number >> 1) == 0 ? -1 : 1) * this.data.r, // 00 01 -; 10 11 +
+            y: opposite_resizer.data.position.y + ((number & 1) == 0 ? -1 : 1) * this.data.r  // 00 10 -; 01 11 +
         }
 
         d3.select(this.node)
@@ -223,8 +223,8 @@ class StartState extends Component {
             .attr('r', this.data.r)
 
         // 根据本身调整rect
-        this.data.rect.width = 2*this.data.r
-        this.data.rect.height = 2*this.data.r
+        this.data.rect.width = 2 * this.data.r
+        this.data.rect.height = 2 * this.data.r
         this.data.rect.position = {
             x: opposite_resizer.data.position.x + ((number >> 1) - 1) * this.data.rect.width, // 00 01要-width
             y: opposite_resizer.data.position.y + ((number & 1) - 1) * this.data.rect.height // 00 10要-height
@@ -270,8 +270,8 @@ class Resizer extends Component {
             parent: parent
         }
         this.data.left_top = {
-            x: this.data.position.x - this.data.width/2,
-            y: this.data.position.y - this.data.width/2
+            x: this.data.position.x - this.data.width / 2,
+            y: this.data.position.y - this.data.width / 2
         }
     }
 
@@ -304,11 +304,12 @@ class Resizer extends Component {
         d.parent.resize(event, d.number)
     }
 
-    dragend(event, d) {}
+    dragend(event, d) {
+    }
 
     bindEvents() {
         let drag = d3.drag()
-            .subject(function() {
+            .subject(function () {
                 let tmp = d3.select(this);
                 return {
                     x: tmp.attr('x'),
@@ -400,29 +401,25 @@ class State extends Component {
 
         let res = true;
 
-        if(inRect(x, y, {x: left_border, y: top_border}, {x: right_border, y: bottom_border})) {
-            if(inRect(x, y, {x: left_border, y: top_border}, left_top_center)) {
-                if(!inCircle(x, y, left_top_center, this.r)) {
+        if (inRect(x, y, {x: left_border, y: top_border}, {x: right_border, y: bottom_border})) {
+            if (inRect(x, y, {x: left_border, y: top_border}, left_top_center)) {
+                if (!inCircle(x, y, left_top_center, this.r)) {
+                    res = false;
+                }
+            } else if (inRect(x, y, {x: right_border, y: top_border}, right_top_center)) {
+                if (!inCircle(x, y, right_top_center, this.r)) {
+                    res = false;
+                }
+            } else if (inRect(x, y, {x: left_border, y: bottom_border}, left_bottom_center)) {
+                if (!inCircle(x, y, left_bottom_center, this.r)) {
+                    res = false;
+                }
+            } else if (inRect(x, y, {x: right_border, y: bottom_border}, right_bottom_center)) {
+                if (!inCircle(x, y, right_bottom_center, this.r)) {
                     res = false;
                 }
             }
-            else if(inRect(x, y, {x: right_border, y: top_border}, right_top_center)) {
-                if(!inCircle(x, y, right_top_center, this.r)) {
-                    res = false;
-                }
-            }
-            else if(inRect(x, y, {x: left_border, y: bottom_border}, left_bottom_center)) {
-                if(!inCircle(x, y, left_bottom_center, this.r)) {
-                    res = false;
-                }
-            }
-            else if(inRect(x, y, {x: right_border, y: bottom_border}, right_bottom_center)) {
-                if(!inCircle(x, y, right_bottom_center, this.r)) {
-                    res = false;
-                }
-            }
-        }
-        else {
+        } else {
             res = false
         }
         return res;
