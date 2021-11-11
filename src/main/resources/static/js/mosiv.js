@@ -1,47 +1,58 @@
 // --------------------------状态图建模 -------------------------------//
+let svg = d3.select("#myDiagram")
 // 选中的建模元素
 let component_to_transmit = null;
 
 /**
  * 建模元素画布
  */
-class StateDiagramCanvas {
-    components = [];
+class StateDiagramSVG {
+    stateDiagram = new StateDiagram()
     component_chose = null;
 
     /**
      * 构造函数
      * @param params 以json形式给出的参数
      */
-    constructor(params) {
-        this.svg = d3.select(params['el'])
+    constructor() {
         this._bindEvents()
     }
 
+    draw() {
+        this.stateDiagram.components.forEach((it) => {
+            it.draw(this.svg)
+        })
+    }
+
+    _bindEvents() {
+        svg.on('click', (event) => {
+            if (component_to_transmit != null) {
+                this.component_chose = new component_to_transmit(event.layerX, event.layerY)
+                this.stateDiagram.add(this.component_chose)
+                this.component_chose.draw(svg)
+                component_to_transmit = null
+            }
+        })
+    }
+}
+
+class StateDiagram {
+    id = -1
+    components = []
+
     /**
-     * 将建模元素添加进画布
+     * 添加将建模元素
      * @param component 建模元素
      */
     add(component) {
         this.components.push(component);
     }
 
-    draw() {
-        this.components.forEach((it) => {
-            it.draw(this.svg)
-        })
-    }
+    toJSON() {}
 
-    _bindEvents() {
-        this.svg.on('click', (event) => {
-            if (component_to_transmit != null) {
-                this.component_chose = new component_to_transmit(event.layerX, event.layerY)
-                this.components.push(this.component_chose)
-                this.component_chose.draw(this.svg)
-                component_to_transmit = null
-            }
-        })
-    }
+    toXML() {}
+
+    toPNG() {}
 }
 
 class Component {
@@ -49,43 +60,40 @@ class Component {
      * 组件类型 根据类型 绘制出不同的图形
      * @type {number}
      */
+    id = -1
     type = -1;
     // svg节点
     node = null
-    data = {
-        position: {
-            x: 0,
-            y: 0
-        },
-        rect: {}, // 外接矩形
-        parent: null
-    }
-
-    resizers = []
-    children = []
 
     draw(svg) {
 
     }
+}
 
-    add_resizer() {
-
+class State extends Component {
+    datum = {
+        position: {
+            x: 0,
+            y: 0
+        },
+        label: null
     }
+    resizer = null
 
-    remove_resizer() {
+    dragstart() {}
 
-    }
+    dragmove() {}
 
-    resize() {
+    dragend() {}
 
-    }
+    resize() {}
 }
 
 /**
  * 开始状态模型
  * type = 1 表示开始状态
  */
-class StartState extends Component {
+class StartState extends State {
     /**
      * 构造函数
      * @param x x坐标（圆心）
@@ -93,47 +101,45 @@ class StartState extends Component {
      */
     constructor(x, y) {
         super();
-        let type = 1
+        this.type = 1
         let default_r = 32
-        this.data = {
+        this.datum = {
+            // g 左上角
             position: {
-                x: x,
-                y: y
+                x: x - default_r,
+                y: y - default_r
             },
             r: default_r,
-            rect: {
-                position: {
-                    x: x - default_r,
-                    y: y - default_r
-                },
-                width: 2 * default_r,
-                height: 2 * default_r
-            },
             min: {
                 r: default_r
             }
         }
 
-        this.add_resizers()
+        this.transitions = []
     }
 
     draw(svg) {
-        this.node = svg.datum(this.data)
+        this.node = svg.datum(this.datum)
+            .append('g')
+            .attr('transform', (d) => {
+                return 'translate(' + d.position.x + ',' + d.position.y + ')'
+            })
+            .node()
+
+        d3.select(this.node)
             .append('circle')
             .attr('cx', (d) => {
-                return d.position.x
+                return d.r
             })
             .attr('cy', (d) => {
-                return d.position.y
+                return d.r
             })
             .attr('r', (d) => {
                 return d.r
             })
             .node()
 
-        this.resizers.forEach((e) => {
-            e.draw(svg)
-        })
+        // this.resizer.draw(svg)
 
         this.bindEvents()
     }
@@ -144,12 +150,12 @@ class StartState extends Component {
 
     dragmove(event, d) {
         d3.select(this)
-            .attr('cx', event.x)
-            .attr('cy', event.y)
+            .attr("transform", (d) => {
+                return "translate(" + (event.x) + "," + (event.y) + ")"
+            })
+
         d.position.x = event.x
         d.position.y = event.y
-
-        // TODO 拖着resizer一起移动应该可以通过<g>解决
     }
 
     dragend(event, d) {
@@ -157,11 +163,16 @@ class StartState extends Component {
 
     bindEvents() {
         let drag = d3.drag()
-            .subject(function () {
-                let tmp = d3.select(this);
+            .subject(function() {
+                let tmp = d3.select(this).attr('transform')
+                let reg = /translate\(\d+,\d+\)/
+                let str = reg.exec(tmp)[0]
+                str = str.substring(10, str.length - 1)
+                let s_list = str.split(',')
+
                 return {
-                    x: tmp.attr('cx'),
-                    y: tmp.attr('cy')
+                    x: Number(s_list[0]),
+                    y: Number(s_list[1])
                 }
             })
             .on('start', this.dragstart)
@@ -247,17 +258,31 @@ class StartState extends Component {
     }
 }
 
+class EndState extends State {
+
+}
+
+class CommonState extends State {
+    constructor() {
+        super();
+        this.transitons = []
+    }
+}
+
+class ResizerGroup {
+
+}
+
 /**
  * 调整组件大小
  */
-class Resizer extends Component {
+class Resizer {
     /**
      * @param x 中心
      * @param y 中心
      * @param parent 父组件
      */
     constructor(number, x, y, parent) {
-        super()
         this.type = 5
         let default_width = 12
         this.data = {
@@ -324,121 +349,14 @@ class Resizer extends Component {
     }
 }
 
-// ################################################################################################################## //
-/**
- * 状态图的中止状态类
- */
-class EndState extends Component {
-    constructor(x, y, r) {
-        super();
-        this.type = 2;
-        this.data = {
-            position: {
-                x: 0,
-                y: 0
-            },
-            r: r
-        }
-    }
+class Transition extends Component {
 
-    draw(svg) {
-        svg.append('circle')
-            .attr('cx', this.position.x + 'px')
-            .attr('cy', this.position.y + 'px')
-            .attr('r', this.r + 'px')
-    }
-
-    contain(x, y) {
-        return inCircle(x, y, {x: this.position.x, y: this.position.y}, this.r);
-    }
-
-    drag(mouse_x, mouse_y) {
-        this.position = {
-            x: mouse_x + this.offset.x,
-            y: mouse_y + this.offset.y
-        }
-    }
 }
 
-/**
- * 状态图的普通状态类
- */
-class State extends Component {
-    constructor(x, y, width, height) {
-        super();
-        this.type = 3;
-        // 外接矩形左上角
-        this.data = {
-            position: {
-                x: 0,
-                y: 0
-            },
-            width: width,
-            height: height,
-            r: r // 圆角半径
-        }
-    }
+class CommonTransition extends Transition {
 
-    draw(svg) {
-        svg.append('rect')
-            .attr('x', this.position.x)
-            .attr('y', this.position.y)
-            .attr('width', this.width)
-            .attr('height', this.height)
-            .attr('rx', this.r)
-    }
-
-    contain(x, y) {
-        let left_border = this.position.x;
-        let right_border = this.position.x + this.width;
-        let top_border = this.position.y;
-        let bottom_border = this.position.y + this.height;
-
-        let left_top_center = {x: left_border + this.r, y: top_border + this.r};
-        let right_top_center = {x: right_border - this.r, y: top_border + this.r};
-        let left_bottom_center = {x: left_border + this.r, y: bottom_border - this.r};
-        let right_bottom_center = {x: right_border - this.r, y: bottom_border - this.r};
-
-        let res = true;
-
-        if (inRect(x, y, {x: left_border, y: top_border}, {x: right_border, y: bottom_border})) {
-            if (inRect(x, y, {x: left_border, y: top_border}, left_top_center)) {
-                if (!inCircle(x, y, left_top_center, this.r)) {
-                    res = false;
-                }
-            } else if (inRect(x, y, {x: right_border, y: top_border}, right_top_center)) {
-                if (!inCircle(x, y, right_top_center, this.r)) {
-                    res = false;
-                }
-            } else if (inRect(x, y, {x: left_border, y: bottom_border}, left_bottom_center)) {
-                if (!inCircle(x, y, left_bottom_center, this.r)) {
-                    res = false;
-                }
-            } else if (inRect(x, y, {x: right_border, y: bottom_border}, right_bottom_center)) {
-                if (!inCircle(x, y, right_bottom_center, this.r)) {
-                    res = false;
-                }
-            }
-        } else {
-            res = false
-        }
-        return res;
-    }
-
-    drag(mouse_x, mouse_y) {
-        this.position = {
-            x: mouse_x + this.offset.x,
-            y: mouse_y + this.offset.y
-        }
-    }
 }
 
-/**
- * 装态图的连线类
- */
-class Link extends Component {
-    constructor() {
-        super();
-        this.type = 4;
-    }
+class Point {
+
 }
