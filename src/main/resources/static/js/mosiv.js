@@ -3,6 +3,12 @@ let svg = d3.select("#myDiagram")
 // 选中的建模元素
 let component_to_transmit = null;
 
+function hide_resizer() {
+    for(let i = 0; i <= 3; ++i) {
+        svg.select('#resizer' + i).remove()
+    }
+}
+
 /**
  * 建模元素画布
  */
@@ -20,7 +26,7 @@ class StateDiagramSVG {
 
     draw() {
         this.stateDiagram.components.forEach((it) => {
-            it.draw(this.svg)
+            it.draw(svg)
         })
     }
 
@@ -29,7 +35,7 @@ class StateDiagramSVG {
             if (component_to_transmit != null) {
                 this.component_chose = new component_to_transmit(event.layerX, event.layerY)
                 this.stateDiagram.add(this.component_chose)
-                this.component_chose.draw(svg)
+                this.component_chose.draw()
                 component_to_transmit = null
             }
         })
@@ -65,7 +71,7 @@ class Component {
     // svg节点
     node = null
 
-    draw(svg) {
+    draw() {
 
     }
 }
@@ -80,11 +86,9 @@ class State extends Component {
     }
     resizer = null
 
-    dragstart() {}
+    drag() {}
 
-    dragmove() {}
-
-    dragend() {}
+    show_resizer() {}
 
     resize() {}
 }
@@ -115,10 +119,20 @@ class StartState extends State {
             }
         }
 
+        this.resizer = new ResizerGroup({
+            position: this.datum.position,
+            width: 2 * this.datum.r,
+            height: 2 * this.datum.r
+        }, {
+            width: 2 * this.datum.r,
+            height: 2 * this.datum.r
+        }, this, "==")
+        // TODO 删除。选中后才显示resizer
+        this.show_resizer()
         this.transitions = []
     }
 
-    draw(svg) {
+    draw() {
         this.node = svg.datum(this.datum)
             .append('g')
             .attr('transform', (d) => {
@@ -139,33 +153,35 @@ class StartState extends State {
             })
             .node()
 
-        // this.resizer.draw(svg)
-
         this.bindEvents()
     }
 
-    dragstart(event, d) {
-        d3.select(this).raise()
-    }
+    drag() {
+        let that = this
 
-    dragmove(event, d) {
-        d3.select(this)
-            .attr("transform", (d) => {
-                return "translate(" + (event.x) + "," + (event.y) + ")"
-            })
+        function dragstart(event, d) {
+            hide_resizer()
+            d3.select(this).raise()
+        }
 
-        d.position.x = event.x
-        d.position.y = event.y
-    }
+        function dragmove(event, d) {
+            d3.select(this)
+                .attr("transform", () => {
+                    return "translate(" + (event.x) + "," + (event.y) + ")"
+                })
 
-    dragend(event, d) {
-    }
+            d.position.x = event.x
+            d.position.y = event.y
+        }
 
-    bindEvents() {
+        function dragend(event, d) {
+            that.show_resizer()
+        }
+
         let drag = d3.drag()
             .subject(function() {
                 let tmp = d3.select(this).attr('transform')
-                let reg = /translate\(\d+,\d+\)/
+                let reg = /translate\((-)?\d+(\.\d+)?,(-)?\d+(\.\d+)?\)/ // TODO 可能有(1px,  2px)的情况
                 let str = reg.exec(tmp)[0]
                 str = str.substring(10, str.length - 1)
                 let s_list = str.split(',')
@@ -175,36 +191,86 @@ class StartState extends State {
                     y: Number(s_list[1])
                 }
             })
-            .on('start', this.dragstart)
-            .on('drag', this.dragmove)
-            .on('end', this.dragend)
+            .on('start', dragstart)
+            .on('drag', dragmove)
+            .on('end', dragend)
 
         d3.select(this.node).call(drag)
     }
 
-    add_resizers() {
-        this.data.rect = {
-            position: {
-                x: this.data.position.x - this.data.r,
-                y: this.data.position.y - this.data.r
-            },
-            width: 2 * this.data.r,
-            height: 2 * this.data.r
-        }
+    show_resizer() {
+        this.resizer.update({
+            position: this.datum.position,
+            width: 2 * this.datum.r,
+            height: 2 * this.datum.r
+        })
+        this.resizer.draw()
+    }
 
+    bindEvents() {
+        this.drag()
+    }
+
+    /**
+     * 根据resizer返回的rect修改component
+     * @param rect
+     */
+    resize(rect) {
+        this.datum.r = rect.width / 2
+        this.datum.position = rect.position
+
+        d3.select(this.node)
+            .select('circle')
+            .attr('cx', this.datum.r)
+            .attr('cy', this.datum.r)
+            .attr('r', this.datum.r)
+
+        d3.select(this.node)
+            .attr('transform', () => {
+                return 'translate(' + (this.datum.position.x) + ',' + (this.datum.position.y) + ')'
+            })
+    }
+}
+
+class EndState extends State {
+
+}
+
+class CommonState extends State {
+    constructor() {
+        super();
+        this.transitons = []
+        this.invirants = []
+    }
+}
+
+class ResizerGroup {
+    resizers = []
+
+    constructor(rect, min, parent, zoom_type) {
+        this.rect = rect
+        this.min = min
+        this.parent = parent
+        this.zoom_type = zoom_type
         /*
          * 0 2     00 10     x+0,y+0  x+w,y+0
          * 1 3     01 11     x+0,y+h  x+w,y+w
          */
-        let resizer0 = new Resizer(0, this.data.rect.position.x, this.data.rect.position.y, this)
-        let resizer1 = new Resizer(1, this.data.rect.position.x, this.data.rect.position.y + this.data.rect.height, this)
-        let resizer2 = new Resizer(2, this.data.rect.position.x + this.data.rect.width, this.data.rect.position.y, this)
-        let resizer3 = new Resizer(3, this.data.rect.position.x + this.data.rect.width, this.data.rect.position.y + this.data.rect.height, this)
+        let resizer0 = new Resizer(0, this.rect.position.x, this.rect.position.y, this)
+        let resizer1 = new Resizer(1, this.rect.position.x, this.rect.position.y + this.rect.height, this)
+        let resizer2 = new Resizer(2, this.rect.position.x + this.rect.width, this.rect.position.y, this)
+        let resizer3 = new Resizer(3, this.rect.position.x + this.rect.width, this.rect.position.y + this.rect.height, this)
 
         this.resizers.push(resizer0)
         this.resizers.push(resizer1)
         this.resizers.push(resizer2)
         this.resizers.push(resizer3)
+    }
+
+    draw() {
+        this.resizers.forEach((resizer) => {
+            resizer.draw()
+        })
     }
 
     resize(event, number) {
@@ -217,60 +283,48 @@ class StartState extends State {
         }
 
         // 00 01鼠标在定点左侧
-        this.data.rect.width = Math.max(2 * this.data.min.r, ((number >> 1) == 0 ? -1 : 1) * (event.sourceEvent.layerX - opposite_resizer.data.position.x))
+        this.rect.width = Math.max(this.min.width, ((number >> 1) == 0 ? -1 : 1) * (event.sourceEvent.layerX - opposite_resizer.datum.position.x))
         // 00 10鼠标在定点上侧
-        this.data.rect.height = Math.max(2 * this.data.min.r, ((number & 1) == 0 ? -1 : 1) * (event.sourceEvent.layerY - opposite_resizer.data.position.y))
+        this.rect.height = Math.max(this.min.height, ((number & 1) == 0 ? -1 : 1) * (event.sourceEvent.layerY - opposite_resizer.datum.position.y))
 
-        // 修改本身
-        this.data.r = Math.max(this.data.min.r, Math.min(this.data.rect.width, this.data.rect.height) / 2)
-        this.data.position = {
-            x: opposite_resizer.data.position.x + ((number >> 1) == 0 ? -1 : 1) * this.data.r, // 00 01 -; 10 11 +
-            y: opposite_resizer.data.position.y + ((number & 1) == 0 ? -1 : 1) * this.data.r  // 00 10 -; 01 11 +
+        // 高宽相等且等比例缩放
+        if(this.zoom_type == "==") {
+            this.rect.width = Math.min(this.rect.width, this.rect.height)
+            this.rect.height = this.rect.width
         }
 
-        d3.select(this.node)
-            .attr('cx', this.data.position.x)
-            .attr('cy', this.data.position.y)
-            .attr('r', this.data.r)
-
-        // 根据本身调整rect
-        this.data.rect.width = 2 * this.data.r
-        this.data.rect.height = 2 * this.data.r
-        this.data.rect.position = {
-            x: opposite_resizer.data.position.x + ((number >> 1) - 1) * this.data.rect.width, // 00 01要-width
-            y: opposite_resizer.data.position.y + ((number & 1) - 1) * this.data.rect.height // 00 10要-height
+        this.rect.position = {
+            x: opposite_resizer.datum.position.x + ((number >> 1) - 1) * this.rect.width, // 00 01 -width
+            y: opposite_resizer.datum.position.y + ((number & 1) - 1) * this.rect.height // 00 10 -height
         }
 
         // 修改resizer
         this.resizers.forEach((e) => {
-            e.data.position = {
-                x: this.data.rect.position.x + (e.data.number >> 1) * this.data.rect.width,
-                y: this.data.rect.position.y + (e.data.number & 1) * this.data.rect.height
+            e.datum.position = {
+                x: this.rect.position.x + (e.datum.number >> 1) * this.rect.width,
+                y: this.rect.position.y + (e.datum.number & 1) * this.rect.height
             }
-            e.data.left_top = {
-                x: e.data.position.x - e.data.width / 2,
-                y: e.data.position.y - e.data.width / 2
+            e.datum.left_top = {
+                x: e.datum.position.x - e.datum.width / 2,
+                y: e.datum.position.y - e.datum.width / 2
             }
             d3.select(e.node)
-                .attr('x', e.data.left_top.x)
-                .attr('y', e.data.left_top.y)
+                .attr('x', e.datum.left_top.x)
+                .attr('y', e.datum.left_top.y)
         })
+
+        this.parent.resize(this.rect, number)
     }
-}
 
-class EndState extends State {
-
-}
-
-class CommonState extends State {
-    constructor() {
-        super();
-        this.transitons = []
+    // 由于resizer在component静止时才显示，所以拖动完成后被show_resizer()调用，以更新resizer的位置
+    update(rect) {
+        for(let i = 0; i <= 3; ++i) {
+            this.resizers[i].update({
+                x: rect.position.x + (i >> 1) * rect.width,
+                y: (rect.position.y + (i & 1) * rect.height)
+            })
+        }
     }
-}
-
-class ResizerGroup {
-
 }
 
 /**
@@ -283,9 +337,8 @@ class Resizer {
      * @param parent 父组件
      */
     constructor(number, x, y, parent) {
-        this.type = 5
         let default_width = 12
-        this.data = {
+        this.datum = {
             position: {
                 x: x,
                 y: y
@@ -294,15 +347,16 @@ class Resizer {
             number: number,
             parent: parent
         }
-        this.data.left_top = {
-            x: this.data.position.x - this.data.width / 2,
-            y: this.data.position.y - this.data.width / 2
+        this.datum.left_top = {
+            x: this.datum.position.x - this.datum.width / 2,
+            y: this.datum.position.y - this.datum.width / 2
         }
     }
 
-    draw(svg) {
-        this.node = svg.datum(this.data)
+    draw() {
+        this.node = svg.datum(this.datum)
             .append('rect')
+            .attr('id', 'resizer' + this.datum.number)
             .attr('x', (d) => {
                 return d.left_top.x
             })
@@ -329,8 +383,7 @@ class Resizer {
         d.parent.resize(event, d.number)
     }
 
-    dragend(event, d) {
-    }
+    dragend(event, d) {}
 
     bindEvents() {
         let drag = d3.drag()
@@ -346,6 +399,19 @@ class Resizer {
             .on('end', this.dragend)
 
         d3.select(this.node).call(drag)
+    }
+
+    update(position) {
+        this.datum.position = position
+
+        this.datum.left_top = {
+            x: this.datum.position.x - this.datum.width / 2,
+            y: this.datum.position.y - this.datum.width / 2
+        }
+
+        svg.select("#resizer" + this.datum.number)
+            .attr('x', this.datum.left_top.x)
+            .attr('y', this.datum.left_top.y)
     }
 }
 
