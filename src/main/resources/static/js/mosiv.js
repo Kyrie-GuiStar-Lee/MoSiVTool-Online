@@ -13,7 +13,8 @@ function hide_resizer() {
  * 建模元素画布
  */
 class StateDiagramSVG {
-    stateDiagram = new StateDiagram()
+    state_diagram_id = 0
+    stateDiagram = null
     component_chose = null;
 
     /**
@@ -21,6 +22,7 @@ class StateDiagramSVG {
      * @param params 以json形式给出的参数
      */
     constructor() {
+        this.stateDiagram = new StateDiagram(this.state_diagram_id++)
         this._bindEvents()
     }
 
@@ -32,11 +34,13 @@ class StateDiagramSVG {
 
     _bindEvents() {
         svg.on('click', (event) => {
-            if (component_to_transmit != null) {
+            if(component_to_transmit == Point) {
+                return
+            }
+            if(component_to_transmit != null) {
                 this.component_chose = new component_to_transmit(event.layerX, event.layerY)
                 this.stateDiagram.add(this.component_chose)
                 this.component_chose.draw()
-                component_to_transmit = null
             }
             // TODO 判断hide_resizer()
         })
@@ -46,12 +50,18 @@ class StateDiagramSVG {
 class StateDiagram {
     id = -1
     components = []
+    component_id = 0
+
+    constructor(id) {
+        this.id = id
+    }
 
     /**
      * 添加将建模元素
      * @param component 建模元素
      */
     add(component) {
+        component.set_id(this.component_id++)
         this.components.push(component);
     }
 
@@ -87,9 +97,20 @@ class State extends Component {
     }
     resizer = null
 
+    set_id(id) {
+        this.id = id
+    }
+
     drag() {}
 
-    show_resizer() {}
+    show_resizer() {
+        this.resizer.update({
+            position: this.datum.position,
+            width: this.datum.width,
+            height: this.datum.height
+        })
+        this.resizer.draw()
+    }
 
     resize() {}
 }
@@ -107,26 +128,28 @@ class StartEndState extends State {
     constructor(x, y) {
         super();
         this.type = 1
-        let default_r = 32
+        let default_width = 64
         this.datum = {
             // g 左上角
             position: {
-                x: x - default_r,
-                y: y - default_r
+                x: x - default_width / 2,
+                y: y - default_width / 2
             },
-            r: default_r,
+            width: default_width,
+            height: default_width,
+            r: default_width / 2,
             min: {
-                r: default_r
+                r: default_width / 2
             }
         }
 
         this.resizer = new ResizerGroup({
             position: this.datum.position,
-            width: 2 * this.datum.r,
-            height: 2 * this.datum.r
+            width: this.datum.width,
+            height: this.datum.height
         }, {
-            width: 2 * this.datum.r,
-            height: 2 * this.datum.r
+            width: this.datum.width,
+            height: this.datum.height
         }, this, "==")
     }
 
@@ -168,6 +191,7 @@ class StartEndState extends State {
         this.bindEvents()
     }
 
+    // TODO 或许可以到父类
     drag() {
         let that = this
 
@@ -210,6 +234,7 @@ class StartEndState extends State {
         d3.select(this.node).call(drag)
     }
 
+    // TODO 或许可以到父类
     click() {
         let that = this
 
@@ -219,15 +244,9 @@ class StartEndState extends State {
             hide_resizer()
             that.show_resizer()
         }
-    }
 
-    show_resizer() {
-        this.resizer.update({
-            position: this.datum.position,
-            width: 2 * this.datum.r,
-            height: 2 * this.datum.r
-        })
-        this.resizer.draw()
+        d3.select(this.node)
+            .on('click', click)
     }
 
     bindEvents() {
@@ -240,6 +259,8 @@ class StartEndState extends State {
      * @param rect
      */
     resize(rect) {
+        this.datum.width = rect.width
+        this.datum.height = rect.height
         this.datum.r = rect.width / 2
         this.datum.position = rect.position
 
@@ -416,17 +437,17 @@ class Resizer {
         this.bindEvents()
     }
 
-    dragstart(event, d) {
-        d3.select(this).raise()
-    }
+    drag() {
+        function dragstart(event, d) {
+            d3.select(this).raise()
+        }
 
-    dragmove(event, d) {
-        d.parent.resize(event, d.number)
-    }
+        function dragmove(event, d) {
+            d.parent.resize(event, d.number)
+        }
 
-    dragend(event, d) {}
+        function dragend(event, d) {}
 
-    bindEvents() {
         let drag = d3.drag()
             .subject(function () {
                 let tmp = d3.select(this);
@@ -435,11 +456,15 @@ class Resizer {
                     y: tmp.attr('y')
                 }
             })
-            .on('start', this.dragstart)
-            .on('drag', this.dragmove)
-            .on('end', this.dragend)
+            .on('start', dragstart)
+            .on('drag', dragmove)
+            .on('end', dragend)
 
         d3.select(this.node).call(drag)
+    }
+
+    bindEvents() {
+        this.drag()
     }
 
     update(position) {
@@ -457,13 +482,60 @@ class Resizer {
 }
 
 class Transition extends Component {
+    points = []
+    guard = []
 
+    constructor() {
+        super();
+    }
 }
 
 class CommonTransition extends Transition {
+    constructor() {
+        super();
+        this.from_state = -1
+        this.to_state = -1
+    }
+}
 
+class ProTransition extends Transition {
+    constructor(x, y) {
+        super();
+        this.from_state = -1
+        this.to_state = []
+    }
+
+    drag() {
+
+    }
 }
 
 class Point {
+    constructor(x, y) {
+        this.datum = {
+            position: {
+                x: x,
+                y: y
+            }
+        }
+    }
 
+    draw() {
+
+    }
+
+    drag() {
+
+    }
+}
+
+class Line {
+    from_point = null
+    to_point = null
+    constructor() {
+    }
+
+    click() {
+
+    }
 }

@@ -102,8 +102,11 @@
                     .style('height', my_diagram_wrapper.node().getBoundingClientRect().height)
 
 
-        let components = [{name: "StartState", obj: StartState},
-            {name: "EndState", obj: EndState}]
+        let components = [{name: "Cursor", obj: null},
+            {name: "StartState", obj: StartState},
+            {name: "EndState", obj: EndState},
+            {name: "Link", obj: Point},
+            {name: "ProTransition", obj: ProTransition}]
 
         my_palette.selectAll("div")
                     .data(components)
@@ -117,15 +120,17 @@
                     .style("border", "1px solid black")
                     .style("cursor", "pointer")
                     .text((d) => {
-                        console.log(d)
                         return d.name
                     })
                     .on("click", (event, d) => {
-                        if(component_to_transmit == null) {
+                        if(d.name == "Cursor") {
+                            component_to_transmit = null
+                            return
+                        }
+                        if (component_to_transmit == null) {
                             component_to_transmit = d["obj"]
                             // TODO 建模元素高亮
-                        }
-                        else {
+                        } else {
                             component_to_transmit = null
                         }
                     })
