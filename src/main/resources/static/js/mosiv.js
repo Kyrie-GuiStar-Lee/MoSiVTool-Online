@@ -1,11 +1,23 @@
 // --------------------------状态图建模 -------------------------------//
 let svg = d3.select("#myDiagram")
+let component_chose = null; // object
 // 选中的建模元素
-let component_to_transmit = null;
+let component_to_transmit = null; // function
 
 function hide_resizer() {
     for(let i = 0; i <= 3; ++i) {
         svg.select('#resizer' + i).remove()
+    }
+}
+
+/**
+ * 求某个状态的中点
+ * @param state
+ */
+function center_of(state) {
+    return {
+        x: state.datum.position.x + state.datum.width / 2,
+        y: state.datum.position.y + state.datum.height / 2
     }
 }
 
@@ -15,7 +27,6 @@ function hide_resizer() {
 class StateDiagramSVG {
     state_diagram_id = 0
     stateDiagram = null
-    component_chose = null;
 
     /**
      * 构造函数
@@ -33,17 +44,27 @@ class StateDiagramSVG {
     }
 
     _bindEvents() {
-        svg.on('click', (event) => {
-            if(component_to_transmit == Point) {
+        svg.on('click.add_component', (event) => {
+            // Transition要等到路径上的所有Point确定才能draw
+            if(component_to_transmit == Transition) {
+                component_chose = new component_to_transmit(event.layerX, event.layerY)
+                this.stateDiagram.add(component_chose)
                 return
             }
+            // draw选中的Component
             if(component_to_transmit != null) {
-                this.component_chose = new component_to_transmit(event.layerX, event.layerY)
-                this.stateDiagram.add(this.component_chose)
-                this.component_chose.draw()
+                component_chose = new component_to_transmit(event.layerX, event.layerY)
+                this.stateDiagram.add(component_chose)
+                component_chose.draw()
             }
-            // TODO 判断hide_resizer()
-        })
+        }).on('click.hide_resizer', (event) => {
+            if(component_to_transmit == null) {
+                // 点击空白处取消选中
+                component_chose = null
+                hide_resizer()
+            }
+        }) // 点击多个点确定Transition路径，只有在选中Transition时才启用，实现见CommonTransition
+            .on('click.link_states', null)
     }
 }
 
@@ -162,8 +183,9 @@ class StartEndState extends State {
     }
 
     draw() {
-        this.node = svg.datum(this.datum)
+        this.node = svg
             .append('g')
+            .datum(this.datum)
             .attr('transform', (d) => {
                 return 'translate(' + d.position.x + ',' + d.position.y + ')'
             })
@@ -186,7 +208,6 @@ class StartEndState extends State {
         d3.select(this.node)
             .append('text')
             .text((d) => {
-                console.log(d)
                 return d.label
             })
             .attr('x', (d) => {
@@ -198,6 +219,7 @@ class StartEndState extends State {
             .attr('font-size', (d) => {
                 return d.font_size
             })
+            // 文字垂直、水平居中
             .attr('text-anchor',"middle")
             .attr('dy','.35em')
 
@@ -254,7 +276,11 @@ class StartEndState extends State {
     click() {
         let that = this
 
-        function click(event, d) {
+        function click_choose(event, d) {
+            event.stopPropagation()
+            console.log('clicked')
+            // 选中该组件
+            component_chose = this
             d3.select(this).raise()
             // 删除其他已显示的resizer
             hide_resizer()
@@ -262,7 +288,7 @@ class StartEndState extends State {
         }
 
         d3.select(this.node)
-            .on('click', click)
+            .on('click.choose', click_choose)
     }
 
     bindEvents() {
@@ -432,8 +458,9 @@ class Resizer {
     }
 
     draw() {
-        this.node = svg.datum(this.datum)
+        this.node = svg
             .append('rect')
+            .datum(this.datum)
             .attr('id', 'resizer' + this.datum.number)
             .attr('x', (d) => {
                 return d.left_top.x
@@ -511,6 +538,41 @@ class CommonTransition extends Transition {
         super();
         this.from_state = -1
         this.to_state = -1
+
+        svg.on('click.link_states', (event) => {
+            if(component_to_transmit == Transition) {
+                // 选择的是State
+                if(component_chose != null) {
+                    // 若未选则起点，则选择的是起点
+                    if(this.from_state === -1) {
+                        this.from_state = component_chose.id
+                        let center = center_of(component_chose)
+                        let point = new Point(center.x, center.y)
+                        this.points.push(point)
+                    }
+                    // 优先处理起点
+                    else if(this.to_state === -1) {
+                        this.to_state = component_chose.id
+                        let center = center_of(component_chose)
+                        let point = new Point(center.x, center.y)
+                        this.points.push(point)
+                    }
+                    component_chose = null
+                }
+                else {
+                    // 起点确定才能选择后续的点
+                    if(this.from_state === -1) {
+                        return
+                    }
+                    let point = new Point(event.x, event.y)
+                    this.points.push(point)
+                }
+            }
+        })
+    }
+
+    draw() {
+
     }
 }
 
@@ -528,30 +590,37 @@ class ProTransition extends Transition {
 
 class Point {
     constructor(x, y) {
+        let default_width = 14
         this.datum = {
+            // 外接矩形左上角
             position: {
-                x: x,
-                y: y
-            }
+                x: x - default_width / 2,
+                y: y - default_width / 2
+            },
+            width: default_width,
+            height: default_width,
+            r: default_width / 2
         }
     }
 
     draw() {
-
+        this.node = svg.append('circle')
+            .datum(this.datum)
+            .attr('cx', (d) => {
+                return d.position.x + d.r
+            })
+            .attr('cy', (d) => {
+                return d.position.y + d.r
+            })
+            .attr('r', (d) => {
+                return d.r
+            })
+            .attr('fill', 'white')
+            .attr('stroke', 'black')
+            .node()
     }
 
     drag() {
-
-    }
-}
-
-class Line {
-    from_point = null
-    to_point = null
-    constructor() {
-    }
-
-    click() {
 
     }
 }
