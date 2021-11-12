@@ -38,6 +38,7 @@ class StateDiagramSVG {
                 this.component_chose.draw()
                 component_to_transmit = null
             }
+            // TODO 判断hide_resizer()
         })
     }
 }
@@ -97,7 +98,7 @@ class State extends Component {
  * 开始状态模型
  * type = 1 表示开始状态
  */
-class StartState extends State {
+class StartEndState extends State {
     /**
      * 构造函数
      * @param x x坐标（圆心）
@@ -127,9 +128,10 @@ class StartState extends State {
             width: 2 * this.datum.r,
             height: 2 * this.datum.r
         }, this, "==")
-        // TODO 删除。选中后才显示resizer
-        this.show_resizer()
-        this.transitions = []
+    }
+
+    setLabel(label) {
+        this.label = label
     }
 
     draw() {
@@ -151,7 +153,17 @@ class StartState extends State {
             .attr('r', (d) => {
                 return d.r
             })
-            .node()
+            .attr('stroke', 'black')
+            .attr('fill', 'white')
+
+        d3.select(this.node)
+            .append('text')
+            .text(this.label)
+            .attr('x', this.datum.r)
+            .attr('y', this.datum.r)
+            .attr('font-size', 14)
+            .attr('text-anchor',"middle")
+            .attr('dy','.35em')
 
         this.bindEvents()
     }
@@ -198,6 +210,17 @@ class StartState extends State {
         d3.select(this.node).call(drag)
     }
 
+    click() {
+        let that = this
+
+        function click(event, d) {
+            d3.select(this).raise()
+            // 删除其他已显示的resizer
+            hide_resizer()
+            that.show_resizer()
+        }
+    }
+
     show_resizer() {
         this.resizer.update({
             position: this.datum.position,
@@ -209,6 +232,7 @@ class StartState extends State {
 
     bindEvents() {
         this.drag()
+        this.click()
     }
 
     /**
@@ -226,15 +250,32 @@ class StartState extends State {
             .attr('r', this.datum.r)
 
         d3.select(this.node)
+            .select('text')
+            .attr('x', this.datum.r)
+            .attr('y', this.datum.r)
+
+        d3.select(this.node)
             .attr('transform', () => {
                 return 'translate(' + (this.datum.position.x) + ',' + (this.datum.position.y) + ')'
             })
     }
 }
 
-class EndState extends State {
-
+class StartState extends StartEndState {
+    constructor(x, y) {
+        super(x, y);
+        this.label = "开始"
+        this.transitions = []
+    }
 }
+
+class EndState extends StartEndState {
+    constructor(x, y) {
+        super(x, y);
+        this.label = "结束"
+    }
+}
+
 
 class CommonState extends State {
     constructor() {
