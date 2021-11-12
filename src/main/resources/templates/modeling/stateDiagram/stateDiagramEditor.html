@@ -127,12 +127,9 @@
                             component_to_transmit = null
                             return
                         }
-                        if (component_to_transmit == null) {
-                            component_to_transmit = d["obj"]
-                            // TODO 建模元素高亮
-                        } else {
-                            component_to_transmit = null
-                        }
+
+                        component_to_transmit = d["obj"]
+                        // TODO 建模元素高亮
                     })
 
         let diagram = new StateDiagramSVG();
@@ -142,26 +139,6 @@
         //     el: "#myPalette", // canvas 的id
         // });
 
-        // 建模元素
-        // TODO 有待优化
-        // let start_state_model = new StartStateModel(51, 40, 32);
-        // let endState = new EndState(51, 40 + 32*2 + 8, 32);
-        // let state = new State(51 - 32, 114 + 32*2 - 32 + 16, 64, 64);
-        // let link = new Link();
-
-        // 添加进建模元素工具栏
-        // palette.add(start_state_model)
-        // palette.add(endState);
-        // palette.add(state);
-        // palette.add(link);
-        //
-        // palette.draw();
-
-        // $('#canvas-wrapper').on('mouseleave', (e) => {
-        //    component_to_transmit = null;
-        //    palette.component_chose = null;
-        // });
-        //
         d3.select(window).on('resize.update_svg', function() {
             my_palette.style('width', my_palette_wrapper.node().getBoundingClientRect().width)
                 .style('height', my_palette_wrapper.node().getBoundingClientRect().height)

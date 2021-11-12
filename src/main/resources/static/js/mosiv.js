@@ -93,7 +93,8 @@ class State extends Component {
             x: 0,
             y: 0
         },
-        label: null
+        label: null,
+        font_size: 0
     }
     resizer = null
 
@@ -129,6 +130,7 @@ class StartEndState extends State {
         super();
         this.type = 1
         let default_width = 64
+        let default_font_size = 14
         this.datum = {
             // g 左上角
             position: {
@@ -140,7 +142,9 @@ class StartEndState extends State {
             r: default_width / 2,
             min: {
                 r: default_width / 2
-            }
+            },
+            label: null,
+            font_size: default_font_size
         }
 
         this.resizer = new ResizerGroup({
@@ -153,8 +157,8 @@ class StartEndState extends State {
         }, this, "==")
     }
 
-    setLabel(label) {
-        this.label = label
+    set_label(label) {
+        this.datum.label = label
     }
 
     draw() {
@@ -181,12 +185,24 @@ class StartEndState extends State {
 
         d3.select(this.node)
             .append('text')
-            .text(this.label)
-            .attr('x', this.datum.r)
-            .attr('y', this.datum.r)
-            .attr('font-size', 14)
+            .text((d) => {
+                console.log(d)
+                return d.label
+            })
+            .attr('x', (d) => {
+                return d.r
+            })
+            .attr('y', (d) => {
+                return d.r
+            })
+            .attr('font-size', (d) => {
+                return d.font_size
+            })
             .attr('text-anchor',"middle")
             .attr('dy','.35em')
+
+        hide_resizer()
+        this.show_resizer()
 
         this.bindEvents()
     }
@@ -285,7 +301,7 @@ class StartEndState extends State {
 class StartState extends StartEndState {
     constructor(x, y) {
         super(x, y);
-        this.label = "开始"
+        this.set_label("开始")
         this.transitions = []
     }
 }
@@ -293,7 +309,7 @@ class StartState extends StartEndState {
 class EndState extends StartEndState {
     constructor(x, y) {
         super(x, y);
-        this.label = "结束"
+        this.set_label("结束")
     }
 }
 
