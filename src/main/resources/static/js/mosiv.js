@@ -4,6 +4,10 @@ let component_chose = null; // object
 // 选中的建模元素
 let component_to_transmit = null; // function
 
+// kld_intersection.js
+let ShapeInfo = KldIntersections.ShapeInfo;
+let Intersection = KldIntersections.Intersection;
+
 function hide_resizer() {
     for(let i = 0; i <= 3; ++i) {
         svg.select('#resizer' + i).remove()
@@ -44,27 +48,39 @@ class StateDiagramSVG {
     }
 
     _bindEvents() {
+        // 正在选择的transition
+        let transition = null
+
         svg.on('click.add_component', (event) => {
-            // Transition要等到路径上的所有Point确定才能draw
-            if(component_to_transmit == Transition) {
-                component_chose = new component_to_transmit(event.layerX, event.layerY)
-                this.stateDiagram.add(component_chose)
-                return
-            }
             // draw选中的Component
-            if(component_to_transmit != null) {
-                component_chose = new component_to_transmit(event.layerX, event.layerY)
-                this.stateDiagram.add(component_chose)
-                component_chose.draw()
+            if (component_to_transmit != null) {
+                let component = new component_to_transmit(event.layerX, event.layerY)
+                if(component instanceof State || component instanceof ProTransition) {
+                    this.stateDiagram.add(component)
+                    component_chose = component
+                    component_chose.draw()
+                }
+                else if(component instanceof CommonTransition) {
+                    if(transition == null) {
+                        transition = component
+                        this.stateDiagram.add(transition)
+                    }
+                    let link_finish = transition.link(event)
+                    if(link_finish) {
+                        console.log("link finish")
+                        transition = null
+                    }
+                }
             }
-        }).on('click.hide_resizer', (event) => {
-            if(component_to_transmit == null) {
-                // 点击空白处取消选中
-                component_chose = null
-                hide_resizer()
-            }
-        }) // 点击多个点确定Transition路径，只有在选中Transition时才启用，实现见CommonTransition
-            .on('click.link_states', null)
+        })
+            .on('click.hide_resizer', (event) => {
+                // TODO 判断没点到component
+                // if(component_to_transmit == null) {
+                //     // 点击空白处取消选中
+                //     component_chose = null
+                //     hide_resizer()
+                // }
+            })
     }
 }
 
@@ -103,9 +119,9 @@ class Component {
     // svg节点
     node = null
 
-    draw() {
+    set_id() {}
 
-    }
+    draw() {}
 }
 
 class State extends Component {
@@ -273,15 +289,18 @@ class StartEndState extends State {
     }
 
     // TODO 或许可以到父类
+    // TODO 和drag冲突
     click() {
         let that = this
 
         function click_choose(event, d) {
-            event.stopPropagation()
+            if (event.defaultPrevented) {
+                return
+            }
             console.log('clicked')
             // 选中该组件
-            component_chose = this
-            d3.select(this).raise()
+            component_chose = that
+            // d3.select(this).raise()
             // 删除其他已显示的resizer
             hide_resizer()
             that.show_resizer()
@@ -291,9 +310,28 @@ class StartEndState extends State {
             .on('click.choose', click_choose)
     }
 
+    // click的替代方案
+    mousedown() {
+        let that = this
+
+        function mousedown_choose(event, d) {
+            console.log('chose')
+            // 选中该组件
+            component_chose = that
+            // d3.select(this).raise()
+            // 删除其他已显示的resizer
+            hide_resizer()
+            that.show_resizer()
+        }
+
+        d3.select(this.node)
+            .on('mousedown.choose', mousedown_choose)
+    }
+
     bindEvents() {
+        // 顺序很关键!
+        this.mousedown()
         this.drag()
-        this.click()
     }
 
     /**
@@ -328,7 +366,8 @@ class StartState extends StartEndState {
     constructor(x, y) {
         super(x, y);
         this.set_label("开始")
-        this.transitions = []
+        this.in_transitions = [] // drag
+        this.out_transitions = [] // drag
     }
 }
 
@@ -336,6 +375,7 @@ class EndState extends StartEndState {
     constructor(x, y) {
         super(x, y);
         this.set_label("结束")
+        this.in_transitions = [] // drag
     }
 }
 
@@ -527,6 +567,27 @@ class Resizer {
 class Transition extends Component {
     points = []
     guard = []
+    curve_generator = d3.line()
+        .x((d, i) => {
+            return d.datum.position.x
+        })
+        .y((d, i) => {
+            return d.datum.position.y
+        })
+        .curve(d3.curveNatural)
+
+    marker = svg.append("marker")
+            .attr("id", "arrow")
+            .attr("markerUnits","strokeWidth")//设置为strokeWidth箭头会随着线的粗细发生变化
+            // .attr("viewBox", "0 0 12 12")//坐标系的区域
+            .attr("refX", 9)//箭头坐标
+            .attr("refY", 6)
+            .attr("markerWidth", 12)
+            .attr("markerHeight", 12)
+            .attr("orient", "auto")//绘制方向，可设定为：auto（自动确认方向）和 角度值
+            .append("path")
+            .attr("d", "M2,2 L10,6 L2,10 L2,2")//箭头的路径
+            .attr('fill', 'black');//箭头颜色
 
     constructor() {
         super();
@@ -538,41 +599,59 @@ class CommonTransition extends Transition {
         super();
         this.from_state = -1
         this.to_state = -1
+    }
 
-        svg.on('click.link_states', (event) => {
-            if(component_to_transmit == Transition) {
-                // 选择的是State
-                if(component_chose != null) {
-                    // 若未选则起点，则选择的是起点
-                    if(this.from_state === -1) {
-                        this.from_state = component_chose.id
-                        let center = center_of(component_chose)
-                        let point = new Point(center.x, center.y)
-                        this.points.push(point)
-                    }
-                    // 优先处理起点
-                    else if(this.to_state === -1) {
-                        this.to_state = component_chose.id
-                        let center = center_of(component_chose)
-                        let point = new Point(center.x, center.y)
-                        this.points.push(point)
-                    }
-                    component_chose = null
-                }
-                else {
-                    // 起点确定才能选择后续的点
-                    if(this.from_state === -1) {
-                        return
-                    }
-                    let point = new Point(event.x, event.y)
-                    this.points.push(point)
-                }
+    link(event) {
+        if(this.to_state !== -1) {
+            // TODO 更新 state 里的 transition 列表
+            return true
+        }
+        // 选择的是State
+        if(component_chose != null) {
+            // TODO bug component_chose在component mousedown内更新，比该判断晚
+            console.log(component_chose)
+            // 若未选则起点，则选择的是起点
+            if(this.from_state === -1) {
+                this.from_state = component_chose.id
+                let center = center_of(component_chose)
+                let point = new Point(center.x, center.y)
+                this.points.push(point)
             }
-        })
+            // 优先处理起点, 后处理终点
+            else if(this.to_state === -1) {
+                this.to_state = component_chose.id
+                let center = center_of(component_chose)
+                let point = new Point(center.x, center.y)
+                this.points.push(point)
+            }
+            component_chose = null
+        }
+        else {
+            console.log(this.from_state)
+            // 起点确定才能选择后续的点
+            if(this.from_state === -1) {
+                return
+            }
+            let point = new Point(event.layerX, event.layerY)
+            this.points.push(point)
+        }
+
+        this.draw()
+        return false
     }
 
     draw() {
+        if(this.node != null) {
+            d3.select(this.node).remove()
+        }
 
+        this.node = svg.append("path")
+            .attr("d", this.curve_generator(this.points))
+            .attr("fill", "none")
+            .attr("stroke","black")
+            .attr("stroke-width", 1)
+            .attr("marker-end","url(#arrow)")
+            .node()
     }
 }
 
