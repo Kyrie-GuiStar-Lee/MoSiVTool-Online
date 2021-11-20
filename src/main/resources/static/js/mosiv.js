@@ -16,6 +16,11 @@ function hide_resizer() {
     }
 }
 
+function hide_points() {
+    svg.selectAll('[point]').remove()
+    console.log(svg.selectAll('[point]'))
+}
+
 /**
  * 建模元素画布
  */
@@ -62,13 +67,20 @@ class StateDiagramSVG {
                     if(target_datum == undefined) {
                         console.log("click.select_component: didn't choose any component")
                         this.component_chose = null
+                        hide_points()
                         hide_resizer()
                         return
                     }
                     let component = this.stateDiagram.get_component_by_id(target_datum.id)
                     component.raise()
                     hide_resizer()
-                    component.show_resizer()
+                    hide_points()
+                    if(component instanceof State) {
+                        component.show_resizer()
+                    }
+                    else if(component instanceof CommonTransition) {
+                        component.show_points()
+                    }
                     console.log("click.select_component: " + component)
                     // TODO get_component_by_id() err handler
                     this.component_chose = component
@@ -83,7 +95,7 @@ class StateDiagramSVG {
                             this.stateDiagram.add(transition)
                         }
                         let link_finish = transition.link(event, this.component_chose)
-                        if (transition.points.length >= 2) {
+                        if (transition.datum.points.length >= 2) {
                             transition.redraw()
                         }
                         if (link_finish) {
@@ -574,11 +586,10 @@ class Resizer {
     }
 
     drag() {
-        function dragstart(event, d) {
-            d3.select(this).raise()
-        }
+        function dragstart(event, d) {}
 
         function dragmove(event, d) {
+            d3.select(this).raise()
             d.parent.resize(event, d.number)
         }
 
@@ -618,8 +629,10 @@ class Resizer {
 }
 
 class Transition extends Component {
-    points = []
-    guard = []
+    datum = {
+        points: [],
+        guard: []
+    }
     curve_generator = d3.line()
         .x((d, i) => {
             return d.datum.position.x
@@ -640,7 +653,8 @@ class Transition extends Component {
             .attr("orient", "auto")//绘制方向，可设定为：auto（自动确认方向）和 角度值
             .append("path")
             .attr("d", "M2,2 L10,6 L2,10 L2,2")//箭头的路径
-            .attr('fill', 'black');//箭头颜色
+            .attr('fill', 'black') //箭头颜色
+            .attr("cursor", "pointer")
 
     constructor() {
         super();
@@ -652,6 +666,7 @@ class CommonTransition extends Transition {
         super();
         this.source_state = null
         this.target_state = null
+        this.point_num = 0
     }
 
     link(event, component_chose) {
@@ -663,17 +678,17 @@ class CommonTransition extends Transition {
             if(this.source_state == null) {
                 this.source_state = component_chose
                 let center = this.source_state.center()
-                let point = new Point(center.x, center.y)
-                this.points.push(point)
+                let point = new Point(this.point_num++, center.x, center.y, this)
+                this.datum.points.push(point)
             }
             // 优先处理起点, 后处理终点
             else if(this.target_state == null) {
                 this.target_state = component_chose
                 let center = this.target_state.center()
-                let point = new Point(center.x, center.y)
-                this.points.push(point)
+                let point = new Point(this.point_num++, center.x, center.y, this)
+                this.datum.points.push(point)
                 // 只有两个点，修正第一个点
-                if(this.points.length === 2) {
+                if(this.datum.points.length === 2) {
                     this._modify_start_point()
                 }
                 // 修正终点
@@ -689,10 +704,10 @@ class CommonTransition extends Transition {
             if(this.source_state == null) {
                 return
             }
-            let point = new Point(event.layerX, event.layerY)
-            this.points.push(point)
+            let point = new Point(this.point_num++, event.layerX, event.layerY, this)
+            this.datum.points.push(point)
             // 根据第一二个点的连线修正第一个点
-            if(this.points.length === 2) {
+            if(this.datum.points.length === 2) {
                 this._modify_start_point()
             }
         }
@@ -700,7 +715,7 @@ class CommonTransition extends Transition {
     }
 
     _modify_start_point() {
-        let curve = this.curve_generator(this.points.slice(0, 2))
+        let curve = this.curve_generator(this.datum.points.slice(0, 2))
         let kld_curve = ShapeInfo.path(curve)
         let kld_border = this.source_state.get_kld_border_shapeInfo()
         console.log(kld_curve, kld_border)
@@ -710,14 +725,14 @@ class CommonTransition extends Transition {
             return
         }
 
-        this.points[0].datum.position = {
+        this.datum.points[0].datum.position = {
             x: intersection.x,
             y: intersection.y
         }
     }
 
     _modify_end_point() {
-        let curve = this.curve_generator(this.points.slice(-2))
+        let curve = this.curve_generator(this.datum.points.slice(-2))
         let kld_curve = ShapeInfo.path(curve)
         let kld_border = this.target_state.get_kld_border_shapeInfo()
         let intersection = Intersection.intersect(kld_curve, kld_border).points[0]
@@ -726,25 +741,25 @@ class CommonTransition extends Transition {
             return
         }
 
-        this.points.slice(-1)[0].datum.position = {
+        this.datum.points.slice(-1)[0].datum.position = {
             x: intersection.x,
             y: intersection.y
         }
     }
 
     update_start_point(x, y) {
-        this.points[0].datum.position = {
+        this.datum.points[0].datum.position = {
             x: x,
             y: y
         }
-        this.points.slice(-1)[0].datum.position = this.target_state.center()
+        this.datum.points.slice(-1)[0].datum.position = this.target_state.center()
         this._modify_start_point()
         this._modify_end_point()
     }
 
     update_end_point(x, y) {
-        this.points[0].datum.position = this.source_state.center()
-        this.points.slice(-1)[0].datum.position = {
+        this.datum.points[0].datum.position = this.source_state.center()
+        this.datum.points.slice(-1)[0].datum.position = {
             x: x,
             y: y
         }
@@ -754,12 +769,16 @@ class CommonTransition extends Transition {
 
     draw() {
         this.node = svg.append("path")
-            .attr("d", this.curve_generator(this.points))
+            .datum(this.datum)
+            .attr("d", this.curve_generator(this.datum.points))
             .attr("fill", "none")
             .attr("stroke","black")
-            .attr("stroke-width", 1)
+            .attr("stroke-width", 1.2)
             .attr("marker-end","url(#arrow)")
+            .attr("cursor", "pointer")
             .node()
+
+        this._bindEvents()
     }
 
     redraw() {
@@ -768,6 +787,41 @@ class CommonTransition extends Transition {
         }
 
         this.draw()
+    }
+
+    show_points() {
+        for(let i = 1; i < this.datum.points.length - 1; ++i) {
+            this.datum.points[i].draw()
+        }
+    }
+
+    mouseover() {
+        let that = this
+
+        function mouseover_hover(event, d) {
+            d3.select(this)
+                .attr('stroke', 'red')
+        }
+
+        d3.select(this.node)
+            .on('mouseover.hover', mouseover_hover)
+    }
+
+    mouseout() {
+        let that = this
+
+        function mouseout_hover(event, d) {
+            d3.select(this)
+                .attr('stroke', 'black')
+        }
+
+        d3.select(this.node)
+            .on('mouseout.hover', mouseout_hover)
+    }
+
+    _bindEvents() {
+        this.mouseover()
+        this.mouseout()
     }
 }
 
@@ -784,8 +838,8 @@ class ProTransition extends Transition {
 }
 
 class Point {
-    constructor(x, y) {
-        let default_width = 14
+    constructor(number, x, y, parent) {
+        let default_width = 6
         this.datum = {
             // 外接矩形左上角
             position: {
@@ -794,13 +848,16 @@ class Point {
             },
             width: default_width,
             height: default_width,
-            r: default_width / 2
+            r: default_width / 2,
+            number: number,
+            parent: parent
         }
     }
 
     draw() {
         this.node = svg.append('circle')
             .datum(this.datum)
+            .attr('point', '')
             .attr('cx', (d) => {
                 return d.position.x + d.r
             })
@@ -812,10 +869,53 @@ class Point {
             })
             .attr('fill', 'white')
             .attr('stroke', 'black')
+            .attr("cursor", "pointer")
             .node()
+
+        this._bindEvents()
     }
 
     drag() {
+        let that = this
 
+        function dragstart(event, d) {}
+
+        function dragmove(event, d) {
+            d3.select(this).raise()
+                .attr('cx', event.x)
+                .attr('cy', event.y)
+
+            d.position = {
+                x: event.x,
+                y: event.y
+            }
+            console.log("dragging")
+
+            d.parent.update_start_point(d.parent.source_state.center().x,
+                d.parent.source_state.center().y)
+            d.parent.update_end_point(d.parent.target_state.center().x,
+                d.parent.target_state.center().y)
+            d.parent.redraw()
+        }
+
+        function dragend(event, d) {}
+
+        let drag = d3.drag()
+            .subject(function () {
+                let tmp = d3.select(this);
+                return {
+                    x: tmp.attr('cx'),
+                    y: tmp.attr('cy')
+                }
+            })
+            .on('start', dragstart)
+            .on('drag', dragmove)
+            .on('end', dragend)
+
+        d3.select(this.node).call(drag)
+    }
+
+    _bindEvents() {
+        this.drag()
     }
 }
