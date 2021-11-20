@@ -240,7 +240,7 @@ class StartEndState extends State {
      * @returns {*}
      */
     get_kld_border_shapeInfo() {
-        return ShapeInfo.circle([this.datum.position.x, this.datum.position.y], this.datum.r)
+        return ShapeInfo.circle([this.datum.position.x + this.datum.r, this.datum.position.y + this.datum.r], this.datum.r)
     }
 
     draw() {
