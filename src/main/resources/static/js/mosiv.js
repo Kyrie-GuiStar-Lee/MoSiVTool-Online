@@ -1,6 +1,5 @@
 // --------------------------状态图建模 -------------------------------//
 let svg = d3.select("#myDiagram")
-let component_chose = null; // object
 // 选中的建模元素
 let component_to_transmit = null; // function
 
@@ -31,6 +30,7 @@ function center_of(state) {
 class StateDiagramSVG {
     state_diagram_id = 0
     stateDiagram = null
+    component_chose = null; // object
 
     /**
      * 构造函数
@@ -51,36 +51,45 @@ class StateDiagramSVG {
         // 正在选择的transition
         let transition = null
 
-        svg.on('click.add_component', (event) => {
+        svg.on('click.select_component', (event) => {
+                if(component_to_transmit == null || component_to_transmit == CommonTransition) {
+                    let target_datum = d3.select(event.target).datum()
+                    // 点击空白处取消选中
+                    if(target_datum == undefined) {
+                        console.log("click.select_component: didn't choose any component")
+                        this.component_chose = null
+                        hide_resizer()
+                        return
+                    }
+                    let component = this.stateDiagram.get_component_by_id(target_datum.id)
+                    component.show_resizer()
+                    console.log("click.select_component: " + component)
+                    // TODO get_component_by_id() err handler
+                    this.component_chose = component
+                }
+            })
+            .on('click.add_component', (event) => {
             // draw选中的Component
             if (component_to_transmit != null) {
                 let component = new component_to_transmit(event.layerX, event.layerY)
-                if(component instanceof State || component instanceof ProTransition) {
+                if (component instanceof State || component instanceof ProTransition) {
                     this.stateDiagram.add(component)
-                    component_chose = component
-                    component_chose.draw()
-                }
-                else if(component instanceof CommonTransition) {
-                    if(transition == null) {
+                    this.component_chose = component
+                    this.component_chose.draw()
+                } else if (component instanceof CommonTransition) {
+                    if (transition == null) {
                         transition = component
                         this.stateDiagram.add(transition)
                     }
-                    let link_finish = transition.link(event)
-                    if(link_finish) {
+                    let link_finish = transition.link(event, this.component_chose)
+                    transition.draw()
+                    if (link_finish) {
                         console.log("link finish")
                         transition = null
                     }
                 }
             }
         })
-            .on('click.hide_resizer', (event) => {
-                // TODO 判断没点到component
-                // if(component_to_transmit == null) {
-                //     // 点击空白处取消选中
-                //     component_chose = null
-                //     hide_resizer()
-                // }
-            })
     }
 }
 
@@ -102,6 +111,17 @@ class StateDiagram {
         this.components.push(component);
     }
 
+    get_component_by_id(id) {
+        for(let i = 0; i < this.components.length; ++i) {
+            if(this.components[i].datum.id === id) {
+                return this.components[i]
+            }
+        }
+
+        // TODO throw exception
+        console.log("get_component_by_id: can't find component")
+    }
+
     toJSON() {}
 
     toXML() {}
@@ -114,8 +134,10 @@ class Component {
      * 组件类型 根据类型 绘制出不同的图形
      * @type {number}
      */
-    id = -1
-    type = -1;
+    datum = {
+        id: -1,
+        type: -1
+    }
     // svg节点
     node = null
 
@@ -126,6 +148,8 @@ class Component {
 
 class State extends Component {
     datum = {
+        id: -1,
+        type: -1,
         position: {
             x: 0,
             y: 0
@@ -136,7 +160,7 @@ class State extends Component {
     resizer = null
 
     set_id(id) {
-        this.id = id
+        this.datum.id = id
     }
 
     drag() {}
@@ -165,7 +189,6 @@ class StartEndState extends State {
      */
     constructor(x, y) {
         super();
-        this.type = 1
         let default_width = 64
         let default_font_size = 14
         this.datum = {
@@ -242,7 +265,7 @@ class StartEndState extends State {
         hide_resizer()
         this.show_resizer()
 
-        this.bindEvents()
+        this._bindEvents()
     }
 
     // TODO 或许可以到父类
@@ -251,11 +274,14 @@ class StartEndState extends State {
 
         function dragstart(event, d) {
             hide_resizer()
-            d3.select(this).raise()
         }
 
         function dragmove(event, d) {
-            d3.select(this)
+            /* important! https://observablehq.com/@d3/click-vs-drag
+                If you call raise() in dragstart, click events will not work properly.
+                Oh my! so torturing to fix this!
+            */
+            d3.select(this).raise()
                 .attr("transform", () => {
                     return "translate(" + (event.x) + "," + (event.y) + ")"
                 })
@@ -288,49 +314,7 @@ class StartEndState extends State {
         d3.select(this.node).call(drag)
     }
 
-    // TODO 或许可以到父类
-    // TODO 和drag冲突
-    click() {
-        let that = this
-
-        function click_choose(event, d) {
-            if (event.defaultPrevented) {
-                return
-            }
-            console.log('clicked')
-            // 选中该组件
-            component_chose = that
-            // d3.select(this).raise()
-            // 删除其他已显示的resizer
-            hide_resizer()
-            that.show_resizer()
-        }
-
-        d3.select(this.node)
-            .on('click.choose', click_choose)
-    }
-
-    // click的替代方案
-    mousedown() {
-        let that = this
-
-        function mousedown_choose(event, d) {
-            console.log('chose')
-            // 选中该组件
-            component_chose = that
-            // d3.select(this).raise()
-            // 删除其他已显示的resizer
-            hide_resizer()
-            that.show_resizer()
-        }
-
-        d3.select(this.node)
-            .on('mousedown.choose', mousedown_choose)
-    }
-
-    bindEvents() {
-        // 顺序很关键!
-        this.mousedown()
+    _bindEvents() {
         this.drag()
     }
 
@@ -365,6 +349,7 @@ class StartEndState extends State {
 class StartState extends StartEndState {
     constructor(x, y) {
         super(x, y);
+        this.datum.type = 1
         this.set_label("开始")
         this.in_transitions = [] // drag
         this.out_transitions = [] // drag
@@ -374,6 +359,7 @@ class StartState extends StartEndState {
 class EndState extends StartEndState {
     constructor(x, y) {
         super(x, y);
+        this.datum.type = 2
         this.set_label("结束")
         this.in_transitions = [] // drag
     }
@@ -517,7 +503,7 @@ class Resizer {
             .attr('fill', 'lightblue')
             .node()
 
-        this.bindEvents()
+        this._bindEvents()
     }
 
     drag() {
@@ -546,7 +532,7 @@ class Resizer {
         d3.select(this.node).call(drag)
     }
 
-    bindEvents() {
+    _bindEvents() {
         this.drag()
     }
 
@@ -601,30 +587,30 @@ class CommonTransition extends Transition {
         this.to_state = -1
     }
 
-    link(event) {
+    link(event, component_chose) {
         if(this.to_state !== -1) {
             // TODO 更新 state 里的 transition 列表
             return true
         }
         // 选择的是State
-        if(component_chose != null) {
+        if(component_chose instanceof State) {
             // TODO bug component_chose在component mousedown内更新，比该判断晚
             console.log(component_chose)
             // 若未选则起点，则选择的是起点
             if(this.from_state === -1) {
-                this.from_state = component_chose.id
+                this.from_state = component_chose.datum.id
                 let center = center_of(component_chose)
                 let point = new Point(center.x, center.y)
                 this.points.push(point)
             }
             // 优先处理起点, 后处理终点
             else if(this.to_state === -1) {
-                this.to_state = component_chose.id
+                this.to_state = component_chose.datum.id
                 let center = center_of(component_chose)
                 let point = new Point(center.x, center.y)
                 this.points.push(point)
+                return true
             }
-            component_chose = null
         }
         else {
             console.log(this.from_state)
@@ -635,8 +621,6 @@ class CommonTransition extends Transition {
             let point = new Point(event.layerX, event.layerY)
             this.points.push(point)
         }
-
-        this.draw()
         return false
     }
 
