@@ -694,6 +694,7 @@ class CommonTransition extends Transition {
                 // 修正终点
                 this._modify_end_point()
                 // 更新 state
+                // TODO startState 和 endState 不自指
                 this.source_state.out_transitions.push(this)
                 this.target_state.in_transitions.push(this)
                 return true
