@@ -391,8 +391,6 @@ class StartState extends StartEndState {
 
     }
 
-
-
     constructor(x, y) {
         super(x, y);
         this.datum.type = 1
@@ -448,9 +446,8 @@ class EndState extends StartEndState {
             .attr('fill', 'rgb(90, 90, 90)')
             .attr('stroke', 'rgb(90, 90, 90)')
 
-        let circles = d3.select(this.node)
-            .selectAll('circle')
-
+        // let circles = d3.select(this.node)
+        //     .selectAll('circle')
 
         hideResizer()
         this.showResizer()
@@ -464,9 +461,8 @@ class EndState extends StartEndState {
         this.datum.r = rect.width / 2
         this.datum.position = rect.position
 
-
-
-        svg.selectAll('circle')
+        d3.select(this.node)
+            .selectAll('circle')
             .attr('cx', (d, i) => {
                 return d.r
             })
@@ -481,8 +477,6 @@ class EndState extends StartEndState {
                     return 0.4 * d.r
                 }
             })
-
-
 
         d3.select(this.node)
             .attr('transform', () => {
