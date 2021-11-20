@@ -277,7 +277,7 @@ class StartEndState extends State {
         return ShapeInfo.circle([this.datum.position.x + this.datum.r, this.datum.position.y + this.datum.r], this.datum.r)
     }
 
-    draw() {
+    /*draw() {//画开始或者结束状态
         this.node = svg
             .append('g')
             .datum(this.datum)
@@ -297,8 +297,23 @@ class StartEndState extends State {
             .attr('r', (d) => {
                 return d.r
             })
-            .attr('stroke', 'black')
-            .attr('fill', 'white')
+            .attr('fill', color)
+            .attr('stroke', 'grey')
+
+        d3.select(this.node)
+            .append('circle')
+            .attr('cx', (d) => {
+                return d.r
+            })
+            .attr('cy', (d) => {
+                return d.r
+            })
+            .attr('r', (d) => {
+                return d.r
+            })
+            .attr('fill', 'grey')
+            .attr('stroke', 'grey')
+
 
         d3.select(this.node)
             .append('text')
@@ -322,7 +337,9 @@ class StartEndState extends State {
         this.show_resizer()
 
         this._bindEvents()
-    }
+    }*/
+
+
 
     drag() {
         let that = this
@@ -398,11 +415,6 @@ class StartEndState extends State {
             .attr('r', this.datum.r)
 
         d3.select(this.node)
-            .select('text')
-            .attr('x', this.datum.r)
-            .attr('y', this.datum.r)
-
-        d3.select(this.node)
             .attr('transform', () => {
                 return 'translate(' + (this.datum.position.x) + ',' + (this.datum.position.y) + ')'
             })
@@ -412,6 +424,39 @@ class StartEndState extends State {
 }
 
 class StartState extends StartEndState {
+    draw() {//画开始状态
+        this.node = svg
+            .append('g')
+            .datum(this.datum)
+            .attr('transform', (d) => {
+                return 'translate(' + d.position.x + ',' + d.position.y + ')'
+            })
+            .node()
+
+        d3.select(this.node)
+            .append('circle')
+            .attr('cx', (d) => {
+                return d.r
+            })
+            .attr('cy', (d) => {
+                return d.r
+            })
+            .attr('r', (d) => {
+                return d.r
+            })
+            .attr('fill', 'grey')
+            .attr('stroke', 'grey')
+
+
+        hide_resizer()
+        this.show_resizer()
+
+        this._bindEvents()
+
+    }
+
+
+
     constructor(x, y) {
         super(x, y);
         this.datum.type = 1
@@ -429,6 +474,88 @@ class StartState extends StartEndState {
 }
 
 class EndState extends StartEndState {
+    draw() {//画结束状态
+        this.node = svg
+            .append('g')
+            .datum(this.datum)
+            .attr('transform', (d) => {
+                return 'translate(' + d.position.x + ',' + d.position.y + ')'
+            })
+            .node()
+
+        d3.select(this.node)
+            .append('circle')
+            .attr('cx', (d) => {
+                return d.r
+            })
+            .attr('cy', (d) => {
+                return d.r
+            })
+            .attr('r', (d) => {
+                return d.r
+            })
+            .attr('index','1')
+            .attr('fill', 'green')
+            .attr('stroke', 'grey')
+            .attr('stroke-width','3px')
+
+        d3.select(this.node)
+            .append('circle')
+            .attr('cx', (d) => {
+                return d.r
+            })
+            .attr('cy', (d) => {
+                return d.r
+            })
+            .attr('r', (d) => {
+                return 0.3*d.r
+            })
+            .attr('index','2')
+            .attr('fill', 'grey')
+            .attr('stroke', 'grey')
+
+        let circles = d3.select(this.node)
+            .selectAll('circle')
+
+
+        hide_resizer()
+        this.show_resizer()
+
+        this._bindEvents()
+    }
+
+    resize(rect) {
+        this.datum.width = rect.width
+        this.datum.height = rect.height
+        this.datum.r = rect.width / 2
+        this.datum.position = rect.position
+
+
+
+        svg.selectAll('circle')
+            .attr('cx', (d, i) => {
+                return d.r
+            })
+            .attr('cy', (d, i) => {
+                return d.r
+            })
+            .attr('r', (d, i) => {
+                if(i === 0) {
+                    return d.r
+                }
+                else return 0.3*d.r
+            })
+
+
+
+        d3.select(this.node)
+            .attr('transform', () => {
+                return 'translate(' + (this.datum.position.x) + ',' + (this.datum.position.y) + ')'
+            })
+
+        this.update_transitions(this.center())
+    }
+
     constructor(x, y) {
         super(x, y);
         this.datum.type = 2
