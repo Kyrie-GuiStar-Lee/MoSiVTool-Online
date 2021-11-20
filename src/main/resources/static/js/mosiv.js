@@ -7,6 +7,9 @@ let component_to_transmit = null; // function
 let ShapeInfo = KldIntersections.ShapeInfo;
 let Intersection = KldIntersections.Intersection;
 
+/**
+ * always call hide_resizer before calling show_resizer
+ */
 function hide_resizer() {
     for(let i = 0; i <= 3; ++i) {
         svg.select('#resizer' + i).remove()
@@ -41,13 +44,15 @@ class StateDiagramSVG {
         let transition = null
         // TODO transition未完成就选择其他的component时，要删除完成了一半的transition
 
+        // draw选中的Component
         svg.on('click.add_component', (event) => {
-            // draw选中的Component
-            let component = new component_to_transmit(event.layerX, event.layerY)
-            if (component instanceof State || component instanceof ProTransition) {
-                this.stateDiagram.add(component)
-                this.component_chose = component
-                this.component_chose.draw()
+            if(component_to_transmit != null) { // Cursor
+                let component = new component_to_transmit(event.layerX, event.layerY)
+                if (component instanceof State || component instanceof ProTransition) {
+                    this.stateDiagram.add(component)
+                    this.component_chose = component
+                    this.component_chose.draw()
+                }
             }
         })
             .on('click.select_component', (event) => {
@@ -61,6 +66,8 @@ class StateDiagramSVG {
                         return
                     }
                     let component = this.stateDiagram.get_component_by_id(target_datum.id)
+                    component.raise()
+                    hide_resizer()
                     component.show_resizer()
                     console.log("click.select_component: " + component)
                     // TODO get_component_by_id() err handler
@@ -68,17 +75,21 @@ class StateDiagramSVG {
                 }
             })
             .on('click.draw_common_transition', (event) => {
-                let component = new component_to_transmit(event.layerX, event.layerY)
-                if (component instanceof CommonTransition) {
-                    if (transition == null) {
-                        transition = component
-                        this.stateDiagram.add(transition)
-                    }
-                    let link_finish = transition.link(event, this.component_chose)
-                    transition.draw()
-                    if (link_finish) {
-                        console.log("link finish")
-                        transition = null
+                if(component_to_transmit != null) { // Cursor
+                    let component = new component_to_transmit(event.layerX, event.layerY)
+                    if (component instanceof CommonTransition) {
+                        if (transition == null) {
+                            transition = component
+                            this.stateDiagram.add(transition)
+                        }
+                        let link_finish = transition.link(event, this.component_chose)
+                        if (transition.points.length >= 2) {
+                            transition.redraw()
+                        }
+                        if (link_finish) {
+                            console.log("link finish")
+                            transition = null
+                        }
                     }
                 }
             })
@@ -136,6 +147,11 @@ class Component {
     set_id() {}
 
     draw() {}
+
+    /**
+     * 浮于顶层
+     */
+    raise() {}
 }
 
 class State extends Component {
@@ -177,6 +193,12 @@ class State extends Component {
     }
 
     resize() {}
+
+    /**
+     * drag, resize时更新transition
+     * @param center 中心坐标
+     */
+    update_transitions(center) {}
 }
 
 /**
@@ -290,7 +312,6 @@ class StartEndState extends State {
         this._bindEvents()
     }
 
-    // TODO 或许可以到父类
     drag() {
         let that = this
 
@@ -308,8 +329,12 @@ class StartEndState extends State {
                     return "translate(" + (event.x) + "," + (event.y) + ")"
                 })
 
-            d.position.x = event.x
-            d.position.y = event.y
+            d.position = {
+                x: event.x,
+                y: event.y
+            }
+
+            that.update_transitions(that.center())
         }
 
         function dragend(event, d) {
@@ -334,6 +359,10 @@ class StartEndState extends State {
             .on('end', dragend)
 
         d3.select(this.node).call(drag)
+    }
+
+    raise() {
+        d3.select(this.node).raise()
     }
 
     _bindEvents() {
@@ -365,6 +394,8 @@ class StartEndState extends State {
             .attr('transform', () => {
                 return 'translate(' + (this.datum.position.x) + ',' + (this.datum.position.y) + ')'
             })
+
+        this.update_transitions(this.center())
     }
 }
 
@@ -373,8 +404,15 @@ class StartState extends StartEndState {
         super(x, y);
         this.datum.type = 1
         this.set_label("开始")
-        this.in_transitions = [] // drag
         this.out_transitions = [] // drag
+    }
+
+    update_transitions(center) {
+        // 更新出边
+        this.out_transitions.forEach((transition) => {
+            transition.update_start_point(center.x, center.y)
+            transition.redraw()
+        })
     }
 }
 
@@ -385,8 +423,15 @@ class EndState extends StartEndState {
         this.set_label("结束")
         this.in_transitions = [] // drag
     }
-}
 
+    update_transitions(center) {
+        // 更新入边
+        this.in_transitions.forEach((transition) => {
+            transition.update_end_point(center.x, center.y)
+            transition.redraw()
+        })
+    }
+}
 
 class CommonState extends State {
     constructor() {
@@ -610,11 +655,8 @@ class CommonTransition extends Transition {
     }
 
     link(event, component_chose) {
-        if(this.target_state != null) {
-            // TODO 更新 state 里的 transition 列表
-            return true
-        }
         // 选择的是State
+        // TODO ProTransition
         if(component_chose instanceof State) {
             console.log(component_chose)
             // 若未选则起点，则选择的是起点
@@ -636,6 +678,9 @@ class CommonTransition extends Transition {
                 }
                 // 修正终点
                 this._modify_end_point()
+                // 更新 state
+                this.source_state.out_transitions.push(this)
+                this.target_state.in_transitions.push(this)
                 return true
             }
         }
@@ -660,6 +705,10 @@ class CommonTransition extends Transition {
         let kld_border = this.source_state.get_kld_border_shapeInfo()
         console.log(kld_curve, kld_border)
         let intersection = Intersection.intersect(kld_curve, kld_border).points[0]
+        // 无交点，一般发生在drag中，两个component靠太近，此时transition被遮挡
+        if(intersection == undefined) {
+            return
+        }
 
         this.points[0].datum.position = {
             x: intersection.x,
@@ -672,6 +721,10 @@ class CommonTransition extends Transition {
         let kld_curve = ShapeInfo.path(curve)
         let kld_border = this.target_state.get_kld_border_shapeInfo()
         let intersection = Intersection.intersect(kld_curve, kld_border).points[0]
+        // 无交点，一般发生在drag中，两个component靠太近，此时transition被遮挡
+        if(intersection == undefined) {
+            return
+        }
 
         this.points.slice(-1)[0].datum.position = {
             x: intersection.x,
@@ -679,11 +732,27 @@ class CommonTransition extends Transition {
         }
     }
 
-    draw() {
-        if(this.node != null) {
-            d3.select(this.node).remove()
+    update_start_point(x, y) {
+        this.points[0].datum.position = {
+            x: x,
+            y: y
         }
+        this.points.slice(-1)[0].datum.position = this.target_state.center()
+        this._modify_start_point()
+        this._modify_end_point()
+    }
 
+    update_end_point(x, y) {
+        this.points[0].datum.position = this.source_state.center()
+        this.points.slice(-1)[0].datum.position = {
+            x: x,
+            y: y
+        }
+        this._modify_start_point()
+        this._modify_end_point()
+    }
+
+    draw() {
         this.node = svg.append("path")
             .attr("d", this.curve_generator(this.points))
             .attr("fill", "none")
@@ -691,6 +760,14 @@ class CommonTransition extends Transition {
             .attr("stroke-width", 1)
             .attr("marker-end","url(#arrow)")
             .node()
+    }
+
+    redraw() {
+        if(this.node != null) {
+            d3.select(this.node).remove()
+        }
+
+        this.draw()
     }
 }
 
