@@ -8,15 +8,15 @@ let ShapeInfo = KldIntersections.ShapeInfo;
 let Intersection = KldIntersections.Intersection;
 
 /**
- * always call hide_resizer before calling show_resizer
+ * always call hideResizer before calling showResizer
  */
-function hide_resizer() {
+function hideResizer() {
     for(let i = 0; i <= 3; ++i) {
         svg.select('#resizer' + i).remove()
     }
 }
 
-function hide_points() {
+function hidePoints() {
     svg.selectAll('[point]').remove()
     console.log(svg.selectAll('[point]'))
 }
@@ -67,22 +67,22 @@ class StateDiagramSVG {
                     if(target_datum == undefined) {
                         console.log("click.select_component: didn't choose any component")
                         this.component_chose = null
-                        hide_points()
-                        hide_resizer()
+                        hidePoints()
+                        hideResizer()
                         return
                     }
-                    let component = this.stateDiagram.get_component_by_id(target_datum.id)
+                    let component = this.stateDiagram.getComponentById(target_datum.id)
                     component.raise()
-                    hide_resizer()
-                    hide_points()
+                    hideResizer()
+                    hidePoints()
                     if(component instanceof State) {
-                        component.show_resizer()
+                        component.showResizer()
                     }
                     else if(component instanceof CommonTransition) {
-                        component.show_points()
+                        component.showPoints()
                     }
                     console.log("click.select_component: " + component)
-                    // TODO get_component_by_id() err handler
+                    // TODO getComponentById() err handler
                     this.component_chose = component
                 }
             })
@@ -122,11 +122,11 @@ class StateDiagram {
      * @param component 建模元素
      */
     add(component) {
-        component.set_id(this.component_id++)
+        component.setId(this.component_id++)
         this.components.push(component);
     }
 
-    get_component_by_id(id) {
+    getComponentById(id) {
         for(let i = 0; i < this.components.length; ++i) {
             if(this.components[i].datum.id === id) {
                 return this.components[i]
@@ -134,7 +134,7 @@ class StateDiagram {
         }
 
         // TODO throw exception
-        console.log("get_component_by_id: can't find component")
+        console.log("getComponentById: can't find component")
     }
 
     toJSON() {}
@@ -156,7 +156,7 @@ class Component {
     // svg节点
     node = null
 
-    set_id() {}
+    setId() {}
 
     draw() {}
 
@@ -179,7 +179,7 @@ class State extends Component {
     }
     resizer = null
 
-    set_id(id) {
+    setId(id) {
         this.datum.id = id
     }
 
@@ -195,7 +195,7 @@ class State extends Component {
         }
     }
 
-    show_resizer() {
+    showResizer() {
         this.resizer.update({
             position: this.datum.position,
             width: this.datum.width,
@@ -210,7 +210,7 @@ class State extends Component {
      * drag, resize时更新transition
      * @param center 中心坐标
      */
-    update_transitions(center) {}
+    updateTransitions(center) {}
 }
 
 /**
@@ -253,7 +253,7 @@ class StartEndState extends State {
         }, this, "==")
     }
 
-    set_label(label) {
+    setLabel(label) {
         this.datum.label = label
     }
 
@@ -261,7 +261,7 @@ class StartEndState extends State {
      * 返回g对应的矩形（绝对坐标）
      * @returns {{width, position: {x: number, y: number}, height}}
      */
-    get_rect() {
+    getRect() {
         return {
             position: this.datum.position,
             width: this.datum.width,
@@ -273,79 +273,15 @@ class StartEndState extends State {
      * 返回component实际形状对应的ShapeInfo
      * @returns {*}
      */
-    get_kld_border_shapeInfo() {
+    getKldBorderShapeInfo() {
         return ShapeInfo.circle([this.datum.position.x + this.datum.r, this.datum.position.y + this.datum.r], this.datum.r)
     }
-
-    /*draw() {//画开始或者结束状态
-        this.node = svg
-            .append('g')
-            .datum(this.datum)
-            .attr('transform', (d) => {
-                return 'translate(' + d.position.x + ',' + d.position.y + ')'
-            })
-            .node()
-
-        d3.select(this.node)
-            .append('circle')
-            .attr('cx', (d) => {
-                return d.r
-            })
-            .attr('cy', (d) => {
-                return d.r
-            })
-            .attr('r', (d) => {
-                return d.r
-            })
-            .attr('fill', color)
-            .attr('stroke', 'grey')
-
-        d3.select(this.node)
-            .append('circle')
-            .attr('cx', (d) => {
-                return d.r
-            })
-            .attr('cy', (d) => {
-                return d.r
-            })
-            .attr('r', (d) => {
-                return d.r
-            })
-            .attr('fill', 'grey')
-            .attr('stroke', 'grey')
-
-
-        d3.select(this.node)
-            .append('text')
-            .text((d) => {
-                return d.label
-            })
-            .attr('x', (d) => {
-                return d.r
-            })
-            .attr('y', (d) => {
-                return d.r
-            })
-            .attr('font-size', (d) => {
-                return d.font_size
-            })
-            // 文字垂直、水平居中
-            .attr('text-anchor',"middle")
-            .attr('dy','.35em')
-
-        hide_resizer()
-        this.show_resizer()
-
-        this._bindEvents()
-    }*/
-
-
 
     drag() {
         let that = this
 
         function dragstart(event, d) {
-            hide_resizer()
+            hideResizer()
         }
 
         function dragmove(event, d) {
@@ -363,11 +299,11 @@ class StartEndState extends State {
                 y: event.y
             }
 
-            that.update_transitions(that.center())
+            that.updateTransitions(that.center())
         }
 
         function dragend(event, d) {
-            that.show_resizer()
+            that.showResizer()
         }
 
         let drag = d3.drag()
@@ -419,7 +355,7 @@ class StartEndState extends State {
                 return 'translate(' + (this.datum.position.x) + ',' + (this.datum.position.y) + ')'
             })
 
-        this.update_transitions(this.center())
+        this.updateTransitions(this.center())
     }
 }
 
@@ -444,12 +380,12 @@ class StartState extends StartEndState {
             .attr('r', (d) => {
                 return d.r
             })
-            .attr('fill', 'grey')
-            .attr('stroke', 'grey')
+            .attr('fill', 'rgb(90, 90, 90)')
+            .attr('stroke', 'rgb(90, 90, 90)')
 
 
-        hide_resizer()
-        this.show_resizer()
+        hideResizer()
+        this.showResizer()
 
         this._bindEvents()
 
@@ -460,14 +396,14 @@ class StartState extends StartEndState {
     constructor(x, y) {
         super(x, y);
         this.datum.type = 1
-        this.set_label("开始")
+        this.setLabel("开始")
         this.out_transitions = [] // drag
     }
 
-    update_transitions(center) {
+    updateTransitions(center) {
         // 更新出边
         this.out_transitions.forEach((transition) => {
-            transition.update_start_point(center.x, center.y)
+            transition.updateStartPoint(center.x, center.y)
             transition.redraw()
         })
     }
@@ -494,9 +430,8 @@ class EndState extends StartEndState {
             .attr('r', (d) => {
                 return d.r
             })
-            .attr('index','1')
-            .attr('fill', 'green')
-            .attr('stroke', 'grey')
+            .attr('fill', 'rgb(204, 226, 160)')
+            .attr('stroke', 'rgb(90, 90, 90)')
             .attr('stroke-width','3px')
 
         d3.select(this.node)
@@ -508,18 +443,17 @@ class EndState extends StartEndState {
                 return d.r
             })
             .attr('r', (d) => {
-                return 0.3*d.r
+                return 0.4*d.r
             })
-            .attr('index','2')
-            .attr('fill', 'grey')
-            .attr('stroke', 'grey')
+            .attr('fill', 'rgb(90, 90, 90)')
+            .attr('stroke', 'rgb(90, 90, 90)')
 
         let circles = d3.select(this.node)
             .selectAll('circle')
 
 
-        hide_resizer()
-        this.show_resizer()
+        hideResizer()
+        this.showResizer()
 
         this._bindEvents()
     }
@@ -543,7 +477,9 @@ class EndState extends StartEndState {
                 if(i === 0) {
                     return d.r
                 }
-                else return 0.3*d.r
+                else if(i === 1) {
+                    return 0.4 * d.r
+                }
             })
 
 
@@ -553,20 +489,20 @@ class EndState extends StartEndState {
                 return 'translate(' + (this.datum.position.x) + ',' + (this.datum.position.y) + ')'
             })
 
-        this.update_transitions(this.center())
+        this.updateTransitions(this.center())
     }
 
     constructor(x, y) {
         super(x, y);
         this.datum.type = 2
-        this.set_label("结束")
+        this.setLabel("结束")
         this.in_transitions = [] // drag
     }
 
-    update_transitions(center) {
+    updateTransitions(center) {
         // 更新入边
         this.in_transitions.forEach((transition) => {
-            transition.update_end_point(center.x, center.y)
+            transition.updateEndPoint(center.x, center.y)
             transition.redraw()
         })
     }
@@ -652,7 +588,7 @@ class ResizerGroup {
         this.parent.resize(this.rect, number)
     }
 
-    // 由于resizer在component静止时才显示，所以拖动完成后被show_resizer()调用，以更新resizer的位置
+    // 由于resizer在component静止时才显示，所以拖动完成后被showResizer()调用，以更新resizer的位置
     update(rect) {
         for(let i = 0; i <= 3; ++i) {
             this.resizers[i].update({
@@ -816,10 +752,10 @@ class CommonTransition extends Transition {
                 this.datum.points.push(point)
                 // 只有两个点，修正第一个点
                 if(this.datum.points.length === 2) {
-                    this._modify_start_point()
+                    this._modifyStartPoint()
                 }
                 // 修正终点
-                this._modify_end_point()
+                this._modifyEndPoint()
                 // 更新 state
                 // TODO startState 和 endState 不自指
                 this.source_state.out_transitions.push(this)
@@ -836,16 +772,16 @@ class CommonTransition extends Transition {
             this.datum.points.push(point)
             // 根据第一二个点的连线修正第一个点
             if(this.datum.points.length === 2) {
-                this._modify_start_point()
+                this._modifyStartPoint()
             }
         }
         return false
     }
 
-    _modify_start_point() {
+    _modifyStartPoint() {
         let curve = this.curve_generator(this.datum.points.slice(0, 2))
         let kld_curve = ShapeInfo.path(curve)
-        let kld_border = this.source_state.get_kld_border_shapeInfo()
+        let kld_border = this.source_state.getKldBorderShapeInfo()
         console.log(kld_curve, kld_border)
         let intersection = Intersection.intersect(kld_curve, kld_border).points[0]
         // 无交点，一般发生在drag中，两个component靠太近，此时transition被遮挡
@@ -859,10 +795,10 @@ class CommonTransition extends Transition {
         }
     }
 
-    _modify_end_point() {
+    _modifyEndPoint() {
         let curve = this.curve_generator(this.datum.points.slice(-2))
         let kld_curve = ShapeInfo.path(curve)
-        let kld_border = this.target_state.get_kld_border_shapeInfo()
+        let kld_border = this.target_state.getKldBorderShapeInfo()
         let intersection = Intersection.intersect(kld_curve, kld_border).points[0]
         // 无交点，一般发生在drag中，两个component靠太近，此时transition被遮挡
         if(intersection == undefined) {
@@ -875,24 +811,24 @@ class CommonTransition extends Transition {
         }
     }
 
-    update_start_point(x, y) {
+    updateStartPoint(x, y) {
         this.datum.points[0].datum.position = {
             x: x,
             y: y
         }
         this.datum.points.slice(-1)[0].datum.position = this.target_state.center()
-        this._modify_start_point()
-        this._modify_end_point()
+        this._modifyStartPoint()
+        this._modifyEndPoint()
     }
 
-    update_end_point(x, y) {
+    updateEndPoint(x, y) {
         this.datum.points[0].datum.position = this.source_state.center()
         this.datum.points.slice(-1)[0].datum.position = {
             x: x,
             y: y
         }
-        this._modify_start_point()
-        this._modify_end_point()
+        this._modifyStartPoint()
+        this._modifyEndPoint()
     }
 
     draw() {
@@ -917,7 +853,7 @@ class CommonTransition extends Transition {
         this.draw()
     }
 
-    show_points() {
+    showPoints() {
         for(let i = 1; i < this.datum.points.length - 1; ++i) {
             this.datum.points[i].draw()
         }
@@ -933,6 +869,8 @@ class CommonTransition extends Transition {
 
         d3.select(this.node)
             .on('mouseover.hover', mouseover_hover)
+        d3.selectAll(this.marker._groups[0])
+            .attr('fill', 'red')
     }
 
     mouseout() {
@@ -945,6 +883,8 @@ class CommonTransition extends Transition {
 
         d3.select(this.node)
             .on('mouseout.hover', mouseout_hover)
+        d3.selectAll(this.marker._groups[0])
+            .attr('fill', 'black')
     }
 
     _bindEvents() {
@@ -1017,11 +957,10 @@ class Point {
                 x: event.x,
                 y: event.y
             }
-            console.log("dragging")
 
-            d.parent.update_start_point(d.parent.source_state.center().x,
+            d.parent.updateStartPoint(d.parent.source_state.center().x,
                 d.parent.source_state.center().y)
-            d.parent.update_end_point(d.parent.target_state.center().x,
+            d.parent.updateEndPoint(d.parent.target_state.center().x,
                 d.parent.target_state.center().y)
             d.parent.redraw()
         }
