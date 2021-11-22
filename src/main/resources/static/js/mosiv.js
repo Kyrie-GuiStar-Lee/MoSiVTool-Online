@@ -383,6 +383,11 @@ class StartState extends StartEndState {
             .attr('fill', 'rgb(90, 90, 90)')
             .attr('stroke', 'rgb(90, 90, 90)')
 
+        // d3.select(circles._groups[0][1])
+        //     .attr('cx', this.datum.r)
+        //     .attr('cy', this.datum.r)
+        //     .attr('r', 0.3*this.datum.r)
+
 
         hideResizer()
         this.showResizer()
@@ -502,13 +507,214 @@ class EndState extends StartEndState {
     }
 }
 
+//CommonState 部分
 class CommonState extends State {
-    constructor() {
+    constructor(x, y) {
         super();
-        this.transitons = []
-        this.invirants = []
+        let default_width = 120
+        let default_height = 64
+        let default_font_size = 14
+        this.datum = {
+            // g 左上角
+            position: {
+                x: x - default_width / 2,
+                y: y - default_height / 2
+            },
+            width: default_width,
+            height: default_height,
+            min: {
+                width:default_width/2,
+                height:default_height/2
+            },
+            label: 'cs',
+            font_size: default_font_size
+        }
+
+        this.resizer = new ResizerGroup({
+            position: this.datum.position,
+            width: this.datum.width,
+            height: this.datum.height
+        }, {
+            width: this.datum.width,
+            height: this.datum.height
+        }, this, "!=")
+        this.out_transitons = []
+        this.in_transitions = []
     }
+
+    draw() {//画Common State
+        this.node = svg
+            .append('g')
+            .datum(this.datum)
+            .attr('transform', (d) => {
+                return 'translate(' + d.position.x + ',' + d.position.y + ')'
+            })
+            .node()
+
+        d3.select(this.node)
+            .append('rect')
+            .attr('width', (d) => {
+                return d.width
+            })
+            .attr('height', (d) => {
+                return d.height
+            })
+            .attr('text',(d)=>{
+                return d.label
+            })
+            .attr('fill', '#fff')
+            .attr('stroke', '#000')
+            .attr('stroke-width', '2px')
+
+
+        hideResizer()
+        this.showResizer()
+
+        this._bindEvents()
+
+    }
+
+
+
+
+    setLabel(label) {
+        this.datum.label = label
+    }
+
+    /**
+     * 返回g对应的矩形（绝对坐标）
+     * @returns {{width, position: {x: number, y: number}, height}}
+     */
+    getRect() {
+        return {
+            position: this.datum.position,
+            width: this.datum.width,
+            height: this.datum.height
+        }
+    }
+
+    /**
+     * 返回component实际形状对应的ShapeInfo
+     * @returns {*}
+     */
+    getKldBorderShapeInfo() {
+        return ShapeInfo.rectangle([this.datum.position.x , this.datum.position.y], [this.datum.width, this.datum.height])
+    }
+
+    drag() {
+        let that = this
+
+        function dragstart(event, d) {
+            hideResizer()
+        }
+
+        function dragmove(event, d) {
+            /* important! https://observablehq.com/@d3/click-vs-drag
+                If you call raise() in dragstart, click events will not work properly.
+                Oh my! So torturing to fix this!
+            */
+            d3.select(this).raise()
+                .attr("transform", () => {
+                    return "translate(" + (event.x) + "," + (event.y) + ")"
+                })
+
+            d.position = {
+                x: event.x,
+                y: event.y
+            }
+
+            that.updateTransitions_in(that.center())
+            that.updateTransitions_out(that.center())
+        }
+
+        function dragend(event, d) {
+            that.showResizer()
+        }
+
+        let drag = d3.drag()
+            .subject(function() {
+                let tmp = d3.select(this).attr('transform')
+                let reg = /translate\((-)?\d+(\.\d+)?,(-)?\d+(\.\d+)?\)/ // TODO 可能有(1px,  2px)的情况
+                let str = reg.exec(tmp)[0]
+                str = str.substring(10, str.length - 1)
+                let s_list = str.split(',')
+
+                return {
+                    x: Number(s_list[0]),
+                    y: Number(s_list[1])
+                }
+            })
+            .on('start', dragstart)
+            .on('drag', dragmove)
+            .on('end', dragend)
+
+        d3.select(this.node).call(drag)
+    }
+
+    raise() {
+        d3.select(this.node).raise()
+    }
+
+    _bindEvents() {
+        this.drag()
+    }
+
+    /**
+     * 根据resizer返回的rect修改component
+     * @param rect
+     */
+    resize(rect) {
+        this.datum.width = rect.width
+        this.datum.height = rect.height
+        this.datum.position = rect.position
+
+        d3.select(this.node)
+            .select('rect')
+            .attr('width', this.datum.width)
+            .attr('height', this.datum.height)
+
+        d3.select(this.node)
+            .attr('transform', () => {
+                return 'translate(' + (this.datum.position.x) + ',' + (this.datum.position.y) + ')'
+            })
+
+        this.updateTransitions_out(this.center())
+        this.updateTransitions_in(this.center())
+
+    }
+
+
+    updateTransitions_out(center) {
+        // 更新出边
+        if(this.out_transitons.length>0) {
+            this.out_transitions.forEach((transition) => {
+                transition.updateStartPoint(center.x, center.y)
+                transition.redraw()
+            })
+        }
+    }
+
+    updateTransitions_in(center) {
+        // 更新入边
+        if(this.in_transitions.length>0) {
+            this.in_transitions.forEach((transition) => {
+                transition.updateEndPoint(center.x, center.y)
+                transition.redraw()
+            })
+        }
+    }
+
+
+
+
 }
+
+
+//CommonState部分结束
+
+
+
+
 
 class ResizerGroup {
     resizers = []
@@ -557,7 +763,7 @@ class ResizerGroup {
         if(this.zoom_type == "==") {
             this.rect.width = Math.min(this.rect.width, this.rect.height)
             this.rect.height = this.rect.width
-        }
+        }else if(this.zoon_type == "!="){}
 
         this.rect.position = {
             x: opposite_resizer.datum.position.x + ((number >> 1) - 1) * this.rect.width, // 00 01 -width
@@ -793,6 +999,7 @@ class CommonTransition extends Transition {
         let curve = this.curve_generator(this.datum.points.slice(-2))
         let kld_curve = ShapeInfo.path(curve)
         let kld_border = this.target_state.getKldBorderShapeInfo()
+        console.log(kld_curve, kld_border)
         let intersection = Intersection.intersect(kld_curve, kld_border).points[0]
         // 无交点，一般发生在drag中，两个component靠太近，此时transition被遮挡
         if(intersection == undefined) {
