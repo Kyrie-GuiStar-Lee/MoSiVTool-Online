@@ -8,7 +8,7 @@ let ShapeInfo = KldIntersections.ShapeInfo;
 let Intersection = KldIntersections.Intersection;
 
 /**
- * always call hideResizer before calling showResizer
+ * always call hideResizer() before calling showResizer()
  */
 function hideResizer() {
     for(let i = 0; i <= 3; ++i) {
@@ -53,7 +53,7 @@ class StateDiagramSVG {
         svg.on('click.add_component', (event) => {
             if(component_to_transmit != null) { // Cursor
                 let component = new component_to_transmit(event.layerX, event.layerY)
-                if (component instanceof State || component instanceof ProTransition) {
+                if (component instanceof State || component instanceof BranchPoint) {
                     this.stateDiagram.add(component)
                     this.component_chose = component
                     this.component_chose.draw()
@@ -360,7 +360,8 @@ class StartEndState extends State {
 }
 
 class StartState extends StartEndState {
-    draw() {//画开始状态
+    draw() {
+        //画开始状态
         this.node = svg
             .append('g')
             .datum(this.datum)
@@ -445,9 +446,6 @@ class EndState extends StartEndState {
             })
             .attr('fill', 'rgb(90, 90, 90)')
             .attr('stroke', 'rgb(90, 90, 90)')
-
-        // let circles = d3.select(this.node)
-        //     .selectAll('circle')
 
         hideResizer()
         this.showResizer()
@@ -718,6 +716,8 @@ class Transition extends Component {
     }
 }
 
+
+// TODO.Future Linkable 接口
 class CommonTransition extends Transition {
     constructor() {
         super();
@@ -848,6 +848,7 @@ class CommonTransition extends Transition {
     }
 
     showPoints() {
+        console.log(this)
         for(let i = 1; i < this.datum.points.length - 1; ++i) {
             this.datum.points[i].draw()
         }
@@ -890,12 +891,90 @@ class CommonTransition extends Transition {
 class ProTransition extends Transition {
     constructor(x, y) {
         super();
-        this.from_state = -1
-        this.to_state = []
+        this.source_state = null
+        this.target_state = []
+    }
+    
+    draw() {
+
     }
 
     drag() {
 
+    }
+}
+
+class BranchPoint extends Component{
+    constructor(x, y) {
+        super()
+        let default_width = 18
+        this.datum = {
+            // 外接矩形左上角
+            position: {
+                x: x - default_width / 2,
+                y: y - default_width / 2
+            },
+            width: default_width,
+            height: default_width,
+            r: default_width / 2
+        }
+    }
+
+    draw() {
+        this.node = svg.append('circle')
+            .datum(this.datum)
+            .attr('cx', (d) => {
+                return d.position.x + d.r
+            })
+            .attr('cy', (d) => {
+                return d.position.y + d.r
+            })
+            .attr('r', (d) => {
+                return d.r
+            })
+            .attr('fill', 'white')
+            .attr('stroke', 'black')
+            .attr("cursor", "pointer")
+            .node()
+
+        this._bindEvents()
+    }
+
+    drag() {
+        let that = this
+
+        function dragstart(event, d) {}
+
+        function dragmove(event, d) {
+            d3.select(this).raise()
+                .attr('cx', event.x)
+                .attr('cy', event.y)
+
+            d.position = {
+                x: event.x,
+                y: event.y
+            }
+        }
+
+        function dragend(event, d) {}
+
+        let drag = d3.drag()
+            .subject(function () {
+                let tmp = d3.select(this);
+                return {
+                    x: tmp.attr('cx'),
+                    y: tmp.attr('cy')
+                }
+            })
+            .on('start', dragstart)
+            .on('drag', dragmove)
+            .on('end', dragend)
+
+        d3.select(this.node).call(drag)
+    }
+
+    _bindEvents() {
+        this.drag()
     }
 }
 
