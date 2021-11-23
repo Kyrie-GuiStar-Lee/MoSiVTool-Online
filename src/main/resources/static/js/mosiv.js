@@ -81,7 +81,7 @@ class StateDiagramSVG {
                     else if(component instanceof CommonTransition) {
                         component.showPoints()
                     }
-                    console.log("click.select_component: " + component)
+                    console.log("click.select_component", component)
                     // TODO getComponentById() err handler
                     this.component_chose = component
                 }
@@ -147,7 +147,7 @@ class StateDiagram {
 class Component {
     /**
      * 组件类型 根据类型 绘制出不同的图形
-     * @type {number}
+     * @type {{id: number, type: number}}
      */
     datum = {
         id: -1,
@@ -156,7 +156,9 @@ class Component {
     // svg节点
     node = null
 
-    setId() {}
+    setId(id) {
+        this.datum.id = id
+    }
 
     draw() {}
 
@@ -178,10 +180,6 @@ class State extends Component {
         font_size: 0
     }
     resizer = null
-
-    setId(id) {
-        this.datum.id = id
-    }
 
     drag() {}
 
@@ -685,8 +683,7 @@ class Resizer {
 
 class Transition extends Component {
     datum = {
-        points: [],
-        guard: []
+        points: []
     }
     curve_generator = d3.line()
         .x((d, i) => {
@@ -713,69 +710,14 @@ class Transition extends Component {
 
     constructor() {
         super();
-    }
-}
-
-
-// TODO.Future Linkable 接口
-class CommonTransition extends Transition {
-    constructor() {
-        super();
-        this.source_state = null
-        this.target_state = null
-        this.point_num = 0
-    }
-
-    link(event, component_chose) {
-        // 选择的是State
-        // TODO ProTransition
-        if(component_chose instanceof State) {
-            console.log(component_chose)
-            // 若未选则起点，则选择的是起点
-            if(this.source_state == null) {
-                this.source_state = component_chose
-                let center = this.source_state.center()
-                let point = new Point(this.point_num++, center.x, center.y, this)
-                this.datum.points.push(point)
-            }
-            // 优先处理起点, 后处理终点
-            else if(this.target_state == null) {
-                this.target_state = component_chose
-                let center = this.target_state.center()
-                let point = new Point(this.point_num++, center.x, center.y, this)
-                this.datum.points.push(point)
-                // 只有两个点，修正第一个点
-                if(this.datum.points.length === 2) {
-                    this._modifyStartPoint()
-                }
-                // 修正终点
-                this._modifyEndPoint()
-                // 更新 state
-                // TODO startState 和 endState 不自指
-                this.source_state.out_transitions.push(this)
-                this.target_state.in_transitions.push(this)
-                return true
-            }
-        }
-        else {
-            // 起点确定才能选择后续的点
-            if(this.source_state == null) {
-                return
-            }
-            let point = new Point(this.point_num++, event.layerX, event.layerY, this)
-            this.datum.points.push(point)
-            // 根据第一二个点的连线修正第一个点
-            if(this.datum.points.length === 2) {
-                this._modifyStartPoint()
-            }
-        }
-        return false
+        this.source = null
+        this.target = null
     }
 
     _modifyStartPoint() {
         let curve = this.curve_generator(this.datum.points.slice(0, 2))
         let kld_curve = ShapeInfo.path(curve)
-        let kld_border = this.source_state.getKldBorderShapeInfo()
+        let kld_border = this.source.getKldBorderShapeInfo()
         console.log(kld_curve, kld_border)
         let intersection = Intersection.intersect(kld_curve, kld_border).points[0]
         // 无交点，一般发生在drag中，两个component靠太近，此时transition被遮挡
@@ -792,7 +734,7 @@ class CommonTransition extends Transition {
     _modifyEndPoint() {
         let curve = this.curve_generator(this.datum.points.slice(-2))
         let kld_curve = ShapeInfo.path(curve)
-        let kld_border = this.target_state.getKldBorderShapeInfo()
+        let kld_border = this.target.getKldBorderShapeInfo()
         let intersection = Intersection.intersect(kld_curve, kld_border).points[0]
         // 无交点，一般发生在drag中，两个component靠太近，此时transition被遮挡
         if(intersection == undefined) {
@@ -810,19 +752,82 @@ class CommonTransition extends Transition {
             x: x,
             y: y
         }
-        this.datum.points.slice(-1)[0].datum.position = this.target_state.center()
+        this.datum.points.slice(-1)[0].datum.position = this.target.center()
         this._modifyStartPoint()
         this._modifyEndPoint()
     }
 
     updateEndPoint(x, y) {
-        this.datum.points[0].datum.position = this.source_state.center()
+        this.datum.points[0].datum.position = this.source.center()
         this.datum.points.slice(-1)[0].datum.position = {
             x: x,
             y: y
         }
         this._modifyStartPoint()
         this._modifyEndPoint()
+    }
+}
+
+
+// TODO.Future Linkable 接口
+class CommonTransition extends Transition {
+    constructor() {
+        super();
+        this.datum.guard = []
+        this.point_num = 0
+    }
+
+    link(event, component_chose) {
+        console.log(component_chose)
+
+        // 若未选则起点，则选择的是起点
+        if (this.source == null) {
+            // 选择的是State
+            if(component_chose instanceof State) {
+                this.source = component_chose
+                let center = this.source.center()
+                let point = new Point(this.point_num++, center.x, center.y, this)
+                this.datum.points.push(point)
+            }
+            else {
+                return
+            }
+        }
+        // 优先处理起点, 后处理终点
+        else if (this.target == null) {
+            if (component_chose instanceof State || component_chose instanceof BranchPoint) {
+                this.target = component_chose
+                let center = this.target.center()
+                let point = new Point(this.point_num++, center.x, center.y, this)
+                this.datum.points.push(point)
+                // 只有两个点，修正第一个点
+                if (this.datum.points.length === 2) {
+                    this._modifyStartPoint()
+                }
+                // 修正终点
+                this._modifyEndPoint()
+                // 更新 state 和 branch point
+                // TODO startState 和 endState 不自指
+                if (this.source instanceof StartState) {
+                    this.source.out_transitions.push(this)
+                }
+                if (this.target instanceof EndState) {
+                    this.target.in_transitions.push(this)
+                } else if (this.target instanceof BranchPoint) {
+                    this.target.common_transition = this
+                }
+                return true
+            }
+            else {
+                let point = new Point(this.point_num++, event.layerX, event.layerY, this)
+                this.datum.points.push(point)
+                // 根据第一二个点的连线修正第一个点
+                if(this.datum.points.length === 2) {
+                    this._modifyStartPoint()
+                }
+            }
+        }
+        return false
     }
 
     draw() {
@@ -891,15 +896,11 @@ class CommonTransition extends Transition {
 class ProTransition extends Transition {
     constructor(x, y) {
         super();
-        this.source_state = null
+        this.branch_point = null
         this.target_state = []
     }
     
     draw() {
-
-    }
-
-    drag() {
 
     }
 }
@@ -918,6 +919,8 @@ class BranchPoint extends Component{
             height: default_width,
             r: default_width / 2
         }
+        this.common_transition = null
+        this.pro_transitions = []
     }
 
     draw() {
@@ -954,6 +957,8 @@ class BranchPoint extends Component{
                 x: event.x,
                 y: event.y
             }
+
+            that.updateTransitions(that.center())
         }
 
         function dragend(event, d) {}
@@ -971,6 +976,34 @@ class BranchPoint extends Component{
             .on('end', dragend)
 
         d3.select(this.node).call(drag)
+    }
+
+    /**
+     * 返回component实际形状对应的ShapeInfo
+     * @returns {*}
+     */
+    getKldBorderShapeInfo() {
+        return ShapeInfo.circle([this.datum.position.x + this.datum.r, this.datum.position.y + this.datum.r], this.datum.r)
+    }
+
+    /**
+     * 中点
+     */
+    center() {
+        return {
+            x: this.datum.position.x + this.datum.width / 2,
+            y: this.datum.position.y + this.datum.height / 2
+        }
+    }
+
+    updateTransitions(center) {
+        this.common_transition.updateEndPoint(center.x, center.y)
+        this.common_transition.redraw()
+
+        this.pro_transitions.forEach((transition) => {
+            transition.updateStartPoint(center.x, center.y)
+            transition.redraw()
+        })
     }
 
     _bindEvents() {
@@ -1031,10 +1064,10 @@ class Point {
                 y: event.y
             }
 
-            d.parent.updateStartPoint(d.parent.source_state.center().x,
-                d.parent.source_state.center().y)
-            d.parent.updateEndPoint(d.parent.target_state.center().x,
-                d.parent.target_state.center().y)
+            d.parent.updateStartPoint(d.parent.source.center().x,
+                d.parent.source.center().y)
+            d.parent.updateEndPoint(d.parent.target.center().x,
+                d.parent.target.center().y)
             d.parent.redraw()
         }
 
