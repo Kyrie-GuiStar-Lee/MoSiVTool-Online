@@ -703,20 +703,6 @@ class Transition extends Component {
         })
         .curve(d3.curveNatural)
 
-    marker = svg.append("marker")
-            .attr("id", "arrow")
-            .attr("markerUnits","strokeWidth")//设置为strokeWidth箭头会随着线的粗细发生变化
-            // .attr("viewBox", "0 0 12 12")//坐标系的区域
-            .attr("refX", 9)//箭头坐标
-            .attr("refY", 6)
-            .attr("markerWidth", 12)
-            .attr("markerHeight", 12)
-            .attr("orient", "auto")//绘制方向，可设定为：auto（自动确认方向）和 角度值
-            .append("path")
-            .attr("d", "M2,2 L10,6 L2,10 L2,2")//箭头的路径
-            .attr('fill', 'black') //箭头颜色
-            .attr("cursor", "pointer")
-
     constructor() {
         super();
         this.source = null
@@ -726,6 +712,7 @@ class Transition extends Component {
     redraw() {
         if(this.node != null) {
             d3.select(this.node).remove()
+            d3.select("#arrow" + this.datum.id).remove()
         }
 
         this.draw()
@@ -784,6 +771,22 @@ class Transition extends Component {
         this._modifyEndPoint()
     }
 
+    initMarker() {
+        svg.append("marker")
+            .attr("id", "arrow" + this.datum.id)
+            .attr("markerUnits","strokeWidth")//设置为strokeWidth箭头会随着线的粗细发生变化
+            // .attr("viewBox", "0 0 12 12")//坐标系的区域
+            .attr("refX", 9)//箭头坐标
+            .attr("refY", 6)
+            .attr("markerWidth", 12)
+            .attr("markerHeight", 12)
+            .attr("orient", "auto")//绘制方向，可设定为：auto（自动确认方向）和 角度值
+            .append("path")
+            .attr("d", "M2,2 L10,6 L2,10 L2,2")//箭头的路径
+            .attr('fill', 'black') //箭头颜色
+            .attr("cursor", "pointer")
+    }
+
     showPoints() {
         console.log(this)
         for(let i = 1; i < this.datum.points.length - 1; ++i) {
@@ -797,12 +800,13 @@ class Transition extends Component {
         function mouseover_hover(event, d) {
             d3.select(this)
                 .attr('stroke', 'red')
+            d3.select('#arrow' + d.id)
+                .select('path')
+                .attr('fill', 'red')
         }
 
         d3.select(this.node)
             .on('mouseover.hover', mouseover_hover)
-        d3.selectAll(this.marker._groups[0])
-            .attr('fill', 'red')
     }
 
     mouseout() {
@@ -811,12 +815,13 @@ class Transition extends Component {
         function mouseout_hover(event, d) {
             d3.select(this)
                 .attr('stroke', 'black')
+            d3.select('#arrow' + d.id)
+                .select('path')
+                .attr('fill', 'black')
         }
 
         d3.select(this.node)
             .on('mouseout.hover', mouseout_hover)
-        d3.selectAll(this.marker._groups[0])
-            .attr('fill', 'black')
     }
 
     _bindEvents() {
@@ -887,13 +892,15 @@ class CommonTransition extends Transition {
     }
 
     draw() {
+        this.initMarker()
+
         this.node = svg.append("path")
             .datum(this.datum)
             .attr("d", this.curve_generator(this.datum.points))
             .attr("fill", "none")
             .attr("stroke","black")
             .attr("stroke-width", 1.2)
-            .attr("marker-end","url(#arrow)")
+            .attr("marker-end","url(#arrow" + this.datum.id +")")
             .attr("cursor", "pointer")
             .node()
 
@@ -904,8 +911,6 @@ class CommonTransition extends Transition {
 class ProTransition extends Transition {
     constructor() {
         super();
-        this.branch_point = null
-        this.target_state = []
     }
 
     link(event, component_chose) {
@@ -960,13 +965,15 @@ class ProTransition extends Transition {
     }
 
     draw() {
+        this.initMarker()
+
         this.node = svg.append("path")
             .datum(this.datum)
             .attr("d", this.curve_generator(this.datum.points))
             .attr("fill", "none")
             .attr("stroke","black")
             .attr("stroke-width", 1.2)
-            .attr("marker-end","url(#arrow)")
+            .attr("marker-end","url(#arrow" + this.datum.id +")")
             .attr("cursor", "pointer")
             .style("stroke-dasharray","5,5")
             .node()
