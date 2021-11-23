@@ -61,7 +61,7 @@ class StateDiagramSVG {
             }
         })
             .on('click.select_component', (event) => {
-                if(component_to_transmit == null || component_to_transmit == CommonTransition) {
+                if(component_to_transmit == null || component_to_transmit == Transition) {
                     let target_datum = d3.select(event.target).datum()
                     // 点击空白处取消选中
                     if(target_datum == undefined) {
@@ -78,7 +78,7 @@ class StateDiagramSVG {
                     if(component instanceof State) {
                         component.showResizer()
                     }
-                    else if(component instanceof CommonTransition) {
+                    else if(component instanceof CommonTransition || component instanceof ProTransition) {
                         component.showPoints()
                     }
                     console.log("click.select_component", component)
@@ -88,9 +88,18 @@ class StateDiagramSVG {
             })
             .on('click.draw_common_transition', (event) => {
                 if(component_to_transmit != null) { // Cursor
-                    let component = new component_to_transmit(event.layerX, event.layerY)
-                    if (component instanceof CommonTransition) {
+                    let component = null
+                    if (component_to_transmit == Transition) {
                         if (transition == null) {
+                            if(this.component_chose instanceof State) {
+                                component = new CommonTransition()
+                            }
+                            else if(this.component_chose instanceof BranchPoint) {
+                                component = new ProTransition()
+                            }
+                            else {
+                                // TODO err handler
+                            }
                             transition = component
                             this.stateDiagram.add(transition)
                         }
@@ -279,6 +288,7 @@ class StartEndState extends State {
 
         function dragstart(event, d) {
             hideResizer()
+            hidePoints()
         }
 
         function dragmove(event, d) {
@@ -713,6 +723,14 @@ class Transition extends Component {
         this.target = null
     }
 
+    redraw() {
+        if(this.node != null) {
+            d3.select(this.node).remove()
+        }
+
+        this.draw()
+    }
+
     _modifyStartPoint() {
         let curve = this.curve_generator(this.datum.points)
         let kld_curve = ShapeInfo.path(curve)
@@ -765,90 +783,6 @@ class Transition extends Component {
         this._modifyStartPoint()
         this._modifyEndPoint()
     }
-}
-
-
-// TODO.Future Linkable 接口
-class CommonTransition extends Transition {
-    constructor() {
-        super();
-        this.datum.guard = []
-    }
-
-    link(event, component_chose) {
-        console.log(component_chose)
-
-        // 若未选则起点，则选择的是起点
-        if (this.source == null) {
-            // 选择的是State
-            if(component_chose instanceof State) {
-                this.source = component_chose
-                let center = this.source.center()
-                let point = new Point(center.x, center.y, this)
-                this.datum.points.push(point)
-            }
-            else {
-                return
-            }
-        }
-        // 优先处理起点, 后处理终点
-        else if (this.target == null) {
-            if (component_chose instanceof State || component_chose instanceof BranchPoint) {
-                this.target = component_chose
-                let center = this.target.center()
-                let point = new Point(center.x, center.y, this)
-                this.datum.points.push(point)
-                // 只有两个点，修正第一个点
-                if (this.datum.points.length === 2) {
-                    this._modifyStartPoint()
-                }
-                // 修正终点
-                this._modifyEndPoint()
-                // 更新 state 和 branch point
-                // TODO startState 和 endState 不自指
-                if (this.source instanceof StartState) {
-                    this.source.out_transitions.push(this)
-                }
-                if (this.target instanceof EndState) {
-                    this.target.in_transitions.push(this)
-                } else if (this.target instanceof BranchPoint) {
-                    this.target.common_transition = this
-                }
-                return true
-            }
-            else {
-                let point = new Point(event.layerX, event.layerY, this)
-                this.datum.points.push(point)
-                // 修正第一个点
-                if(this.datum.points.length >= 2) {
-                    this._modifyStartPoint()
-                }
-            }
-        }
-        return false
-    }
-
-    draw() {
-        this.node = svg.append("path")
-            .datum(this.datum)
-            .attr("d", this.curve_generator(this.datum.points))
-            .attr("fill", "none")
-            .attr("stroke","black")
-            .attr("stroke-width", 1.2)
-            .attr("marker-end","url(#arrow)")
-            .attr("cursor", "pointer")
-            .node()
-
-        this._bindEvents()
-    }
-
-    redraw() {
-        if(this.node != null) {
-            d3.select(this.node).remove()
-        }
-
-        this.draw()
-    }
 
     showPoints() {
         console.log(this)
@@ -891,15 +825,153 @@ class CommonTransition extends Transition {
     }
 }
 
+
+// TODO.Future Linkable 接口
+class CommonTransition extends Transition {
+    constructor() {
+        super();
+        this.datum.guard = []
+    }
+
+    link(event, component_chose) {
+        console.log(component_chose)
+
+        // 若未选则起点，则选择的是起点
+        if (this.source == null) {
+            // 选择的是State
+            if(component_chose instanceof State) {
+                this.source = component_chose
+                let source_center = this.source.center()
+                let point = new Point(source_center.x, source_center.y, this)
+                this.datum.points.push(point)
+            }
+            else {
+                return
+            }
+        }
+        // 优先处理起点, 后处理终点
+        else if (this.target == null) {
+            if (component_chose instanceof State || component_chose instanceof BranchPoint) {
+                this.target = component_chose
+                let target_center = this.target.center()
+                let point = new Point(target_center.x, target_center.y, this)
+                this.datum.points.push(point)
+
+                // 修正起点和终点
+                let source_center = this.source.center()
+                this.updateStartPoint(source_center.x, source_center.y)
+                this._modifyEndPoint()
+
+                // 更新 state 和 branch point
+                // TODO startState 和 endState 不自指
+                if (this.source instanceof StartState) {
+                    this.source.out_transitions.push(this)
+                }
+                if (this.target instanceof EndState) {
+                    this.target.in_transitions.push(this)
+                } else if (this.target instanceof BranchPoint) {
+                    this.target.common_transition = this
+                }
+                return true
+            }
+            else {
+                let point = new Point(event.layerX, event.layerY, this)
+                this.datum.points.push(point)
+                // 修正第一个点
+                if(this.datum.points.length >= 2) {
+                    this._modifyStartPoint()
+                }
+            }
+        }
+        return false
+    }
+
+    draw() {
+        this.node = svg.append("path")
+            .datum(this.datum)
+            .attr("d", this.curve_generator(this.datum.points))
+            .attr("fill", "none")
+            .attr("stroke","black")
+            .attr("stroke-width", 1.2)
+            .attr("marker-end","url(#arrow)")
+            .attr("cursor", "pointer")
+            .node()
+
+        this._bindEvents()
+    }
+}
+
 class ProTransition extends Transition {
-    constructor(x, y) {
+    constructor() {
         super();
         this.branch_point = null
         this.target_state = []
     }
-    
-    draw() {
 
+    link(event, component_chose) {
+        console.log(component_chose)
+
+        // 若未选则起点，则选择的是起点
+        if (this.source == null) {
+            // 选择的是State
+            if(component_chose instanceof BranchPoint) {
+                this.source = component_chose
+                let source_center = this.source.center()
+                let point = new Point(source_center.x, source_center.y, this)
+                this.datum.points.push(point)
+            }
+            else {
+                return
+            }
+        }
+        // 优先处理起点, 后处理终点
+        else if (this.target == null) {
+            if (component_chose instanceof State) {
+                this.target = component_chose
+                let target_center = this.target.center()
+                let point = new Point(target_center.x, target_center.y, this)
+                this.datum.points.push(point)
+
+                // 修正起点和终点
+                let source_center = this.source.center()
+                this.updateStartPoint(source_center.x, source_center.y)
+                this._modifyEndPoint()
+
+                // 更新 state 和 branch point
+                // TODO startState 和 endState 不自指
+                if(this.source instanceof BranchPoint) {
+                    this.source.pro_transitions.push(this)
+                }
+                if(this.target instanceof EndState) {
+                    this.target.in_transitions.push(this)
+                }
+                return true
+            }
+            else {
+                let point = new Point(event.layerX, event.layerY, this)
+                this.datum.points.push(point)
+                // 修正第一个点
+                if(this.datum.points.length >= 2) {
+                    this._modifyStartPoint()
+                }
+            }
+        }
+        return false
+    }
+
+    draw() {
+        this.node = svg.append("path")
+            .datum(this.datum)
+            .attr("d", this.curve_generator(this.datum.points))
+            .attr("fill", "none")
+            .attr("stroke","black")
+            .attr("stroke-width", 1.2)
+            .attr("marker-end","url(#arrow)")
+            .attr("cursor", "pointer")
+            .style("stroke-dasharray","5,5")
+            .node()
+
+        this._bindEvents()
     }
 }
 
@@ -944,7 +1016,10 @@ class BranchPoint extends Component{
     drag() {
         let that = this
 
-        function dragstart(event, d) {}
+        function dragstart(event, d) {
+            hideResizer()
+            hidePoints()
+        }
 
         function dragmove(event, d) {
             d3.select(this).raise()
@@ -1051,7 +1126,9 @@ class Point {
     drag() {
         let that = this
 
-        function dragstart(event, d) {}
+        function dragstart(event, d) {
+            hideResizer()
+        }
 
         function dragmove(event, d) {
             d3.select(this).raise()
