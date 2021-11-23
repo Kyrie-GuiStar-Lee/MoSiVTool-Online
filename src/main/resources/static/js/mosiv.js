@@ -147,7 +147,6 @@ class StateDiagram {
 class Component {
     /**
      * 组件类型 根据类型 绘制出不同的图形
-     * @type {{id: number, type: number}}
      */
     datum = {
         id: -1,
@@ -715,7 +714,7 @@ class Transition extends Component {
     }
 
     _modifyStartPoint() {
-        let curve = this.curve_generator(this.datum.points.slice(0, 2))
+        let curve = this.curve_generator(this.datum.points)
         let kld_curve = ShapeInfo.path(curve)
         let kld_border = this.source.getKldBorderShapeInfo()
         console.log(kld_curve, kld_border)
@@ -732,10 +731,10 @@ class Transition extends Component {
     }
 
     _modifyEndPoint() {
-        let curve = this.curve_generator(this.datum.points.slice(-2))
+        let curve = this.curve_generator(this.datum.points)
         let kld_curve = ShapeInfo.path(curve)
         let kld_border = this.target.getKldBorderShapeInfo()
-        let intersection = Intersection.intersect(kld_curve, kld_border).points[0]
+        let intersection = Intersection.intersect(kld_curve, kld_border).points.slice(-1)[0]
         // 无交点，一般发生在drag中，两个component靠太近，此时transition被遮挡
         if(intersection == undefined) {
             return
@@ -774,7 +773,6 @@ class CommonTransition extends Transition {
     constructor() {
         super();
         this.datum.guard = []
-        this.point_num = 0
     }
 
     link(event, component_chose) {
@@ -786,7 +784,7 @@ class CommonTransition extends Transition {
             if(component_chose instanceof State) {
                 this.source = component_chose
                 let center = this.source.center()
-                let point = new Point(this.point_num++, center.x, center.y, this)
+                let point = new Point(center.x, center.y, this)
                 this.datum.points.push(point)
             }
             else {
@@ -798,7 +796,7 @@ class CommonTransition extends Transition {
             if (component_chose instanceof State || component_chose instanceof BranchPoint) {
                 this.target = component_chose
                 let center = this.target.center()
-                let point = new Point(this.point_num++, center.x, center.y, this)
+                let point = new Point(center.x, center.y, this)
                 this.datum.points.push(point)
                 // 只有两个点，修正第一个点
                 if (this.datum.points.length === 2) {
@@ -819,10 +817,10 @@ class CommonTransition extends Transition {
                 return true
             }
             else {
-                let point = new Point(this.point_num++, event.layerX, event.layerY, this)
+                let point = new Point(event.layerX, event.layerY, this)
                 this.datum.points.push(point)
-                // 根据第一二个点的连线修正第一个点
-                if(this.datum.points.length === 2) {
+                // 修正第一个点
+                if(this.datum.points.length >= 2) {
                     this._modifyStartPoint()
                 }
             }
@@ -954,8 +952,8 @@ class BranchPoint extends Component{
                 .attr('cy', event.y)
 
             d.position = {
-                x: event.x,
-                y: event.y
+                x: event.x - that.datum.r,
+                y: event.y - that.datum.r
             }
 
             that.updateTransitions(that.center())
@@ -997,8 +995,10 @@ class BranchPoint extends Component{
     }
 
     updateTransitions(center) {
-        this.common_transition.updateEndPoint(center.x, center.y)
-        this.common_transition.redraw()
+        if(this.common_transition != null) {
+            this.common_transition.updateEndPoint(center.x, center.y)
+            this.common_transition.redraw()
+        }
 
         this.pro_transitions.forEach((transition) => {
             transition.updateStartPoint(center.x, center.y)
@@ -1012,7 +1012,7 @@ class BranchPoint extends Component{
 }
 
 class Point {
-    constructor(number, x, y, parent) {
+    constructor(x, y, parent) {
         let default_width = 6
         this.datum = {
             // 外接矩形左上角
@@ -1023,7 +1023,6 @@ class Point {
             width: default_width,
             height: default_width,
             r: default_width / 2,
-            number: number,
             parent: parent
         }
     }
