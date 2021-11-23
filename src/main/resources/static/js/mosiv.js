@@ -562,6 +562,7 @@ class CommonState extends State {
             .attr('text',(d)=>{
                 return d.label
             })
+            .attr('rx','10')
             .attr('fill', '#fff')
             .attr('stroke', '#000')
             .attr('stroke-width', '2px')
