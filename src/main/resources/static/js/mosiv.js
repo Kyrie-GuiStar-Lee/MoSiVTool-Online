@@ -538,7 +538,7 @@ class CommonState extends State {
             width: this.datum.width,
             height: this.datum.height
         }, this, "!=")
-        this.out_transitons = []
+        this.out_transitions = []
         this.in_transitions = []
     }
 
@@ -686,7 +686,7 @@ class CommonState extends State {
 
     updateTransitions_out(center) {
         // 更新出边
-        if(this.out_transitons.length>0) {
+        if(this.out_transitions.length>0) {
             this.out_transitions.forEach((transition) => {
                 transition.updateStartPoint(center.x, center.y)
                 transition.redraw()
@@ -936,10 +936,12 @@ class CommonTransition extends Transition {
         // 选择的是State
         // TODO ProTransition
         if(component_chose instanceof State) {
-            console.log(component_chose)
+            // console.log(component_chose)
             // 若未选则起点，则选择的是起点
             if(this.source_state == null) {
                 this.source_state = component_chose
+                console.log(this.source_state)
+                // console.log(this.target_state)
                 let center = this.source_state.center()
                 let point = new Point(this.point_num++, center.x, center.y, this)
                 this.datum.points.push(point)
@@ -947,6 +949,8 @@ class CommonTransition extends Transition {
             // 优先处理起点, 后处理终点
             else if(this.target_state == null) {
                 this.target_state = component_chose
+                console.log(this.source_state)
+                // console.log(this.target_state)
                 let center = this.target_state.center()
                 let point = new Point(this.point_num++, center.x, center.y, this)
                 this.datum.points.push(point)
