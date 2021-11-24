@@ -99,6 +99,8 @@ class StateDiagramSVG {
                             }
                             else {
                                 // TODO err handler
+                                console.log('click.draw_common_transition:' + 'err')
+                                return
                             }
                             transition = component
                             this.stateDiagram.add(transition)
@@ -192,6 +194,18 @@ class State extends Component {
     drag() {}
 
     /**
+     * 返回g对应的矩形（绝对坐标）
+     * @returns {{width, position: {x: number, y: number}, height}}
+     */
+    getRect() {
+        return {
+            position: this.datum.position,
+            width: this.datum.width,
+            height: this.datum.height
+        }
+    }
+
+    /**
      * 状态的中点
      */
     center() {
@@ -261,18 +275,6 @@ class StartEndState extends State {
 
     setLabel(label) {
         this.datum.label = label
-    }
-
-    /**
-     * 返回g对应的矩形（绝对坐标）
-     * @returns {{width, position: {x: number, y: number}, height}}
-     */
-    getRect() {
-        return {
-            position: this.datum.position,
-            width: this.datum.width,
-            height: this.datum.height
-        }
     }
 
     /**
@@ -517,7 +519,8 @@ class CommonState extends State {
     constructor(x, y) {
         super();
         let default_width = 120
-        let default_height = 64
+        let default_height = 74
+        let default_radius = 10
         let default_font_size = 14
         this.datum = {
             // g 左上角
@@ -527,6 +530,7 @@ class CommonState extends State {
             },
             width: default_width,
             height: default_height,
+            radius: default_radius,
             min: {
                 width:default_width/2,
                 height:default_height/2
@@ -543,6 +547,8 @@ class CommonState extends State {
             width: this.datum.width,
             height: this.datum.height
         }, this, "!=")
+
+        this.invirants = []
         this.out_transitions = []
         this.in_transitions = []
     }
@@ -567,7 +573,9 @@ class CommonState extends State {
             .attr('text',(d)=>{
                 return d.label
             })
-            .attr('rx','10')
+            .attr('rx', (d) => {
+                return d.radius
+            })
             .attr('fill', '#fff')
             .attr('stroke', '#000')
             .attr('stroke-width', '2px')
@@ -580,23 +588,8 @@ class CommonState extends State {
 
     }
 
-
-
-
     setLabel(label) {
         this.datum.label = label
-    }
-
-    /**
-     * 返回g对应的矩形（绝对坐标）
-     * @returns {{width, position: {x: number, y: number}, height}}
-     */
-    getRect() {
-        return {
-            position: this.datum.position,
-            width: this.datum.width,
-            height: this.datum.height
-        }
     }
 
     /**
@@ -604,7 +597,7 @@ class CommonState extends State {
      * @returns {*}
      */
     getKldBorderShapeInfo() {
-        return ShapeInfo.rectangle([this.datum.position.x , this.datum.position.y], [this.datum.width, this.datum.height])
+        return ShapeInfo.rectangle([this.datum.position.x , this.datum.position.y], [this.datum.width, this.datum.height], this.datum.radius)
     }
 
     drag() {
@@ -615,10 +608,6 @@ class CommonState extends State {
         }
 
         function dragmove(event, d) {
-            /* important! https://observablehq.com/@d3/click-vs-drag
-                If you call raise() in dragstart, click events will not work properly.
-                Oh my! So torturing to fix this!
-            */
             d3.select(this).raise()
                 .attr("transform", () => {
                     return "translate(" + (event.x) + "," + (event.y) + ")"
@@ -629,8 +618,7 @@ class CommonState extends State {
                 y: event.y
             }
 
-            that.updateTransitions_in(that.center())
-            that.updateTransitions_out(that.center())
+            that.updateTransitions(that.center())
         }
 
         function dragend(event, d) {
@@ -684,43 +672,22 @@ class CommonState extends State {
                 return 'translate(' + (this.datum.position.x) + ',' + (this.datum.position.y) + ')'
             })
 
-        this.updateTransitions_out(this.center())
-        this.updateTransitions_in(this.center())
-
+        this.updateTransitions(this.center())
     }
 
-
-    updateTransitions_out(center) {
-        // 更新出边
-        if(this.out_transitions.length>0) {
-            this.out_transitions.forEach((transition) => {
-                transition.updateStartPoint(center.x, center.y)
-                transition.redraw()
-            })
-        }
-    }
-
-    updateTransitions_in(center) {
+    updateTransitions(center) {
         // 更新入边
-        if(this.in_transitions.length>0) {
-            this.in_transitions.forEach((transition) => {
-                transition.updateEndPoint(center.x, center.y)
-                transition.redraw()
-            })
-        }
+        this.in_transitions.forEach((transition) => {
+            transition.updateEndPoint(center.x, center.y)
+            transition.redraw()
+        })
+        // 更新出边
+        this.out_transitions.forEach((transition) => {
+            transition.updateStartPoint(center.x, center.y)
+            transition.redraw()
+        })
     }
-
-
-
-
 }
-
-
-//CommonState部分结束
-
-
-
-
 
 class ResizerGroup {
     resizers = []
@@ -1076,11 +1043,12 @@ class CommonTransition extends Transition {
 
                 // 更新 state 和 branch point
                 // TODO startState 和 endState 不自指
-                if (this.source instanceof StartState) {
+                if (this.source instanceof StartState || this.source instanceof CommonState) {
                     this.source.out_transitions.push(this)
                 }
-                if (this.target instanceof EndState) {
+                if (this.target instanceof EndState || this.target instanceof CommonState) {
                     this.target.in_transitions.push(this)
+                    console.log(this.target.in_transitions)
                 } else if (this.target instanceof BranchPoint) {
                     this.target.common_transition = this
                 }
@@ -1154,7 +1122,7 @@ class ProTransition extends Transition {
                 if(this.source instanceof BranchPoint) {
                     this.source.pro_transitions.push(this)
                 }
-                if(this.target instanceof EndState) {
+                if(this.target instanceof EndState || this.target instanceof CommonState) {
                     this.target.in_transitions.push(this)
                 }
                 return true
