@@ -20,7 +20,22 @@ function hidePoints() {
     svg.selectAll('[point]').remove()
 }
 
-function binary_search({arr, val, cmp}) {
+function indexOf({arr, val, equal}) {
+    if(equal == undefined) {
+        equal = (a, b) => {
+            return a - b
+        }
+    }
+
+    for(let i = 0; i < arr.length; ++i) {
+        if(equal(arr[i], val) === 0) {
+            return i
+        }
+    }
+    return -1
+}
+
+function binarySearch({arr, val, cmp}) {
     if(cmp == undefined) {
         cmp = (a, b) => {
             return a - b
@@ -31,11 +46,11 @@ function binary_search({arr, val, cmp}) {
         high = arr.length - 1;
     while(low <= high) {
         let mid = Math.floor((high + low) / 2);
-        if(cmp(val, arr[mid]) == 0){
+        if(cmp(arr[mid], val) === 0){
             return mid;
-        }else if(cmp(val, arr[mid]) > 0){
+        }else if(cmp(arr[mid], val) < 0){
             low = mid + 1;
-        }else if(cmp(val, arr[mid]) < 0){
+        }else if(cmp(arr[mid], val) > 0){
             high = mid - 1;
         }else{
             return -1;
@@ -142,10 +157,12 @@ class StateDiagramSVG {
                 let delete_key_code = 46
                 if(event.keyCode === delete_key_code) {
                     let component_ids = this.component_chose.remove()
+                    console.log(component_ids)
                     component_ids.forEach((id) => {
                         this.stateDiagram.removeComponentById(id)
                     })
                     this.component_chose = null
+                    console.log(this.stateDiagram.components)
                 }
             })
     }
@@ -174,12 +191,15 @@ class StateDiagram {
      * @param id
      */
     removeComponentById(id) {
-        for(let i = 0; i < this.components.length; ++i) {
-            if(this.components[i].datum.id === id) {
-                this.components.splice(i, 1)
-                break
+        // O(log n)
+        let index = binarySearch({
+            arr: this.components,
+            val: id,
+            cmp: (a, b) => {
+                return a.datum.id - b
             }
-        }
+        })
+        this.components.splice(index, 1)
     }
 
     getComponentById(id) {
@@ -469,9 +489,13 @@ class StartState extends StartEndState {
         hideResizer()
 
         let transition_ids = [this.datum.id]
-        for(let i = 0; i < this.out_transitions.length; ++i) {
+        /**
+         * 因为this.out_transitions[i].remove()对this.out_transitions做了修改，所以只能倒序遍历
+         */
+        for(let i = this.out_transitions.length - 1; i >= 0; --i) {
             transition_ids.push(...this.out_transitions[i].remove())
         }
+        this.out_transitions.splice(0, this.out_transitions.length)
 
         d3.select(this.node).remove()
 
@@ -574,9 +598,10 @@ class EndState extends StartEndState {
         hideResizer()
 
         let transition_ids = [this.datum.id]
-        for (let i = 0; i < this.in_transitions.length; ++i) {
+        for (let i = this.in_transitions.length - 1; i >= 0; --i) {
             transition_ids.push(...this.in_transitions[i].remove())
         }
+        this.in_transitions.splice(0, this.in_transitions.length)
 
         d3.select(this.node).remove()
 
@@ -762,13 +787,16 @@ class CommonState extends State {
         hideResizer()
 
         let transition_ids = [this.datum.id]
-        for (let i = 0; i < this.in_transitions.length; ++i) {
+        for (let i = this.in_transitions.length - 1; i >= 0; --i) {
             transition_ids.push(...this.in_transitions[i].remove())
         }
+        this.in_transitions.splice(0, this.in_transitions.length)
 
-        for (let i = 0; i < this.out_transitions.length; ++i) {
+        for (let i = this.out_transitions.length - 1; i >= 0; --i) {
             transition_ids.push(...this.out_transitions[i].remove())
         }
+        this.out_transitions.splice(0, this.out_transitions.length)
+
         d3.select(this.node).remove()
 
         return transition_ids
@@ -1091,6 +1119,26 @@ class Transition extends Component {
 
     remove() {
         hidePoints()
+
+        /**
+         * this.source和this.target都有这份transition，所以都要删除
+         */
+        let index = indexOf({
+            arr: this.source.out_transitions,
+            val: this.datum.id,
+            equal: (a, b) => {
+                return a.datum.id - b
+            }})
+        this.source.out_transitions.splice(index, 1)
+
+        index = indexOf({
+            arr: this.target.in_transitions,
+            val: this.datum.id,
+            equal: (a, b) => {
+                return a.datum.id - b
+            }})
+        this.target.in_transitions.splice(index, 1)
+
         d3.select(this.node).remove()
         if(this.text_box != null) {
             d3.select(this.text_box.node).remove()
@@ -1138,11 +1186,10 @@ class CommonTransition extends Transition {
                 if (this.source instanceof StartState || this.source instanceof CommonState) {
                     this.source.out_transitions.push(this)
                 }
-                if (this.target instanceof EndState || this.target instanceof CommonState) {
+                if (this.target instanceof EndState || this.target instanceof CommonState || this.target instanceof BranchPoint) {
                     this.target.in_transitions.push(this)
-                } else if (this.target instanceof BranchPoint) {
-                    this.target.common_transition = this
                 }
+
                 this.showGuard()
                 return true
             }
@@ -1185,7 +1232,7 @@ class CommonTransition extends Transition {
 
     showGuard() {
         // TODO
-        this.guard = ["x >= 1", "y <= 30"]
+        // this.guard = ["x >= 1", "y <= 30"]
         let length = this.datum.points.length
         let mid_position = null
         if(length % 2 === 1) {
@@ -1240,7 +1287,7 @@ class ProTransition extends Transition {
                 // 更新 state 和 branch point
                 // TODO startState 和 endState 不自指
                 if(this.source instanceof BranchPoint) {
-                    this.source.pro_transitions.push(this)
+                    this.source.out_transitions.push(this)
                 }
                 if(this.target instanceof EndState || this.target instanceof CommonState) {
                     this.target.in_transitions.push(this)
@@ -1291,8 +1338,8 @@ class BranchPoint extends Component{
             height: default_width,
             r: default_width / 2
         }
-        this.common_transition = null
-        this.pro_transitions = []
+        this.in_transitions = []
+        this.out_transitions = []
     }
 
     draw() {
@@ -1372,12 +1419,12 @@ class BranchPoint extends Component{
     }
 
     updateTransitions(center) {
-        if(this.common_transition != null) {
-            this.common_transition.updateEndPoint(center.x, center.y)
-            this.common_transition.redraw()
-        }
+        this.in_transitions.forEach((transition) => {
+            transition.updateEndPoint(center.x, center.y)
+            transition.redraw()
+        })
 
-        this.pro_transitions.forEach((transition) => {
+        this.out_transitions.forEach((transition) => {
             transition.updateStartPoint(center.x, center.y)
             transition.redraw()
         })
@@ -1391,15 +1438,17 @@ class BranchPoint extends Component{
         hidePoints()
 
         let transition_ids = [this.datum.id]
-        if(this.common_transition != null) {
-            transition_ids.push(...this.common_transition.remove())
+        for (let i = this.in_transitions.length - 1; i >= 0; --i) {
+            transition_ids.push(...this.in_transitions[i].remove())
         }
+        this.in_transitions.splice(0, this.in_transitions.length)
 
-        for (let i = 0; i < this.pro_transitions.length; ++i) {
-            transition_ids.push(...this.pro_transitions[i].remove())
+        for (let i = this.out_transitions.length - 1; i >= 0; --i) {
+            transition_ids.push(...this.out_transitions[i].remove())
         }
+        this.out_transitions.splice(0, this.out_transitions.length)
+
         d3.select(this.node).remove()
-
         return transition_ids
     }
 }
