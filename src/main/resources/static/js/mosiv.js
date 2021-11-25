@@ -116,6 +116,16 @@ class StateDiagramSVG {
                     }
                 }
             })
+            .on('keydown.delete_component', (event) => {
+                let delete_key_code = 46
+                if(event.keyCode === delete_key_code) {
+                    this.stateDiagram.remove(this.component_chose)
+                    hideResizer()
+                    hidePoints()
+                    d3.select(this.component_chose.node).remove()
+                    this.component_chose = null
+                }
+            })
     }
 }
 
@@ -129,12 +139,25 @@ class StateDiagram {
     }
 
     /**
-     * 添加将建模元素
+     * 添加建模元素
      * @param component 建模元素
      */
     add(component) {
         component.setId(this.component_id++)
         this.components.push(component);
+    }
+
+    /**
+     * 移除建模元素
+     * @param component 建模元素
+     */
+    remove(component) {
+        for(let i = 0; i <= this.components.length; ++i) {
+            if(component.datum.id === this.components[i].datum.id) {
+                this.components.splice(i, 1)
+                break
+            }
+        }
     }
 
     getComponentById(id) {
@@ -146,6 +169,7 @@ class StateDiagram {
 
         // TODO throw exception
         console.log("getComponentById: can't find component")
+        console.log(this.components)
     }
 
     toJSON() {}
@@ -1004,12 +1028,12 @@ class Transition extends Component {
     }
 }
 
-
 // TODO.Future Linkable 接口
 class CommonTransition extends Transition {
     constructor() {
         super();
-        this.datum.guard = []
+        this.guard = []
+        this.text_box = null
     }
 
     link(event, component_chose) {
@@ -1052,6 +1076,7 @@ class CommonTransition extends Transition {
                 } else if (this.target instanceof BranchPoint) {
                     this.target.common_transition = this
                 }
+                this.showGuard()
                 return true
             }
             else {
@@ -1080,6 +1105,38 @@ class CommonTransition extends Transition {
             .node()
 
         this._bindEvents()
+    }
+
+    // TODO Map
+    addGuard(guard) {
+        this.guard.push(guard)
+    }
+
+    removeGuard() {
+
+    }
+
+    showGuard() {
+        // TODO
+        this.guard = ["x >= 1", "y <= 30"]
+        let length = this.datum.points.length
+        let mid_position = null
+        console.log(this.datum.points)
+        if(length % 2 === 1) {
+            console.log("odd")
+            mid_position = this.datum.points[(length - 1) / 2].datum.position
+        }
+        else {
+            let point1 = this.datum.points[length / 2 - 1]
+            let point2 = this.datum.points[length / 2]
+            mid_position = {
+                x: (point1.datum.position.x + point2.datum.position.x) / 2,
+                y: (point1.datum.position.y + point2.datum.position.y) / 2
+            }
+        }
+
+        this.text_box = new TextBox(mid_position.x, mid_position.y, this.guard, this)
+        this.text_box.draw()
     }
 }
 
@@ -1337,6 +1394,92 @@ class Point {
                 return {
                     x: tmp.attr('cx'),
                     y: tmp.attr('cy')
+                }
+            })
+            .on('start', dragstart)
+            .on('drag', dragmove)
+            .on('end', dragend)
+
+        d3.select(this.node).call(drag)
+    }
+
+    _bindEvents() {
+        this.drag()
+    }
+}
+
+class TextBox {
+    constructor(x, y, text, parent) {
+        let default_font_size = 14
+        this.datum = {
+            position: {
+                x: x,
+                y: y
+            },
+            parent: parent // list
+        }
+        this.text = text
+    }
+
+    setText(text) {
+        this.text = text
+    }
+
+    draw() {
+        this.node = svg.append('text')
+            .datum(this.datum)
+            .attr('x', (d) => {
+                return d.position.x
+            })
+            .attr('y', (d) => {
+                return d.position.y
+            })
+            .attr('font-size', (d) => {
+                return d.font_size
+            }).node()
+
+        d3.select(this.node)
+            .selectAll('tspan')
+            .data(this.text)
+            .enter()
+            .append('tspan')
+            .attr('x', this.datum.position.x)
+            .attr('dy', '1em')
+            .text((d) => {
+                return d;
+            })
+
+        this._bindEvents()
+    }
+
+    drag() {
+        let that = this
+
+        function dragstart(event, d) {}
+
+        function dragmove(event, d) {
+            d3.select(this).raise()
+                .attr('x', event.x)
+                .attr('y', event.y)
+
+            d3.select(this)
+                .selectAll('tspan')
+                .attr('x', event.x)
+
+            d.position = {
+                x: event.x,
+                y: event.y
+            }
+        }
+
+        function dragend(event, d) {}
+
+        let drag = d3.drag()
+            .subject(function () {
+                let tmp = d3.select(this);
+                return {
+                    x: tmp.attr('x'),
+                    y: tmp.attr('y')
                 }
             })
             .on('start', dragstart)
