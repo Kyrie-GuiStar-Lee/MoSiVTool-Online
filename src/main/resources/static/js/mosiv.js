@@ -18,8 +18,45 @@ function hideResizer() {
 
 function hidePoints() {
     svg.selectAll('[point]').remove()
-    console.log(svg.selectAll('[point]'))
 }
+
+function indexOf({arr, val, equal}) {
+    if(equal == undefined) {
+        equal = (a, b) => {
+            return a - b
+        }
+    }
+
+    for(let i = 0; i < arr.length; ++i) {
+        if(equal(arr[i], val) === 0) {
+            return i
+        }
+    }
+    return -1
+}
+
+function binarySearch({arr, val, cmp}) {
+    if(cmp == undefined) {
+        cmp = (a, b) => {
+            return a - b
+        }
+    }
+
+    let low = 0,
+        high = arr.length - 1;
+    while(low <= high) {
+        let mid = Math.floor((high + low) / 2);
+        if(cmp(arr[mid], val) === 0){
+            return mid;
+        }else if(cmp(arr[mid], val) < 0){
+            low = mid + 1;
+        }else if(cmp(arr[mid], val) > 0){
+            high = mid - 1;
+        }else{
+            return -1;
+        }
+    }
+};
 
 /**
  * 建模元素画布
@@ -116,6 +153,18 @@ class StateDiagramSVG {
                     }
                 }
             })
+            .on('keydown.delete_component', (event) => {
+                let delete_key_code = 46
+                if(event.keyCode === delete_key_code) {
+                    let component_ids = this.component_chose.remove()
+                    console.log(component_ids)
+                    component_ids.forEach((id) => {
+                        this.stateDiagram.removeComponentById(id)
+                    })
+                    this.component_chose = null
+                    console.log(this.stateDiagram.components)
+                }
+            })
     }
 }
 
@@ -129,12 +178,28 @@ class StateDiagram {
     }
 
     /**
-     * 添加将建模元素
+     * 添加建模元素
      * @param component 建模元素
      */
     add(component) {
         component.setId(this.component_id++)
         this.components.push(component);
+    }
+
+    /**
+     * 通过id移除建模元素
+     * @param id
+     */
+    removeComponentById(id) {
+        // O(log n)
+        let index = binarySearch({
+            arr: this.components,
+            val: id,
+            cmp: (a, b) => {
+                return a.datum.id - b
+            }
+        })
+        this.components.splice(index, 1)
     }
 
     getComponentById(id) {
@@ -146,6 +211,7 @@ class StateDiagram {
 
         // TODO throw exception
         console.log("getComponentById: can't find component")
+        console.log(this.components)
     }
 
     toJSON() {}
@@ -171,6 +237,11 @@ class Component {
     }
 
     draw() {}
+
+    /**
+     * 删除自己
+     */
+    remove() {}
 
     /**
      * 浮于顶层
@@ -369,6 +440,13 @@ class StartEndState extends State {
 }
 
 class StartState extends StartEndState {
+    constructor(x, y) {
+        super(x, y);
+        this.datum.type = 1
+        this.setLabel("开始")
+        this.out_transitions = [] // drag
+    }
+
     draw() {
         //画开始状态
         this.node = svg
@@ -393,24 +471,10 @@ class StartState extends StartEndState {
             .attr('fill', 'rgb(90, 90, 90)')
             .attr('stroke', 'rgb(90, 90, 90)')
 
-        // d3.select(circles._groups[0][1])
-        //     .attr('cx', this.datum.r)
-        //     .attr('cy', this.datum.r)
-        //     .attr('r', 0.3*this.datum.r)
-
-
         hideResizer()
         this.showResizer()
 
         this._bindEvents()
-
-    }
-
-    constructor(x, y) {
-        super(x, y);
-        this.datum.type = 1
-        this.setLabel("开始")
-        this.out_transitions = [] // drag
     }
 
     updateTransitions(center) {
@@ -420,9 +484,33 @@ class StartState extends StartEndState {
             transition.redraw()
         })
     }
+
+    remove() {
+        hideResizer()
+
+        let transition_ids = [this.datum.id]
+        /**
+         * 因为this.out_transitions[i].remove()对this.out_transitions做了修改，所以只能倒序遍历
+         */
+        for(let i = this.out_transitions.length - 1; i >= 0; --i) {
+            transition_ids.push(...this.out_transitions[i].remove())
+        }
+        this.out_transitions.splice(0, this.out_transitions.length)
+
+        d3.select(this.node).remove()
+
+        return transition_ids
+    }
 }
 
 class EndState extends StartEndState {
+    constructor(x, y) {
+        super(x, y);
+        this.datum.type = 2
+        this.setLabel("结束")
+        this.in_transitions = [] // drag
+    }
+
     draw() {//画结束状态
         this.node = svg
             .append('g')
@@ -498,19 +586,26 @@ class EndState extends StartEndState {
         this.updateTransitions(this.center())
     }
 
-    constructor(x, y) {
-        super(x, y);
-        this.datum.type = 2
-        this.setLabel("结束")
-        this.in_transitions = [] // drag
-    }
-
     updateTransitions(center) {
         // 更新入边
         this.in_transitions.forEach((transition) => {
             transition.updateEndPoint(center.x, center.y)
             transition.redraw()
         })
+    }
+
+    remove() {
+        hideResizer()
+
+        let transition_ids = [this.datum.id]
+        for (let i = this.in_transitions.length - 1; i >= 0; --i) {
+            transition_ids.push(...this.in_transitions[i].remove())
+        }
+        this.in_transitions.splice(0, this.in_transitions.length)
+
+        d3.select(this.node).remove()
+
+        return transition_ids
     }
 }
 
@@ -686,6 +781,25 @@ class CommonState extends State {
             transition.updateStartPoint(center.x, center.y)
             transition.redraw()
         })
+    }
+
+    remove() {
+        hideResizer()
+
+        let transition_ids = [this.datum.id]
+        for (let i = this.in_transitions.length - 1; i >= 0; --i) {
+            transition_ids.push(...this.in_transitions[i].remove())
+        }
+        this.in_transitions.splice(0, this.in_transitions.length)
+
+        for (let i = this.out_transitions.length - 1; i >= 0; --i) {
+            transition_ids.push(...this.out_transitions[i].remove())
+        }
+        this.out_transitions.splice(0, this.out_transitions.length)
+
+        d3.select(this.node).remove()
+
+        return transition_ids
     }
 }
 
@@ -881,6 +995,7 @@ class Transition extends Component {
         super();
         this.source = null
         this.target = null
+        this.text_box = null // 文本框
     }
 
     redraw() {
@@ -896,7 +1011,6 @@ class Transition extends Component {
         let curve = this.curve_generator(this.datum.points)
         let kld_curve = ShapeInfo.path(curve)
         let kld_border = this.source.getKldBorderShapeInfo()
-        console.log(kld_curve, kld_border)
         let intersection = Intersection.intersect(kld_curve, kld_border).points[0]
         // 无交点，一般发生在drag中，两个component靠太近，此时transition被遮挡
         if(intersection == undefined) {
@@ -1002,19 +1116,45 @@ class Transition extends Component {
         this.mouseover()
         this.mouseout()
     }
-}
 
+    remove() {
+        hidePoints()
+
+        /**
+         * this.source和this.target都有这份transition，所以都要删除
+         */
+        let index = indexOf({
+            arr: this.source.out_transitions,
+            val: this.datum.id,
+            equal: (a, b) => {
+                return a.datum.id - b
+            }})
+        this.source.out_transitions.splice(index, 1)
+
+        index = indexOf({
+            arr: this.target.in_transitions,
+            val: this.datum.id,
+            equal: (a, b) => {
+                return a.datum.id - b
+            }})
+        this.target.in_transitions.splice(index, 1)
+
+        d3.select(this.node).remove()
+        if(this.text_box != null) {
+            d3.select(this.text_box.node).remove()
+        }
+        return [this.datum.id]
+    }
+}
 
 // TODO.Future Linkable 接口
 class CommonTransition extends Transition {
     constructor() {
         super();
-        this.datum.guard = []
+        this.guard = []
     }
 
     link(event, component_chose) {
-        console.log(component_chose)
-
         // 若未选则起点，则选择的是起点
         if (this.source == null) {
             // 选择的是State
@@ -1046,12 +1186,11 @@ class CommonTransition extends Transition {
                 if (this.source instanceof StartState || this.source instanceof CommonState) {
                     this.source.out_transitions.push(this)
                 }
-                if (this.target instanceof EndState || this.target instanceof CommonState) {
+                if (this.target instanceof EndState || this.target instanceof CommonState || this.target instanceof BranchPoint) {
                     this.target.in_transitions.push(this)
-                    console.log(this.target.in_transitions)
-                } else if (this.target instanceof BranchPoint) {
-                    this.target.common_transition = this
                 }
+
+                this.showGuard()
                 return true
             }
             else {
@@ -1081,6 +1220,36 @@ class CommonTransition extends Transition {
 
         this._bindEvents()
     }
+
+    // TODO Map
+    addGuard(guard) {
+        this.guard.push(guard)
+    }
+
+    removeGuard() {
+
+    }
+
+    showGuard() {
+        // TODO
+        // this.guard = ["x >= 1", "y <= 30"]
+        let length = this.datum.points.length
+        let mid_position = null
+        if(length % 2 === 1) {
+            mid_position = this.datum.points[(length - 1) / 2].datum.position
+        }
+        else {
+            let point1 = this.datum.points[length / 2 - 1]
+            let point2 = this.datum.points[length / 2]
+            mid_position = {
+                x: (point1.datum.position.x + point2.datum.position.x) / 2,
+                y: (point1.datum.position.y + point2.datum.position.y) / 2
+            }
+        }
+
+        this.text_box = new TextBox(mid_position.x, mid_position.y, this.guard, this)
+        this.text_box.draw()
+    }
 }
 
 class ProTransition extends Transition {
@@ -1089,8 +1258,6 @@ class ProTransition extends Transition {
     }
 
     link(event, component_chose) {
-        console.log(component_chose)
-
         // 若未选则起点，则选择的是起点
         if (this.source == null) {
             // 选择的是State
@@ -1120,7 +1287,7 @@ class ProTransition extends Transition {
                 // 更新 state 和 branch point
                 // TODO startState 和 endState 不自指
                 if(this.source instanceof BranchPoint) {
-                    this.source.pro_transitions.push(this)
+                    this.source.out_transitions.push(this)
                 }
                 if(this.target instanceof EndState || this.target instanceof CommonState) {
                     this.target.in_transitions.push(this)
@@ -1171,8 +1338,8 @@ class BranchPoint extends Component{
             height: default_width,
             r: default_width / 2
         }
-        this.common_transition = null
-        this.pro_transitions = []
+        this.in_transitions = []
+        this.out_transitions = []
     }
 
     draw() {
@@ -1252,12 +1419,12 @@ class BranchPoint extends Component{
     }
 
     updateTransitions(center) {
-        if(this.common_transition != null) {
-            this.common_transition.updateEndPoint(center.x, center.y)
-            this.common_transition.redraw()
-        }
+        this.in_transitions.forEach((transition) => {
+            transition.updateEndPoint(center.x, center.y)
+            transition.redraw()
+        })
 
-        this.pro_transitions.forEach((transition) => {
+        this.out_transitions.forEach((transition) => {
             transition.updateStartPoint(center.x, center.y)
             transition.redraw()
         })
@@ -1265,6 +1432,24 @@ class BranchPoint extends Component{
 
     _bindEvents() {
         this.drag()
+    }
+
+    remove() {
+        hidePoints()
+
+        let transition_ids = [this.datum.id]
+        for (let i = this.in_transitions.length - 1; i >= 0; --i) {
+            transition_ids.push(...this.in_transitions[i].remove())
+        }
+        this.in_transitions.splice(0, this.in_transitions.length)
+
+        for (let i = this.out_transitions.length - 1; i >= 0; --i) {
+            transition_ids.push(...this.out_transitions[i].remove())
+        }
+        this.out_transitions.splice(0, this.out_transitions.length)
+
+        d3.select(this.node).remove()
+        return transition_ids
     }
 }
 
@@ -1344,6 +1529,96 @@ class Point {
             .on('end', dragend)
 
         d3.select(this.node).call(drag)
+    }
+
+    _bindEvents() {
+        this.drag()
+    }
+}
+
+class TextBox {
+    constructor(x, y, text, parent) {
+        let default_font_size = 14
+        this.datum = {
+            position: {
+                x: x,
+                y: y
+            },
+            parent: parent // list
+        }
+        this.text = text
+    }
+
+    setText(text) {
+        this.text = text
+    }
+
+    draw() {
+        this.node = svg.append('text')
+            .datum(this.datum)
+            .attr('x', (d) => {
+                return d.position.x
+            })
+            .attr('y', (d) => {
+                return d.position.y
+            })
+            .attr('font-size', (d) => {
+                return d.font_size
+            }).node()
+
+        d3.select(this.node)
+            .selectAll('tspan')
+            .data(this.text)
+            .enter()
+            .append('tspan')
+            .attr('x', this.datum.position.x)
+            .attr('dy', '1em')
+            .text((d) => {
+                return d;
+            })
+
+        this._bindEvents()
+    }
+
+    drag() {
+        let that = this
+
+        function dragstart(event, d) {}
+
+        function dragmove(event, d) {
+            d3.select(this).raise()
+                .attr('x', event.x)
+                .attr('y', event.y)
+
+            d3.select(this)
+                .selectAll('tspan')
+                .attr('x', event.x)
+
+            d.position = {
+                x: event.x,
+                y: event.y
+            }
+        }
+
+        function dragend(event, d) {}
+
+        let drag = d3.drag()
+            .subject(function () {
+                let tmp = d3.select(this);
+                return {
+                    x: tmp.attr('x'),
+                    y: tmp.attr('y')
+                }
+            })
+            .on('start', dragstart)
+            .on('drag', dragmove)
+            .on('end', dragend)
+
+        d3.select(this.node).call(drag)
+    }
+
+    raise() {
+        d3.select(this.node).raise()
     }
 
     _bindEvents() {
