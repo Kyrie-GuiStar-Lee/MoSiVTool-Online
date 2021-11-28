@@ -1079,6 +1079,13 @@ class CommonTransition extends Transition {
                 if (this.source instanceof StartState) {
                     this.source.out_transitions.push(this)
                 }
+                if (this.source instanceof CommonState){
+                    this.source.out_transitions.push(this)
+                }
+                if (this.target instanceof CommonState){
+                    this.target.in_transitions.push(this)
+                }
+
                 if (this.target instanceof EndState) {
                     this.target.in_transitions.push(this)
                 } else if (this.target instanceof BranchPoint) {
@@ -1153,6 +1160,9 @@ class ProTransition extends Transition {
                 // TODO startState 和 endState 不自指
                 if(this.source instanceof BranchPoint) {
                     this.source.pro_transitions.push(this)
+                }
+                if(this.target instanceof CommonState){
+                    this.target.in_transitions.push(this)
                 }
                 if(this.target instanceof EndState) {
                     this.target.in_transitions.push(this)
