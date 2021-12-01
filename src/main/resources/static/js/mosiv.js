@@ -11,7 +11,7 @@ let Intersection = KldIntersections.Intersection;
  * always call hideResizer() before calling showResizer()
  */
 function hideResizer() {
-    for(let i = 0; i <= 3; ++i) {
+    for (let i = 0; i <= 3; ++i) {
         svg.select('#resizer' + i).remove()
     }
 }
@@ -51,7 +51,7 @@ class StateDiagramSVG {
 
         // draw选中的Component
         svg.on('click.add_component', (event) => {
-            if(component_to_transmit != null) { // Cursor
+            if (component_to_transmit != null) { // Cursor
                 let component = new component_to_transmit(event.layerX, event.layerY)
                 if (component instanceof State || component instanceof BranchPoint) {
                     this.stateDiagram.add(component)
@@ -61,10 +61,10 @@ class StateDiagramSVG {
             }
         })
             .on('click.select_component', (event) => {
-                if(component_to_transmit == null || component_to_transmit == Transition) {
+                if (component_to_transmit == null || component_to_transmit == Transition) {
                     let target_datum = d3.select(event.target).datum()
                     // 点击空白处取消选中
-                    if(target_datum == undefined) {
+                    if (target_datum == undefined) {
                         console.log("click.select_component: didn't choose any component")
                         this.component_chose = null
                         hidePoints()
@@ -72,32 +72,30 @@ class StateDiagramSVG {
                         return
                     }
                     let component = this.stateDiagram.getComponentById(target_datum.id)
-                    component.raise()
                     hideResizer()
                     hidePoints()
-                    if(component instanceof State) {
+                    if (component instanceof State) {
                         component.showResizer()
-                    }
-                    else if(component instanceof CommonTransition || component instanceof ProTransition) {
+                    } else if (component instanceof CommonTransition || component instanceof ProTransition) {
                         component.showPoints()
                     }
+                    component.raise()
+                    component.active()
                     console.log("click.select_component", component)
                     // TODO getComponentById() err handler
                     this.component_chose = component
                 }
             })
             .on('click.draw_common_transition', (event) => {
-                if(component_to_transmit != null) { // Cursor
+                if (component_to_transmit != null) { // Cursor
                     let component = null
                     if (component_to_transmit == Transition) {
                         if (transition == null) {
-                            if(this.component_chose instanceof State) {
+                            if (this.component_chose instanceof State) {
                                 component = new CommonTransition()
-                            }
-                            else if(this.component_chose instanceof BranchPoint) {
+                            } else if (this.component_chose instanceof BranchPoint) {
                                 component = new ProTransition()
-                            }
-                            else {
+                            } else {
                                 // TODO err handler
                             }
                             transition = component
@@ -136,8 +134,8 @@ class StateDiagram {
     }
 
     getComponentById(id) {
-        for(let i = 0; i < this.components.length; ++i) {
-            if(this.components[i].datum.id === id) {
+        for (let i = 0; i < this.components.length; ++i) {
+            if (this.components[i].datum.id === id) {
                 return this.components[i]
             }
         }
@@ -146,11 +144,14 @@ class StateDiagram {
         console.log("getComponentById: can't find component")
     }
 
-    toJSON() {}
+    toJSON() {
+    }
 
-    toXML() {}
+    toXML() {
+    }
 
-    toPNG() {}
+    toPNG() {
+    }
 }
 
 class Component {
@@ -168,12 +169,17 @@ class Component {
         this.datum.id = id
     }
 
-    draw() {}
+    draw() {
+    }
 
     /**
      * 浮于顶层
      */
-    raise() {}
+    raise() {
+    }
+
+    active() {
+    }
 }
 
 class State extends Component {
@@ -189,7 +195,8 @@ class State extends Component {
     }
     resizer = null
 
-    drag() {}
+    drag() {
+    }
 
     /**
      * 状态的中点
@@ -210,13 +217,15 @@ class State extends Component {
         this.resizer.draw()
     }
 
-    resize() {}
+    resize() {
+    }
 
     /**
      * drag, resize时更新transition
      * @param center 中心坐标
      */
-    updateTransitions(center) {}
+    updateTransitions(center) {
+    }
 }
 
 /**
@@ -314,7 +323,7 @@ class StartEndState extends State {
         }
 
         let drag = d3.drag()
-            .subject(function() {
+            .subject(function () {
                 let tmp = d3.select(this).attr('transform')
                 let reg = /translate\((-)?\d+(\.\d+)?,(-)?\d+(\.\d+)?\)/ // TODO 可能有(1px,  2px)的情况
                 let str = reg.exec(tmp)[0]
@@ -438,7 +447,7 @@ class EndState extends StartEndState {
             })
             .attr('fill', 'rgb(204, 226, 160)')
             .attr('stroke', 'rgb(90, 90, 90)')
-            .attr('stroke-width','3px')
+            .attr('stroke-width', '3px')
 
         d3.select(this.node)
             .append('circle')
@@ -449,7 +458,7 @@ class EndState extends StartEndState {
                 return d.r
             })
             .attr('r', (d) => {
-                return 0.4*d.r
+                return 0.4 * d.r
             })
             .attr('fill', 'rgb(90, 90, 90)')
             .attr('stroke', 'rgb(90, 90, 90)')
@@ -475,10 +484,9 @@ class EndState extends StartEndState {
                 return d.r
             })
             .attr('r', (d, i) => {
-                if(i === 0) {
+                if (i === 0) {
                     return d.r
-                }
-                else if(i === 1) {
+                } else if (i === 1) {
                     return 0.4 * d.r
                 }
             })
@@ -559,7 +567,7 @@ class ResizerGroup {
         this.rect.height = Math.max(this.min.height, ((number & 1) == 0 ? -1 : 1) * (event.sourceEvent.layerY - opposite_resizer.datum.position.y))
 
         // 高宽相等且等比例缩放
-        if(this.zoom_type == "==") {
+        if (this.zoom_type == "==") {
             this.rect.width = Math.min(this.rect.width, this.rect.height)
             this.rect.height = this.rect.width
         }
@@ -589,7 +597,7 @@ class ResizerGroup {
 
     // 由于resizer在component静止时才显示，所以拖动完成后被showResizer()调用，以更新resizer的位置
     update(rect) {
-        for(let i = 0; i <= 3; ++i) {
+        for (let i = 0; i <= 3; ++i) {
             this.resizers[i].update({
                 x: rect.position.x + (i >> 1) * rect.width,
                 y: (rect.position.y + (i & 1) * rect.height)
@@ -648,14 +656,16 @@ class Resizer {
     }
 
     drag() {
-        function dragstart(event, d) {}
+        function dragstart(event, d) {
+        }
 
         function dragmove(event, d) {
             d3.select(this).raise()
             d.parent.resize(event, d.number)
         }
 
-        function dragend(event, d) {}
+        function dragend(event, d) {
+        }
 
         let drag = d3.drag()
             .subject(function () {
@@ -710,7 +720,7 @@ class Transition extends Component {
     }
 
     redraw() {
-        if(this.node != null) {
+        if (this.node != null) {
             d3.select(this.node).remove()
             d3.select("#arrow" + this.datum.id).remove()
         }
@@ -725,7 +735,7 @@ class Transition extends Component {
         console.log(kld_curve, kld_border)
         let intersection = Intersection.intersect(kld_curve, kld_border).points[0]
         // 无交点，一般发生在drag中，两个component靠太近，此时transition被遮挡
-        if(intersection == undefined) {
+        if (intersection == undefined) {
             return
         }
 
@@ -741,7 +751,7 @@ class Transition extends Component {
         let kld_border = this.target.getKldBorderShapeInfo()
         let intersection = Intersection.intersect(kld_curve, kld_border).points.slice(-1)[0]
         // 无交点，一般发生在drag中，两个component靠太近，此时transition被遮挡
-        if(intersection == undefined) {
+        if (intersection == undefined) {
             return
         }
 
@@ -774,7 +784,7 @@ class Transition extends Component {
     initMarker() {
         svg.append("marker")
             .attr("id", "arrow" + this.datum.id)
-            .attr("markerUnits","strokeWidth")//设置为strokeWidth箭头会随着线的粗细发生变化
+            .attr("markerUnits", "strokeWidth")//设置为strokeWidth箭头会随着线的粗细发生变化
             // .attr("viewBox", "0 0 12 12")//坐标系的区域
             .attr("refX", 9)//箭头坐标
             .attr("refY", 6)
@@ -782,14 +792,14 @@ class Transition extends Component {
             .attr("markerHeight", 12)
             .attr("orient", "auto")//绘制方向，可设定为：auto（自动确认方向）和 角度值
             .append("path")
+            .classed("transition-marker", true)
             .attr("d", "M2,2 L10,6 L2,10 L2,2")//箭头的路径
-            .attr('fill', 'black') //箭头颜色
             .attr("cursor", "pointer")
     }
 
     showPoints() {
         console.log(this)
-        for(let i = 1; i < this.datum.points.length - 1; ++i) {
+        for (let i = 1; i < this.datum.points.length - 1; ++i) {
             this.datum.points[i].draw()
         }
     }
@@ -825,11 +835,17 @@ class Transition extends Component {
     }
 
     _bindEvents() {
-        this.mouseover()
-        this.mouseout()
+        // this.mouseover()
+        // this.mouseout()
+    }
+
+    active() {
+        d3.select(this.node).attr('stroke', 'orange')
+        d3.select('#arrow' + this.datum.id)
+            .select('path')
+            .attr('fill', 'orange')
     }
 }
-
 
 // TODO.Future Linkable 接口
 class CommonTransition extends Transition {
@@ -844,13 +860,12 @@ class CommonTransition extends Transition {
         // 若未选则起点，则选择的是起点
         if (this.source == null) {
             // 选择的是State
-            if(component_chose instanceof State) {
+            if (component_chose instanceof State) {
                 this.source = component_chose
                 let source_center = this.source.center()
                 let point = new Point(source_center.x, source_center.y, this)
                 this.datum.points.push(point)
-            }
-            else {
+            } else {
                 return
             }
         }
@@ -878,12 +893,11 @@ class CommonTransition extends Transition {
                     this.target.common_transition = this
                 }
                 return true
-            }
-            else {
+            } else {
                 let point = new Point(event.layerX, event.layerY, this)
                 this.datum.points.push(point)
                 // 修正第一个点
-                if(this.datum.points.length >= 2) {
+                if (this.datum.points.length >= 2) {
                     this._modifyStartPoint()
                 }
             }
@@ -897,10 +911,9 @@ class CommonTransition extends Transition {
         this.node = svg.append("path")
             .datum(this.datum)
             .attr("d", this.curve_generator(this.datum.points))
-            .attr("fill", "none")
-            .attr("stroke","black")
+            .classed("transition", true)
             .attr("stroke-width", 1.2)
-            .attr("marker-end","url(#arrow" + this.datum.id +")")
+            .attr("marker-end", "url(#arrow" + this.datum.id + ")")
             .attr("cursor", "pointer")
             .node()
 
@@ -919,13 +932,12 @@ class ProTransition extends Transition {
         // 若未选则起点，则选择的是起点
         if (this.source == null) {
             // 选择的是State
-            if(component_chose instanceof BranchPoint) {
+            if (component_chose instanceof BranchPoint) {
                 this.source = component_chose
                 let source_center = this.source.center()
                 let point = new Point(source_center.x, source_center.y, this)
                 this.datum.points.push(point)
-            }
-            else {
+            } else {
                 return
             }
         }
@@ -944,19 +956,18 @@ class ProTransition extends Transition {
 
                 // 更新 state 和 branch point
                 // TODO startState 和 endState 不自指
-                if(this.source instanceof BranchPoint) {
+                if (this.source instanceof BranchPoint) {
                     this.source.pro_transitions.push(this)
                 }
-                if(this.target instanceof EndState) {
+                if (this.target instanceof EndState) {
                     this.target.in_transitions.push(this)
                 }
                 return true
-            }
-            else {
+            } else {
                 let point = new Point(event.layerX, event.layerY, this)
                 this.datum.points.push(point)
                 // 修正第一个点
-                if(this.datum.points.length >= 2) {
+                if (this.datum.points.length >= 2) {
                     this._modifyStartPoint()
                 }
             }
@@ -971,18 +982,18 @@ class ProTransition extends Transition {
             .datum(this.datum)
             .attr("d", this.curve_generator(this.datum.points))
             .attr("fill", "none")
-            .attr("stroke","black")
+            .attr("stroke", "black")
             .attr("stroke-width", 1.2)
-            .attr("marker-end","url(#arrow" + this.datum.id +")")
+            .attr("marker-end", "url(#arrow" + this.datum.id + ")")
             .attr("cursor", "pointer")
-            .style("stroke-dasharray","5,5")
+            .style("stroke-dasharray", "5,5")
             .node()
 
         this._bindEvents()
     }
 }
 
-class BranchPoint extends Component{
+class BranchPoint extends Component {
     constructor(x, y) {
         super()
         let default_width = 18
@@ -1041,7 +1052,8 @@ class BranchPoint extends Component{
             that.updateTransitions(that.center())
         }
 
-        function dragend(event, d) {}
+        function dragend(event, d) {
+        }
 
         let drag = d3.drag()
             .subject(function () {
@@ -1077,7 +1089,7 @@ class BranchPoint extends Component{
     }
 
     updateTransitions(center) {
-        if(this.common_transition != null) {
+        if (this.common_transition != null) {
             this.common_transition.updateEndPoint(center.x, center.y)
             this.common_transition.redraw()
         }
@@ -1154,7 +1166,8 @@ class Point {
             d.parent.redraw()
         }
 
-        function dragend(event, d) {}
+        function dragend(event, d) {
+        }
 
         let drag = d3.drag()
             .subject(function () {

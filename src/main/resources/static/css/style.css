@@ -16,3 +16,21 @@
     background-color: #F8F8F8;
     border: 1px solid #aaa;
 }
+
+.transition:hover {
+    stroke: red;
+    fill: none;
+}
+
+.transition {
+    stroke: black;
+    fill: none;
+}
+
+.transition-marker:hover {
+    fill: red;
+}
+
+.transition-marker {
+    fill: black;
+}
