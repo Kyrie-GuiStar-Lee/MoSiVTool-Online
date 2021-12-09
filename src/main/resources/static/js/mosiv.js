@@ -10,6 +10,9 @@ let Intersection = KldIntersections.Intersection;
 /**
  * always call hideResizer() before calling showResizer()
  */
+
+
+
 function hideResizer() {
     for(let i = 0; i <= 3; ++i) {
         svg.select('#resizer' + i).remove()
@@ -58,6 +61,8 @@ function binarySearch({arr, val, cmp}) {
     }
 };
 
+let state_diagram_id = 0;
+
 /**
  * 建模元素画布
  */
@@ -65,6 +70,7 @@ class StateDiagramSVG {
     state_diagram_id = 0
     stateDiagram = null
     component_chose = null; // object
+    name = "一个状态机图"
 
     /**
      * 构造函数
@@ -75,11 +81,44 @@ class StateDiagramSVG {
         this._bindEvents()
     }
 
-    draw() {
-        this.stateDiagram.components.forEach((it) => {
-            it.draw(svg)
+    // draw() {
+    //     this.stateDiagram.components.forEach((it) => {
+    //         it.draw(svg)
+    //     })
+    // }
+
+    write_xml(){
+        $.ajax({
+            url:"http://127.0.0.1//write_xml",
+            type:"get",
+            success:function (){
+                alert("write success")
+            }
+        })
+
+    }
+
+
+    save_diagram(){
+        let state_diagram = {
+            id:state_diagram_id,
+            name:this.name
+        }
+
+        let that = this;
+        $.ajax({
+            contentType: "application/json;charset=utf-8",
+            url: "http://127.0.0.1:80/save_state_diagram",
+            type: "post",
+            data: JSON.stringify(state_diagram),
+            success:function (res){
+                alert("成功创建状态机图"+res)
+                state_diagram_id = res;
+            }
+
         })
     }
+
 
     _bindEvents() {
         // 正在选择的transition
@@ -148,6 +187,7 @@ class StateDiagramSVG {
                         }
                         if (link_finish) {
                             console.log("link finish")
+
                             transition = null
                         }
                     }
@@ -214,7 +254,110 @@ class StateDiagram {
         console.log(this.components)
     }
 
-    toJSON() {}
+        toJSON() {
+            //定义json数组
+            let json_data = []
+
+            //定义不同JSON对象
+
+            //定义状态图
+            let state_diagram = {
+                "type":"state_diagram",
+                "id":state_diagram_id,//TODO 获取当前状态图的ID
+                "name":"",
+            }
+            //定义状态
+            let state = {
+                "type":"state",
+                "name":"",
+                "id":"",
+                "sdg_id":"",
+                "abscissa":"",
+                "ordinate":"",
+                "label":""
+                // name:{
+                //
+                // },
+                // label:{
+                //
+                // }
+            }
+            //定义迁移
+            let transition = {
+                "id":"",
+                "sdg_id":"",
+                "type":"transition",
+                "label":"",
+                "source":"",
+                "target":""
+            }
+            //定义branch_point （目前来看属性和状态一样，因为状态还不能增加name和label）
+            let branch_point = {
+                "type":"",
+                "id":"",
+                "abscissa":"",
+                "ordinate":""
+            }
+
+            json_data.push(state_diagram)
+            for(let i=0; i<this.components.length; i++){
+                if(this.components[i] instanceof State){
+                    state = null;
+                    state = {
+                        "type":"state",
+                        "name":"",
+                        "label":"",
+                        "sdg_id":state_diagram.id,
+                        "id":this.components[i].datum.id,
+                        "abscissa": this.components[i].datum.position.x,
+                        "ordinate": this.components[i].datum.position.y
+                    }
+                    json_data.push(state)
+                }
+                if(this.components[i] instanceof Transition){
+                    transition = null;
+                    transition = {
+                        "type":"transition",
+                        "sdg_id":state_diagram.id,
+                        "id":this.components[i].datum.id,
+                        "label":"",
+                        "source":this.components[i].source.datum.id,
+                        "target":this.components[i].target.datum.id,
+                    }
+                    json_data.push(transition)
+                }
+                if(this.components[i] instanceof BranchPoint){
+                    branch_point = null;
+                    branch_point = {
+                        "type":"branch_point",
+                        "id":this.components[i].datum.id,
+                        "abscissa": this.components[i].datum.position.x,
+                        "ordinate": this.components[i].datum.position.y
+                    }
+                    json_data.push(branch_point)
+                }
+
+            }
+            $.ajax({
+                dataType: "json",
+                contentType: "application/json",
+                url: "http://127.0.0.1:80/save_json",
+                type: "post",
+                data: JSON.stringify(json_data),
+                success: function () {
+                    alert("111");
+                },
+                error: function(e) {
+                    alert("出现错误");
+                }
+
+            })
+
+
+            console.log(json_data)
+
+
+        }
 
     toXML() {}
 
@@ -302,6 +445,8 @@ class State extends Component {
      * @param center 中心坐标
      */
     updateTransitions(center) {}
+
+
 }
 
 /**
@@ -1232,7 +1377,7 @@ class CommonTransition extends Transition {
 
     showGuard() {
         // TODO
-        // this.guard = ["x >= 1", "y <= 30"]
+        this.guard = ["x >= 1", "y <= 30"]
         let length = this.datum.points.length
         let mid_position = null
         if(length % 2 === 1) {

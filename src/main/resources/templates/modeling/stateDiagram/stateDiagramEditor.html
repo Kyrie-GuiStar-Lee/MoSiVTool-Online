@@ -12,6 +12,8 @@
           th:href="@{/css/ace.min.css}">
     <link rel="stylesheet" href="../../../static/css/stateDiagramEditor.css"
           th:href="@{/css/stateDiagramEditor.css}">
+
+
 </head>
 <body class="no-skin">
 <div id="app">
@@ -59,9 +61,19 @@
         <div class="footer">
             <div class="footer-inner">
                 <div class="footer-content">
-                <span class="bigger-120">
+                    <button onclick = "tojson()" >
+                        Save(Test)
+                    </button>
+                    <button onclick = "save_diagram()" >
+                        Add diagram(Test)
+                    </button>
+                    <button onclick = "write_xml()" >
+                        Write xml(Test)
+                    </button>
+
+                    <span class="bigger-120">
                      &copy; 2021 MoSiV-Online
-                </span>
+                    </span>
                 </div>
             </div>
         </div>
@@ -134,8 +146,6 @@
                         // TODO 建模元素高亮
                     })
 
-        let diagram = new StateDiagramSVG();
-
         // 建模元素工具栏
         // let palette = new StateDiagramPalette({
         //     el: "#myPalette", // canvas 的id
@@ -148,5 +158,16 @@
                 .style('height', my_diagram_wrapper.node().getBoundingClientRect().height)
         });
     });
+    let diagram = new StateDiagramSVG();
+    function save_diagram(){
+        diagram.save_diagram();
+    }
+    function write_xml(){
+        diagram.write_xml();
+    }
+
+    function tojson(){
+        diagram.stateDiagram.toJSON();
+    }
 </script>
 </html>
