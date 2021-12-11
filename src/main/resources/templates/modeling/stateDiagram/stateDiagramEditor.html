@@ -6,8 +6,6 @@
     <title>System Modeling</title>
     <link rel="stylesheet" href="../../../static/css/bootstrap.min.css"
           th:href="@{/css/bootstrap.min.css}">
-    <link rel="stylesheet" href="../../../static/css/style.css"
-          th:href="@{/css/style.css}">
     <link rel="stylesheet" href="../../../static/css/font-awesome.min.css"
           th:href="@{/css/font-awesome.min.css}">
     <link rel="stylesheet" href="../../../static/css/ace.min.css"
@@ -83,7 +81,7 @@
 <script src="../../../static/js/vue.min.js" th:src="@{/js/vue.min.js}"></script>
 <script src="../../../static/js/d3.min.js" th:src="@{/js/d3.min.js}"></script>
 <script src="../../../static/js/util.js" th:src="@{/js/util.js}"></script>
-<script src="../../../static/js/kld-intersections.js" th:src="@{/js/kld-intersections.js}"></script>
+<script src="../../../static/kld-intersections.js" th:src="@{/js/kld-intersections.js}"></script>
 <script src="../../../static/js/mosiv.js" th:src="@{/js/mosiv.js}"></script>
 <script>
     $(function () {
@@ -97,44 +95,43 @@
         // 获取父节点
         let my_palette_wrapper = d3.select(my_palette.node().parentNode)
         my_palette.style('width', my_palette_wrapper.node().getBoundingClientRect().width)
-            .style('height', my_palette_wrapper.node().getBoundingClientRect().height)
+                    .style('height', my_palette_wrapper.node().getBoundingClientRect().height)
 
         let my_diagram = d3.select('#myDiagram')
         let my_diagram_wrapper = d3.select(my_diagram.node().parentNode)
         my_diagram.style('width', my_diagram_wrapper.node().getBoundingClientRect().width)
-            .style('height', my_diagram_wrapper.node().getBoundingClientRect().height)
+                    .style('height', my_diagram_wrapper.node().getBoundingClientRect().height)
 
 
         let components = [{name: "Cursor", obj: null},
             {name: "StartState", obj: StartState},
             {name: "EndState", obj: EndState},
-            {name: "CommonState", obj: CommonState},
-            {name: "Transition", obj: Transition},
-            {name: "BranchPoint", obj: BranchPoint}]
+            {name: "CommonTransition", obj: CommonTransition},
+            {name: "ProTransition", obj: ProTransition}]
 
         my_palette.selectAll("div")
-            .data(components)
-            .enter()
-            .append("div")
+                    .data(components)
+                    .enter()
+                    .append("div")
 
         my_palette.selectAll("div")
-            .data(components)
-            .style("width", "100%")
-            .style("padding-bottom", "80%")
-            .style("border", "1px solid black")
-            .style("cursor", "pointer")
-            .text((d) => {
-                return d.name
-            })
-            .on("click", (event, d) => {
-                if (d.name == "Cursor") {
-                    component_to_transmit = null
-                    return
-                }
+                    .data(components)
+                    .style("width", "100%")
+                    .style("padding-bottom", "80%")
+                    .style("border", "1px solid black")
+                    .style("cursor", "pointer")
+                    .text((d) => {
+                        return d.name
+                    })
+                    .on("click", (event, d) => {
+                        if(d.name == "Cursor") {
+                            component_to_transmit = null
+                            return
+                        }
 
-                component_to_transmit = d["obj"]
-                // TODO 建模元素高亮
-            })
+                        component_to_transmit = d["obj"]
+                        // TODO 建模元素高亮
+                    })
 
         let diagram = new StateDiagramSVG();
 
@@ -143,7 +140,7 @@
         //     el: "#myPalette", // canvas 的id
         // });
 
-        d3.select(window).on('resize.update_svg', function () {
+        d3.select(window).on('resize.update_svg', function() {
             my_palette.style('width', my_palette_wrapper.node().getBoundingClientRect().width)
                 .style('height', my_palette_wrapper.node().getBoundingClientRect().height)
             my_diagram.style('width', my_diagram_wrapper.node().getBoundingClientRect().width)
