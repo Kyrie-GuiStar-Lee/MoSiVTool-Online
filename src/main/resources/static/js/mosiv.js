@@ -1,5 +1,6 @@
 // --------------------------状态图建模 -------------------------------//
 let svg = d3.select("#myDiagram")
+let component_chose = null; // object
 // 选中的建模元素
 let component_to_transmit = null; // function
 
@@ -7,18 +8,21 @@ let component_to_transmit = null; // function
 let ShapeInfo = KldIntersections.ShapeInfo;
 let Intersection = KldIntersections.Intersection;
 
-/**
- * always call hideResizer before calling showResizer
- */
-function hideResizer() {
+function hide_resizer() {
     for(let i = 0; i <= 3; ++i) {
         svg.select('#resizer' + i).remove()
     }
 }
 
-function hidePoints() {
-    svg.selectAll('[point]').remove()
-    console.log(svg.selectAll('[point]'))
+/**
+ * 求某个状态的中点
+ * @param state
+ */
+function center_of(state) {
+    return {
+        x: state.datum.position.x + state.datum.width / 2,
+        y: state.datum.position.y + state.datum.height / 2
+    }
 }
 
 /**
@@ -27,7 +31,6 @@ function hidePoints() {
 class StateDiagramSVG {
     state_diagram_id = 0
     stateDiagram = null
-    component_chose = null; // object
 
     /**
      * 构造函数
@@ -47,63 +50,36 @@ class StateDiagramSVG {
     _bindEvents() {
         // 正在选择的transition
         let transition = null
-        // TODO transition未完成就选择其他的component时，要删除完成了一半的transition
 
-        // draw选中的Component
         svg.on('click.add_component', (event) => {
-            if(component_to_transmit != null) { // Cursor
+            // draw选中的Component
+            if (component_to_transmit != null) {
                 let component = new component_to_transmit(event.layerX, event.layerY)
-                if (component instanceof State || component instanceof ProTransition) {
+                if(component instanceof State || component instanceof ProTransition) {
                     this.stateDiagram.add(component)
-                    this.component_chose = component
-                    this.component_chose.draw()
+                    component_chose = component
+                    component_chose.draw()
+                }
+                else if(component instanceof CommonTransition) {
+                    if(transition == null) {
+                        transition = component
+                        this.stateDiagram.add(transition)
+                    }
+                    let link_finish = transition.link(event)
+                    if(link_finish) {
+                        console.log("link finish")
+                        transition = null
+                    }
                 }
             }
         })
-            .on('click.select_component', (event) => {
-                if(component_to_transmit == null || component_to_transmit == CommonTransition) {
-                    let target_datum = d3.select(event.target).datum()
-                    // 点击空白处取消选中
-                    if(target_datum == undefined) {
-                        console.log("click.select_component: didn't choose any component")
-                        this.component_chose = null
-                        hidePoints()
-                        hideResizer()
-                        return
-                    }
-                    let component = this.stateDiagram.getComponentById(target_datum.id)
-                    component.raise()
-                    hideResizer()
-                    hidePoints()
-                    if(component instanceof State) {
-                        component.showResizer()
-                    }
-                    else if(component instanceof CommonTransition) {
-                        component.showPoints()
-                    }
-                    console.log("click.select_component: " + component)
-                    // TODO getComponentById() err handler
-                    this.component_chose = component
-                }
-            })
-            .on('click.draw_common_transition', (event) => {
-                if(component_to_transmit != null) { // Cursor
-                    let component = new component_to_transmit(event.layerX, event.layerY)
-                    if (component instanceof CommonTransition) {
-                        if (transition == null) {
-                            transition = component
-                            this.stateDiagram.add(transition)
-                        }
-                        let link_finish = transition.link(event, this.component_chose)
-                        if (transition.datum.points.length >= 2) {
-                            transition.redraw()
-                        }
-                        if (link_finish) {
-                            console.log("link finish")
-                            transition = null
-                        }
-                    }
-                }
+            .on('click.hide_resizer', (event) => {
+                // TODO 判断没点到component
+                // if(component_to_transmit == null) {
+                //     // 点击空白处取消选中
+                //     component_chose = null
+                //     hide_resizer()
+                // }
             })
     }
 }
@@ -122,19 +98,8 @@ class StateDiagram {
      * @param component 建模元素
      */
     add(component) {
-        component.setId(this.component_id++)
+        component.set_id(this.component_id++)
         this.components.push(component);
-    }
-
-    getComponentById(id) {
-        for(let i = 0; i < this.components.length; ++i) {
-            if(this.components[i].datum.id === id) {
-                return this.components[i]
-            }
-        }
-
-        // TODO throw exception
-        console.log("getComponentById: can't find component")
     }
 
     toJSON() {}
@@ -149,27 +114,18 @@ class Component {
      * 组件类型 根据类型 绘制出不同的图形
      * @type {number}
      */
-    datum = {
-        id: -1,
-        type: -1
-    }
+    id = -1
+    type = -1;
     // svg节点
     node = null
 
-    setId() {}
+    set_id() {}
 
     draw() {}
-
-    /**
-     * 浮于顶层
-     */
-    raise() {}
 }
 
 class State extends Component {
     datum = {
-        id: -1,
-        type: -1,
         position: {
             x: 0,
             y: 0
@@ -179,23 +135,13 @@ class State extends Component {
     }
     resizer = null
 
-    setId(id) {
-        this.datum.id = id
+    set_id(id) {
+        this.id = id
     }
 
     drag() {}
 
-    /**
-     * 状态的中点
-     */
-    center() {
-        return {
-            x: this.datum.position.x + this.datum.width / 2,
-            y: this.datum.position.y + this.datum.height / 2
-        }
-    }
-
-    showResizer() {
+    show_resizer() {
         this.resizer.update({
             position: this.datum.position,
             width: this.datum.width,
@@ -205,12 +151,6 @@ class State extends Component {
     }
 
     resize() {}
-
-    /**
-     * drag, resize时更新transition
-     * @param center 中心坐标
-     */
-    updateTransitions(center) {}
 }
 
 /**
@@ -225,6 +165,7 @@ class StartEndState extends State {
      */
     constructor(x, y) {
         super();
+        this.type = 1
         let default_width = 64
         let default_font_size = 14
         this.datum = {
@@ -253,57 +194,78 @@ class StartEndState extends State {
         }, this, "==")
     }
 
-    setLabel(label) {
+    set_label(label) {
         this.datum.label = label
     }
 
-    /**
-     * 返回g对应的矩形（绝对坐标）
-     * @returns {{width, position: {x: number, y: number}, height}}
-     */
-    getRect() {
-        return {
-            position: this.datum.position,
-            width: this.datum.width,
-            height: this.datum.height
-        }
+    draw() {
+        this.node = svg
+            .append('g')
+            .datum(this.datum)
+            .attr('transform', (d) => {
+                return 'translate(' + d.position.x + ',' + d.position.y + ')'
+            })
+            .node()
+
+        d3.select(this.node)
+            .append('circle')
+            .attr('cx', (d) => {
+                return d.r
+            })
+            .attr('cy', (d) => {
+                return d.r
+            })
+            .attr('r', (d) => {
+                return d.r
+            })
+            .attr('stroke', 'black')
+            .attr('fill', 'white')
+
+        d3.select(this.node)
+            .append('text')
+            .text((d) => {
+                return d.label
+            })
+            .attr('x', (d) => {
+                return d.r
+            })
+            .attr('y', (d) => {
+                return d.r
+            })
+            .attr('font-size', (d) => {
+                return d.font_size
+            })
+            // 文字垂直、水平居中
+            .attr('text-anchor',"middle")
+            .attr('dy','.35em')
+
+        hide_resizer()
+        this.show_resizer()
+
+        this.bindEvents()
     }
 
-    /**
-     * 返回component实际形状对应的ShapeInfo
-     * @returns {*}
-     */
-    getKldBorderShapeInfo() {
-        return ShapeInfo.circle([this.datum.position.x + this.datum.r, this.datum.position.y + this.datum.r], this.datum.r)
-    }
-
+    // TODO 或许可以到父类
     drag() {
         let that = this
 
         function dragstart(event, d) {
-            hideResizer()
+            hide_resizer()
+            d3.select(this).raise()
         }
 
         function dragmove(event, d) {
-            /* important! https://observablehq.com/@d3/click-vs-drag
-                If you call raise() in dragstart, click events will not work properly.
-                Oh my! So torturing to fix this!
-            */
-            d3.select(this).raise()
+            d3.select(this)
                 .attr("transform", () => {
                     return "translate(" + (event.x) + "," + (event.y) + ")"
                 })
 
-            d.position = {
-                x: event.x,
-                y: event.y
-            }
-
-            that.updateTransitions(that.center())
+            d.position.x = event.x
+            d.position.y = event.y
         }
 
         function dragend(event, d) {
-            that.showResizer()
+            that.show_resizer()
         }
 
         let drag = d3.drag()
@@ -326,11 +288,49 @@ class StartEndState extends State {
         d3.select(this.node).call(drag)
     }
 
-    raise() {
-        d3.select(this.node).raise()
+    // TODO 或许可以到父类
+    // TODO 和drag冲突
+    click() {
+        let that = this
+
+        function click_choose(event, d) {
+            if (event.defaultPrevented) {
+                return
+            }
+            console.log('clicked')
+            // 选中该组件
+            component_chose = that
+            // d3.select(this).raise()
+            // 删除其他已显示的resizer
+            hide_resizer()
+            that.show_resizer()
+        }
+
+        d3.select(this.node)
+            .on('click.choose', click_choose)
     }
 
-    _bindEvents() {
+    // click的替代方案
+    mousedown() {
+        let that = this
+
+        function mousedown_choose(event, d) {
+            console.log('chose')
+            // 选中该组件
+            component_chose = that
+            // d3.select(this).raise()
+            // 删除其他已显示的resizer
+            hide_resizer()
+            that.show_resizer()
+        }
+
+        d3.select(this.node)
+            .on('mousedown.choose', mousedown_choose)
+    }
+
+    bindEvents() {
+        // 顺序很关键!
+        this.mousedown()
         this.drag()
     }
 
@@ -351,156 +351,34 @@ class StartEndState extends State {
             .attr('r', this.datum.r)
 
         d3.select(this.node)
+            .select('text')
+            .attr('x', this.datum.r)
+            .attr('y', this.datum.r)
+
+        d3.select(this.node)
             .attr('transform', () => {
                 return 'translate(' + (this.datum.position.x) + ',' + (this.datum.position.y) + ')'
             })
-
-        this.updateTransitions(this.center())
     }
 }
 
 class StartState extends StartEndState {
-    draw() {//画开始状态
-        this.node = svg
-            .append('g')
-            .datum(this.datum)
-            .attr('transform', (d) => {
-                return 'translate(' + d.position.x + ',' + d.position.y + ')'
-            })
-            .node()
-
-        d3.select(this.node)
-            .append('circle')
-            .attr('cx', (d) => {
-                return d.r
-            })
-            .attr('cy', (d) => {
-                return d.r
-            })
-            .attr('r', (d) => {
-                return d.r
-            })
-            .attr('fill', 'rgb(90, 90, 90)')
-            .attr('stroke', 'rgb(90, 90, 90)')
-
-
-        hideResizer()
-        this.showResizer()
-
-        this._bindEvents()
-
-    }
-
     constructor(x, y) {
         super(x, y);
-        this.datum.type = 1
-        this.setLabel("开始")
+        this.set_label("开始")
+        this.in_transitions = [] // drag
         this.out_transitions = [] // drag
-    }
-
-    updateTransitions(center) {
-        // 更新出边
-        this.out_transitions.forEach((transition) => {
-            transition.updateStartPoint(center.x, center.y)
-            transition.redraw()
-        })
     }
 }
 
 class EndState extends StartEndState {
-    draw() {//画结束状态
-        this.node = svg
-            .append('g')
-            .datum(this.datum)
-            .attr('transform', (d) => {
-                return 'translate(' + d.position.x + ',' + d.position.y + ')'
-            })
-            .node()
-
-        d3.select(this.node)
-            .append('circle')
-            .attr('cx', (d) => {
-                return d.r
-            })
-            .attr('cy', (d) => {
-                return d.r
-            })
-            .attr('r', (d) => {
-                return d.r
-            })
-            .attr('fill', 'rgb(204, 226, 160)')
-            .attr('stroke', 'rgb(90, 90, 90)')
-            .attr('stroke-width','3px')
-
-        d3.select(this.node)
-            .append('circle')
-            .attr('cx', (d) => {
-                return d.r
-            })
-            .attr('cy', (d) => {
-                return d.r
-            })
-            .attr('r', (d) => {
-                return 0.4*d.r
-            })
-            .attr('fill', 'rgb(90, 90, 90)')
-            .attr('stroke', 'rgb(90, 90, 90)')
-
-        // let circles = d3.select(this.node)
-        //     .selectAll('circle')
-
-        hideResizer()
-        this.showResizer()
-
-        this._bindEvents()
-    }
-
-    resize(rect) {
-        this.datum.width = rect.width
-        this.datum.height = rect.height
-        this.datum.r = rect.width / 2
-        this.datum.position = rect.position
-
-        d3.select(this.node)
-            .selectAll('circle')
-            .attr('cx', (d, i) => {
-                return d.r
-            })
-            .attr('cy', (d, i) => {
-                return d.r
-            })
-            .attr('r', (d, i) => {
-                if(i === 0) {
-                    return d.r
-                }
-                else if(i === 1) {
-                    return 0.4 * d.r
-                }
-            })
-
-        d3.select(this.node)
-            .attr('transform', () => {
-                return 'translate(' + (this.datum.position.x) + ',' + (this.datum.position.y) + ')'
-            })
-
-        this.updateTransitions(this.center())
-    }
-
     constructor(x, y) {
         super(x, y);
-        this.datum.type = 2
-        this.setLabel("结束")
+        this.set_label("结束")
         this.in_transitions = [] // drag
     }
-
-    updateTransitions(center) {
-        // 更新入边
-        this.in_transitions.forEach((transition) => {
-            transition.updateEndPoint(center.x, center.y)
-            transition.redraw()
-        })
-    }
 }
+
 
 class CommonState extends State {
     constructor() {
@@ -582,7 +460,7 @@ class ResizerGroup {
         this.parent.resize(this.rect, number)
     }
 
-    // 由于resizer在component静止时才显示，所以拖动完成后被showResizer()调用，以更新resizer的位置
+    // 由于resizer在component静止时才显示，所以拖动完成后被show_resizer()调用，以更新resizer的位置
     update(rect) {
         for(let i = 0; i <= 3; ++i) {
             this.resizers[i].update({
@@ -639,14 +517,15 @@ class Resizer {
             .attr('fill', 'lightblue')
             .node()
 
-        this._bindEvents()
+        this.bindEvents()
     }
 
     drag() {
-        function dragstart(event, d) {}
+        function dragstart(event, d) {
+            d3.select(this).raise()
+        }
 
         function dragmove(event, d) {
-            d3.select(this).raise()
             d.parent.resize(event, d.number)
         }
 
@@ -667,7 +546,7 @@ class Resizer {
         d3.select(this.node).call(drag)
     }
 
-    _bindEvents() {
+    bindEvents() {
         this.drag()
     }
 
@@ -686,10 +565,8 @@ class Resizer {
 }
 
 class Transition extends Component {
-    datum = {
-        points: [],
-        guard: []
-    }
+    points = []
+    guard = []
     curve_generator = d3.line()
         .x((d, i) => {
             return d.datum.position.x
@@ -710,8 +587,7 @@ class Transition extends Component {
             .attr("orient", "auto")//绘制方向，可设定为：auto（自动确认方向）和 角度值
             .append("path")
             .attr("d", "M2,2 L10,6 L2,10 L2,2")//箭头的路径
-            .attr('fill', 'black') //箭头颜色
-            .attr("cursor", "pointer")
+            .attr('fill', 'black');//箭头颜色
 
     constructor() {
         super();
@@ -721,169 +597,61 @@ class Transition extends Component {
 class CommonTransition extends Transition {
     constructor() {
         super();
-        this.source_state = null
-        this.target_state = null
-        this.point_num = 0
+        this.from_state = -1
+        this.to_state = -1
     }
 
-    link(event, component_chose) {
+    link(event) {
+        if(this.to_state !== -1) {
+            // TODO 更新 state 里的 transition 列表
+            return true
+        }
         // 选择的是State
-        // TODO ProTransition
-        if(component_chose instanceof State) {
+        if(component_chose != null) {
+            // TODO bug component_chose在component mousedown内更新，比该判断晚
             console.log(component_chose)
             // 若未选则起点，则选择的是起点
-            if(this.source_state == null) {
-                this.source_state = component_chose
-                let center = this.source_state.center()
-                let point = new Point(this.point_num++, center.x, center.y, this)
-                this.datum.points.push(point)
+            if(this.from_state === -1) {
+                this.from_state = component_chose.id
+                let center = center_of(component_chose)
+                let point = new Point(center.x, center.y)
+                this.points.push(point)
             }
             // 优先处理起点, 后处理终点
-            else if(this.target_state == null) {
-                this.target_state = component_chose
-                let center = this.target_state.center()
-                let point = new Point(this.point_num++, center.x, center.y, this)
-                this.datum.points.push(point)
-                // 只有两个点，修正第一个点
-                if(this.datum.points.length === 2) {
-                    this._modifyStartPoint()
-                }
-                // 修正终点
-                this._modifyEndPoint()
-                // 更新 state
-                // TODO startState 和 endState 不自指
-                this.source_state.out_transitions.push(this)
-                this.target_state.in_transitions.push(this)
-                return true
+            else if(this.to_state === -1) {
+                this.to_state = component_chose.id
+                let center = center_of(component_chose)
+                let point = new Point(center.x, center.y)
+                this.points.push(point)
             }
+            component_chose = null
         }
         else {
+            console.log(this.from_state)
             // 起点确定才能选择后续的点
-            if(this.source_state == null) {
+            if(this.from_state === -1) {
                 return
             }
-            let point = new Point(this.point_num++, event.layerX, event.layerY, this)
-            this.datum.points.push(point)
-            // 根据第一二个点的连线修正第一个点
-            if(this.datum.points.length === 2) {
-                this._modifyStartPoint()
-            }
+            let point = new Point(event.layerX, event.layerY)
+            this.points.push(point)
         }
+
+        this.draw()
         return false
     }
 
-    _modifyStartPoint() {
-        let curve = this.curve_generator(this.datum.points.slice(0, 2))
-        let kld_curve = ShapeInfo.path(curve)
-        let kld_border = this.source_state.getKldBorderShapeInfo()
-        console.log(kld_curve, kld_border)
-        let intersection = Intersection.intersect(kld_curve, kld_border).points[0]
-        // 无交点，一般发生在drag中，两个component靠太近，此时transition被遮挡
-        if(intersection == undefined) {
-            return
-        }
-
-        this.datum.points[0].datum.position = {
-            x: intersection.x,
-            y: intersection.y
-        }
-    }
-
-    _modifyEndPoint() {
-        let curve = this.curve_generator(this.datum.points.slice(-2))
-        let kld_curve = ShapeInfo.path(curve)
-        let kld_border = this.target_state.getKldBorderShapeInfo()
-        let intersection = Intersection.intersect(kld_curve, kld_border).points[0]
-        // 无交点，一般发生在drag中，两个component靠太近，此时transition被遮挡
-        if(intersection == undefined) {
-            return
-        }
-
-        this.datum.points.slice(-1)[0].datum.position = {
-            x: intersection.x,
-            y: intersection.y
-        }
-    }
-
-    updateStartPoint(x, y) {
-        this.datum.points[0].datum.position = {
-            x: x,
-            y: y
-        }
-        this.datum.points.slice(-1)[0].datum.position = this.target_state.center()
-        this._modifyStartPoint()
-        this._modifyEndPoint()
-    }
-
-    updateEndPoint(x, y) {
-        this.datum.points[0].datum.position = this.source_state.center()
-        this.datum.points.slice(-1)[0].datum.position = {
-            x: x,
-            y: y
-        }
-        this._modifyStartPoint()
-        this._modifyEndPoint()
-    }
-
     draw() {
-        this.node = svg.append("path")
-            .datum(this.datum)
-            .attr("d", this.curve_generator(this.datum.points))
-            .attr("fill", "none")
-            .attr("stroke","black")
-            .attr("stroke-width", 1.2)
-            .attr("marker-end","url(#arrow)")
-            .attr("cursor", "pointer")
-            .node()
-
-        this._bindEvents()
-    }
-
-    redraw() {
         if(this.node != null) {
             d3.select(this.node).remove()
         }
 
-        this.draw()
-    }
-
-    showPoints() {
-        for(let i = 1; i < this.datum.points.length - 1; ++i) {
-            this.datum.points[i].draw()
-        }
-    }
-
-    mouseover() {
-        let that = this
-
-        function mouseover_hover(event, d) {
-            d3.select(this)
-                .attr('stroke', 'red')
-        }
-
-        d3.select(this.node)
-            .on('mouseover.hover', mouseover_hover)
-        d3.selectAll(this.marker._groups[0])
-            .attr('fill', 'red')
-    }
-
-    mouseout() {
-        let that = this
-
-        function mouseout_hover(event, d) {
-            d3.select(this)
-                .attr('stroke', 'black')
-        }
-
-        d3.select(this.node)
-            .on('mouseout.hover', mouseout_hover)
-        d3.selectAll(this.marker._groups[0])
-            .attr('fill', 'black')
-    }
-
-    _bindEvents() {
-        this.mouseover()
-        this.mouseout()
+        this.node = svg.append("path")
+            .attr("d", this.curve_generator(this.points))
+            .attr("fill", "none")
+            .attr("stroke","black")
+            .attr("stroke-width", 1)
+            .attr("marker-end","url(#arrow)")
+            .node()
     }
 }
 
@@ -900,8 +668,8 @@ class ProTransition extends Transition {
 }
 
 class Point {
-    constructor(number, x, y, parent) {
-        let default_width = 6
+    constructor(x, y) {
+        let default_width = 14
         this.datum = {
             // 外接矩形左上角
             position: {
@@ -910,16 +678,13 @@ class Point {
             },
             width: default_width,
             height: default_width,
-            r: default_width / 2,
-            number: number,
-            parent: parent
+            r: default_width / 2
         }
     }
 
     draw() {
         this.node = svg.append('circle')
             .datum(this.datum)
-            .attr('point', '')
             .attr('cx', (d) => {
                 return d.position.x + d.r
             })
@@ -931,52 +696,10 @@ class Point {
             })
             .attr('fill', 'white')
             .attr('stroke', 'black')
-            .attr("cursor", "pointer")
             .node()
-
-        this._bindEvents()
     }
 
     drag() {
-        let that = this
 
-        function dragstart(event, d) {}
-
-        function dragmove(event, d) {
-            d3.select(this).raise()
-                .attr('cx', event.x)
-                .attr('cy', event.y)
-
-            d.position = {
-                x: event.x,
-                y: event.y
-            }
-
-            d.parent.updateStartPoint(d.parent.source_state.center().x,
-                d.parent.source_state.center().y)
-            d.parent.updateEndPoint(d.parent.target_state.center().x,
-                d.parent.target_state.center().y)
-            d.parent.redraw()
-        }
-
-        function dragend(event, d) {}
-
-        let drag = d3.drag()
-            .subject(function () {
-                let tmp = d3.select(this);
-                return {
-                    x: tmp.attr('cx'),
-                    y: tmp.attr('cy')
-                }
-            })
-            .on('start', dragstart)
-            .on('drag', dragmove)
-            .on('end', dragend)
-
-        d3.select(this.node).call(drag)
-    }
-
-    _bindEvents() {
-        this.drag()
     }
 }
