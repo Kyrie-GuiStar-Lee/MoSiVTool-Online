@@ -11,7 +11,7 @@ spring:
       filters: stat
       driver-class-name: com.mysql.cj.jdbc.Driver
       #基本属性
-      url: jdbc:mysql://localhost:3306/mosiv?serverTimezone=Asia/Shanghai
+      url: jdbc:mysql://localhost:3306/
       username: root
       password: 19980203
       #配置初始化大小/最大/最小
