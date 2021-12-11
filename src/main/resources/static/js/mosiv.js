@@ -112,8 +112,9 @@ class StateDiagramSVG {
             type: "post",
             data: JSON.stringify(state_diagram),
             success:function (res){
-                alert("成功创建状态机图"+res)
-                state_diagram_id = res;
+                alert("成功创建状态机图"+res.data)
+                state_diagram_id = res.data;
+
             }
 
         })
@@ -269,25 +270,32 @@ class StateDiagram {
             //定义状态
             let state = {
                 "type":"state",
-                "name":"",
+                "name": {
+                    "abscissa":0,
+                    "ordinate":0,
+                    "content":"",
+                    "state_id":"",
+                },
+
                 "id":"",
                 "sdg_id":"",
                 "abscissa":"",
                 "ordinate":"",
-                "label":""
-                // name:{
-                //
-                // },
-                // label:{
-                //
-                // }
+                "is_init":false,
+                "is_final":false,
             }
             //定义迁移
             let transition = {
                 "id":"",
                 "sdg_id":"",
                 "type":"transition",
-                "label":"",
+                "label": {
+                    "abscissa":0,
+                    "ordinate":0,
+                    "kind":"default",
+                    "content":"null",
+                    "component_id":"",
+                },
                 "source":"",
                 "target":""
             }
@@ -301,13 +309,78 @@ class StateDiagram {
 
             json_data.push(state_diagram)
             for(let i=0; i<this.components.length; i++){
-                if(this.components[i] instanceof State){
+                if(this.components[i] instanceof StartState){
                     state = null;
                     state = {
                         "type":"state",
-                        "name":"",
-                        "label":"",
-                        "sdg_id":state_diagram.id,
+                        "name": {
+                            "abscissa":0,//todo 待前端传值
+                            "ordinate":0,//todo 待前端传值
+                            "content":"test",//todo 待前端传值
+                            "state_id":this.components[i].datum.id,
+                        },
+                        "label":{
+                          "abscissa":0,//todo 待前端传值
+                          "ordinate":0, //todo 待前端传值
+                          "kind":"default",//todo 待前端传值
+                          "content":"null",  //todo 待前端传值
+                          "component_id":this.components[i].datum.id,
+                        },
+                        "is_init":true,
+                        "is_final":false,
+                        "sdg_id":state_diagram_id,
+                        "id":this.components[i].datum.id,
+                        "abscissa": this.components[i].datum.position.x,
+                        "ordinate": this.components[i].datum.position.y
+                    }
+                    json_data.push(state)
+                }
+                if(this.components[i] instanceof EndState){
+                    state = null;
+                    state = {
+                        "type":"state",
+                        "name": {
+                            "abscissa":0,//todo 待前端传值
+                            "ordinate":0,//todo 待前端传值
+                            "content":"test",//todo 待前端传值
+                            "state_id":this.components[i].datum.id,
+                        },
+                        "label":{
+                            "abscissa":0,//todo 待前端传值
+                            "ordinate":0, //todo 待前端传值
+                            "kind":"default",//todo 待前端传值
+                            "content":"null",  //todo 待前端传值
+                            "component_id":this.components[i].datum.id,
+                        },
+                        "is_init":false,
+                        "is_final":true,
+                        "sdg_id":state_diagram_id,
+                        "id":this.components[i].datum.id,
+                        "abscissa": this.components[i].datum.position.x,
+                        "ordinate": this.components[i].datum.position.y
+                    }
+                    json_data.push(state)
+                }
+                if(this.components[i] instanceof CommonState){
+                    state = null;
+                    state = {
+                        "type":"state",
+                        "name": {
+                            "abscissa":0,//todo 待前端传值
+                            "ordinate":0,//todo 待前端传值
+                            "content":"test",//todo 待前端传值
+                            "state_id":this.components[i].datum.id,
+                        },
+                        "label":{
+                            "abscissa":0,//todo 待前端传值
+                            "ordinate":0, //todo 待前端传值
+                            "kind":"default",//todo 待前端传值
+                            "content":"null",  //todo 待前端传值
+                            "component_id":this.components[i].datum.id,
+                        },
+                        "is_init":false,
+                        "is_final":false,
+                        "sdg_id":state_diagram_id,
                         "id":this.components[i].datum.id,
                         "abscissa": this.components[i].datum.position.x,
                         "ordinate": this.components[i].datum.position.y
@@ -318,9 +391,15 @@ class StateDiagram {
                     transition = null;
                     transition = {
                         "type":"transition",
-                        "sdg_id":state_diagram.id,
+                        "sdg_id":state_diagram_id,
                         "id":this.components[i].datum.id,
-                        "label":"",
+                        "label": {
+                            "abscissa":0,
+                            "ordinate":0,
+                            "kind":"default",//todo 待前端传值
+                            "content":"null",//todo 待前端传值
+                            "component_id":this.components[i].datum.id,
+                        },
                         "source":this.components[i].source.datum.id,
                         "target":this.components[i].target.datum.id,
                     }
@@ -347,13 +426,8 @@ class StateDiagram {
                 success: function () {
                     alert("111");
                 },
-                error: function(e) {
-                    alert("出现错误");
-                }
 
             })
-
-
             console.log(json_data)
 
 
