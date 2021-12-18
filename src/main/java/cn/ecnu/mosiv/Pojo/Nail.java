@@ -3,12 +3,11 @@ package cn.ecnu.mosiv.Pojo;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
 @Setter
-public class Label {
+@Getter
+public class Nail {
     private int abscissa;
     private int ordinate;
-    private String kind;
-    private String content;
-    private String componentId;
+    private String transitionId;
+
 }

@@ -5,10 +5,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Label {
+public class BranchPoint {
     private int abscissa;
     private int ordinate;
-    private String kind;
-    private String content;
-    private String componentId;
+    private String id;
+    private String sdgId;
 }
