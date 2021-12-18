@@ -39,6 +39,8 @@ public interface StategramDAO {
 
     List<Transition> select_all_transitions();
 
+    List<BranchPoint> select_all_branch_points();
+
     Name selectStateName(@Param("id") String id);
 
     List<Label> selectLabels(@Param(("id")) String id);

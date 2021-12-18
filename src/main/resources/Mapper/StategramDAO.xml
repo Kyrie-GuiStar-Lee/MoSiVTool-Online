@@ -35,6 +35,13 @@
         <result column="component_id" jdbcType="VARCHAR" property="componentId"></result>
     </resultMap>
 
+    <resultMap id="BranchPoint" type="cn.ecnu.mosiv.Pojo.BranchPoint">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="abscissa" jdbcType="INTEGER" property="abscissa"></result>
+        <result column="ordinate" jdbcType="INTEGER" property="ordinate"></result>
+        <result column="sdg_id" jdbcType="VARCHAR" property="sdgId"></result>
+    </resultMap>
+
     <insert id = "newStateDiagram" parameterType="cn.ecnu.mosiv.Pojo.StateDiagram" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
         insert into state_gram values(#{stateDiagram.id},#{stateDiagram.name})
     </insert>
@@ -108,6 +115,10 @@
 
     <select id="select_all_transitions" resultMap="Transition">
         select * from transition;
+    </select>
+
+    <select id="select_all_branch_points" resultMap="BranchPoint">
+        select * from branchpoints;
     </select>
 
     <select id="selectStateName" resultMap="Name">

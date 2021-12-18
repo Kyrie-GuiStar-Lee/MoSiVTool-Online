@@ -319,6 +319,17 @@ public class DataController {
             }
         }
 
+        //branchpoint
+        List<BranchPoint> list_b = stategramDAO.select_all_branch_points();
+        for(BranchPoint t:list_b){
+            Element branch_point = doc.createElement("branchpoint");
+            branch_point.setAttribute("y",Integer.toString(t.getOrdinate()));
+            branch_point.setAttribute("x",Integer.toString(t.getAbscissa()));
+            branch_point.setAttribute("id",t.getId());
+            template.appendChild(branch_point);
+
+        }
+
 
         // 迁移
         List<Transition> list_t = stategramDAO.select_all_transitions();
