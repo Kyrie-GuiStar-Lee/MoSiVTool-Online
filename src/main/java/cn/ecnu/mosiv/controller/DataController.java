@@ -1,28 +1,30 @@
 package cn.ecnu.mosiv.controller;
 
 import cn.ecnu.mosiv.Pojo.*;
-import cn.ecnu.mosiv.dao.StategramDAO;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONException;
-import net.sf.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
+import cn.ecnu.mosiv.Pojo.Result;
+import jdk.nashorn.internal.objects.annotations.Getter;
 import org.springframework.web.bind.annotation.*;
+import org.w3c.dom.CDATASection;
+import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+
+import net.sf.json.*;
+import cn.ecnu.mosiv.dao.StategramDAO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,20 +38,20 @@ public class DataController {
     @CrossOrigin
     @ResponseBody
     @PostMapping(value = "/add_state_diagram")
-    public Result save_state_diagram(@RequestBody Object object) throws JSONException {
+    public Result save_state_diagram(@RequestBody Object object) throws JSONException{
         JSONObject jsonObject = JSONObject.fromObject(object);
         StateDiagram stateDiagram = new StateDiagram();
         Result result = new Result();
-        try {
+        try{
             stateDiagram.setName(jsonObject.getString("name"));
-        } catch (JSONException e) {
+        }catch(JSONException e){
             e.printStackTrace();
             result.setErrmsg("JSON reading error");
             result.setCode("10");
             return result;
         }
         stategramDAO.newStateDiagram(stateDiagram);
-        if (stateDiagram.getId() != -1) {
+        if (stateDiagram.getId() != -1){
             result.setCode("00");
             result.setData(stateDiagram.getId());
             return result;
@@ -62,35 +64,36 @@ public class DataController {
 
     @CrossOrigin
     @ResponseBody
-    @PostMapping(value = "/save_json")
+    @PostMapping (value = "/save_json" )
     public Result save_state(@RequestBody List<Object> data) throws JSONException {
         JSONArray data1 = JSONArray.fromObject(data);
         List<String> current_states = new ArrayList<>();
         List<String> current_transitions = new ArrayList<>();
         List<String> current_branch_points = new ArrayList<>();
-        for (int i = 0; i < data.size(); i++) {
+        for(int i=0; i<data.size();i++){
             JSONObject object1 = data1.getJSONObject(i);
             //组件的type是state,保存状态相关信息
 //            if(object1.getString("type").equals("state")){
-            if (object1.getString("type").equals("1") || object1.getString("type").equals("2") || object1.getString("type").equals("3")) {
+            if(object1.getString("type").equals("1")||object1.getString("type").equals("2")||object1.getString("type").equals("3")){
                 Location location = new Location();
                 location.setAbscissa(object1.getInt("abscissa"));
                 location.setOrdinate(object1.getInt("ordinate"));
                 location.setId(object1.getString("id"));
                 location.setSdgId(object1.getString("sdg_id"));
-                if (object1.getString("type").equals("1")) {
+                if(object1.getString("type").equals("1")){
                     location.setIsInit(true);
                     location.setIsFinal(false);
                 }
-                if (object1.getString("type").equals("2")) {
+                if(object1.getString("type").equals("2")){
                     location.setIsInit(false);
                     location.setIsFinal(true);
                 }
-                if (object1.getString("type").equals("3")) {
+                if(object1.getString("type").equals("3")){
                     location.setIsInit(false);
                     location.setIsFinal(false);
                 }
-
+//                location.setIsInit(object1.getBoolean("is_init"));
+//                location.setIsFinal(object1.getBoolean("is_final"));
                 Name name = new Name();
                 JSONObject name1 = object1.getJSONObject("name");
                 name.setAbscissa(name1.getInt("abscissa"));
@@ -111,11 +114,12 @@ public class DataController {
                 current_states.add(location.getId());
 
                 //如果数据库中没有该状态，则新建；有则更新
-                if (stategramDAO.selectState(location.getId()) == null) {
+                if(stategramDAO.selectState(location.getId())==null){
                     stategramDAO.newState(location);
                     stategramDAO.newName(name);
                     stategramDAO.newLabel(label);
-                } else {
+                }
+                else{
                     stategramDAO.updateState(location);
                     stategramDAO.updateName(name);
                     stategramDAO.updateLabel(label);
@@ -125,7 +129,7 @@ public class DataController {
 
             //组件的type是transition，保存transition的相关信息
 //            if(object1.getString("type").equals("transition")){
-            if (object1.getString("type").equals("4") || object1.getString("type").equals("5")) {
+              if(object1.getString("type").equals("4")||object1.getString("type").equals("5")){
                 Transition transition1 = new Transition();
                 transition1.setId(object1.getString("id"));
                 transition1.setSdgId(object1.getString("sdg_id"));
@@ -143,18 +147,19 @@ public class DataController {
                 current_transitions.add(transition1.getId());
 
                 //如果数据库中没有该transition，则新建；有则更新
-                if (stategramDAO.selectTransition(transition1.getId()) == null) {
+                if(stategramDAO.selectTransition(transition1.getId())==null){
                     stategramDAO.newTransition(transition1);
                     stategramDAO.newLabel(label);
-                } else {
+                }
+                else{
                     stategramDAO.updateTransition(transition1);
                     stategramDAO.updateLabel(label);
                 }
 
-            }
+              }
 
-            //保存branch point 相关信息
-            if (object1.getString("type").equals("6")) {
+              //保存branch point 相关信息
+            if(object1.getString("type").equals("6")){
                 BranchPoint branchPoint = new BranchPoint();
                 branchPoint.setId(object1.getString("id"));
                 branchPoint.setSdgId(object1.getString("sdg_id"));
@@ -162,9 +167,10 @@ public class DataController {
                 branchPoint.setOrdinate(object1.getInt("ordinate"));
 
                 current_branch_points.add(branchPoint.getId());
-                if (stategramDAO.selectBranchPoint(branchPoint.getId()) == null) {
+                if(stategramDAO.selectBranchPoint(branchPoint.getId())==null){
                     stategramDAO.newBranchPoint(branchPoint);
-                } else {
+                }
+                else{
                     stategramDAO.updateBranchPoint(branchPoint);
                 }
             }
@@ -180,18 +186,18 @@ public class DataController {
         List<String> old_branch_points = stategramDAO.select_branch_point_ids();
 
 
-        for (String t : current_states) {
-            if (old_states.contains(t)) {
+        for(String t : current_states){
+            if(old_states.contains(t)){
                 old_states.remove(t);
             }
         }
-        for (String t : current_transitions) {
-            if (old_transitions.contains(t)) {
+        for(String t : current_transitions){
+            if(old_transitions.contains(t)){
                 old_transitions.remove(t);
             }
         }
-        for (String t : current_branch_points) {
-            if (old_branch_points.contains(t)) {
+        for(String t : current_branch_points){
+            if(old_branch_points.contains(t)){
                 old_branch_points.remove(t);
             }
         }
@@ -200,22 +206,22 @@ public class DataController {
 //        System.out.println(old_transitions);
 
         //完成上述操作后，old_states、old_transitions和old_branch_points中剩余的id就是需要删除的state、transition和branch_point的id
-        if (old_states.size() > 0) {
+        if(old_states.size()>0){
             stategramDAO.deleteState(old_states);
             stategramDAO.deleteName(old_states);
             stategramDAO.deleteLabel(old_states);
         }
-        if (old_transitions.size() > 0) {
+        if(old_transitions.size()>0){
             stategramDAO.deleteTransition(old_transitions);
             stategramDAO.deleteLabel(old_transitions);
         }
-        if (old_branch_points.size() > 0) {
+        if(old_branch_points.size()>0){
             stategramDAO.deleteBranchPoint(old_branch_points);
         }
 
         //定义向前端返回的result
         Result result = new Result();
-        if (data != null) {
+        if (data!=null){
             result.setCode("00");
             return result;
         }
@@ -225,7 +231,7 @@ public class DataController {
 
     @CrossOrigin
     @ResponseBody
-    @GetMapping(value = "/write_xml")
+    @GetMapping(value = "/write_xml" )
     public Result XmlWriter()
             throws ParserConfigurationException, TransformerException {
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
@@ -266,7 +272,7 @@ public class DataController {
 
         //状态
         List<Location> list_s = stategramDAO.select_all_states();
-        for (Location l : list_s) {
+        for(Location l : list_s) {
 
             Element location = doc.createElement("location");
             String ordinate_s = Integer.toString(l.getOrdinate());
@@ -288,7 +294,7 @@ public class DataController {
             location.appendChild(name1);
 
             List<Label> list_l = stategramDAO.selectLabels(id_s);
-            for (Label la : list_l) {
+            for(Label la : list_l) {
                 Element label = doc.createElement("label");
                 String ordinate_l = Integer.toString(la.getOrdinate());
                 label.setAttribute("y", ordinate_l);
@@ -301,22 +307,33 @@ public class DataController {
                 location.appendChild(label);
             }
 
-            if (l.getIsInit() == true) {
+            if(l.getIsInit()==true){
                 Element init = doc.createElement("init");
-                init.setAttribute("ref", l.getId());
+                init.setAttribute("ref",l.getId());
                 template.appendChild(init);
             }
-            if (l.getIsFinal() == true) {
+            if(l.getIsFinal()==true){
                 Element fin = doc.createElement("fin");
-                fin.setAttribute("ref", l.getId());
+                fin.setAttribute("ref",l.getId());
                 template.appendChild(fin);
             }
+        }
+
+        //branchpoint
+        List<BranchPoint> list_b = stategramDAO.select_all_branch_points();
+        for(BranchPoint t:list_b){
+            Element branch_point = doc.createElement("branchpoint");
+            branch_point.setAttribute("y",Integer.toString(t.getOrdinate()));
+            branch_point.setAttribute("x",Integer.toString(t.getAbscissa()));
+            branch_point.setAttribute("id",t.getId());
+            template.appendChild(branch_point);
+
         }
 
 
         // 迁移
         List<Transition> list_t = stategramDAO.select_all_transitions();
-        for (Transition t : list_t) {
+        for(Transition t:list_t) {
             Element transition = doc.createElement("transition");
             template.appendChild(transition);
 
@@ -329,7 +346,7 @@ public class DataController {
             transition.appendChild(target);
 
             List<Label> list_la = stategramDAO.selectLabels(t.getId());
-            for (Label la : list_la) {
+            for(Label la:list_la) {
                 Element label1 = doc.createElement("label");
                 String ordinate_la = Integer.toString(la.getOrdinate());
                 label1.setAttribute("y", ordinate_la);
@@ -374,7 +391,7 @@ public class DataController {
         }
 
         Result result = new Result();
-        if (docFactory != null) {
+        if (docFactory!=null){
             result.setCode("00");
             return result;
         }

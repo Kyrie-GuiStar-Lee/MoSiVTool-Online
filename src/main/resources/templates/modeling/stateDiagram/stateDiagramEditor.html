@@ -12,6 +12,8 @@
           th:href="@{/css/ace.min.css}">
     <link rel="stylesheet" href="../../../static/css/stateDiagramEditor.css"
           th:href="@{/css/stateDiagramEditor.css}">
+
+
 </head>
 <body class="no-skin">
 <div id="app">
@@ -59,13 +61,13 @@
         <div class="footer">
             <div class="footer-inner">
                 <div class="footer-content">
-                    <button onclick="tojson()">
+                    <button onclick = "tojson()" >
                         Save(Test)
                     </button>
-                    <button onclick="save_diagram()">
+                    <button onclick = "save_diagram()" >
                         Add diagram(Test)
                     </button>
-                    <button onclick="write_xml()">
+                    <button onclick = "write_xml()" >
                         Write xml(Test)
                     </button>
 
@@ -105,12 +107,12 @@
         // 获取父节点
         let my_palette_wrapper = d3.select(my_palette.node().parentNode)
         my_palette.style('width', my_palette_wrapper.node().getBoundingClientRect().width)
-            .style('height', my_palette_wrapper.node().getBoundingClientRect().height)
+                    .style('height', my_palette_wrapper.node().getBoundingClientRect().height)
 
         let my_diagram = d3.select('#myDiagram')
         let my_diagram_wrapper = d3.select(my_diagram.node().parentNode)
         my_diagram.style('width', my_diagram_wrapper.node().getBoundingClientRect().width)
-            .style('height', my_diagram_wrapper.node().getBoundingClientRect().height)
+                    .style('height', my_diagram_wrapper.node().getBoundingClientRect().height)
 
 
         let components = [{name: "Cursor", obj: null},
@@ -121,35 +123,35 @@
             {name: "BranchPoint", obj: BranchPoint}]
 
         my_palette.selectAll("div")
-            .data(components)
-            .enter()
-            .append("div")
+                    .data(components)
+                    .enter()
+                    .append("div")
 
         my_palette.selectAll("div")
-            .data(components)
-            .style("width", "100%")
-            .style("padding-bottom", "80%")
-            .style("border", "1px solid black")
-            .style("cursor", "pointer")
-            .text((d) => {
-                return d.name
-            })
-            .on("click", (event, d) => {
-                if (d.name == "Cursor") {
-                    component_to_transmit = null
-                    return
-                }
+                    .data(components)
+                    .style("width", "100%")
+                    .style("padding-bottom", "80%")
+                    .style("border", "1px solid black")
+                    .style("cursor", "pointer")
+                    .text((d) => {
+                        return d.name
+                    })
+                    .on("click", (event, d) => {
+                        if(d.name == "Cursor") {
+                            component_to_transmit = null
+                            return
+                        }
 
-                component_to_transmit = d["obj"]
-                // TODO 建模元素高亮
-            })
+                        component_to_transmit = d["obj"]
+                        // TODO 建模元素高亮
+                    })
 
         // 建模元素工具栏
         // let palette = new StateDiagramPalette({
         //     el: "#myPalette", // canvas 的id
         // });
 
-        d3.select(window).on('resize.update_svg', function () {
+        d3.select(window).on('resize.update_svg', function() {
             my_palette.style('width', my_palette_wrapper.node().getBoundingClientRect().width)
                 .style('height', my_palette_wrapper.node().getBoundingClientRect().height)
             my_diagram.style('width', my_diagram_wrapper.node().getBoundingClientRect().width)
@@ -157,16 +159,14 @@
         });
     });
     let diagram = new StateDiagramSVG();
-
-    function save_diagram() {
+    function save_diagram(){
         diagram.save_diagram();
     }
-
-    function write_xml() {
+    function write_xml(){
         diagram.write_xml();
     }
 
-    function tojson() {
+    function tojson(){
         diagram.stateDiagram.toJSON();
     }
 </script>
