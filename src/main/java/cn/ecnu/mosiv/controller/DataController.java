@@ -2,6 +2,7 @@ package cn.ecnu.mosiv.controller;
 
 import cn.ecnu.mosiv.Pojo.*;
 import cn.ecnu.mosiv.Pojo.Result;
+import jdk.nashorn.internal.objects.annotations.Getter;
 import org.springframework.web.bind.annotation.*;
 import org.w3c.dom.CDATASection;
 import org.w3c.dom.Comment;
@@ -36,21 +37,30 @@ public class DataController {
 
     @CrossOrigin
     @ResponseBody
-    @PostMapping(value = "/save_state_diagram")
+    @PostMapping(value = "/add_state_diagram")
     public Result save_state_diagram(@RequestBody Object object) throws JSONException{
         JSONObject jsonObject = JSONObject.fromObject(object);
         StateDiagram stateDiagram = new StateDiagram();
-        stateDiagram.setName(jsonObject.getString("name"));
-        stategramDAO.newStateDiagram(stateDiagram);
         Result result = new Result();
-        if (stateDiagram.getId() != 0){
-            result.setId("00");
+        try{
+            stateDiagram.setName(jsonObject.getString("name"));
+        }catch(JSONException e){
+            e.printStackTrace();
+            result.setErrmsg("JSON reading error");
+            result.setCode("10");
+            return result;
+        }
+        stategramDAO.newStateDiagram(stateDiagram);
+        if (stateDiagram.getId() != -1){
+            result.setCode("00");
             result.setData(stateDiagram.getId());
             return result;
         }
-        result.setId("01");
+        result.setCode("01");
+        result.setErrmsg("getting id from database error");
         return result;
     }
+
 
     @CrossOrigin
     @ResponseBody
@@ -59,22 +69,31 @@ public class DataController {
         JSONArray data1 = JSONArray.fromObject(data);
         List<String> current_states = new ArrayList<>();
         List<String> current_transitions = new ArrayList<>();
+        List<String> current_branch_points = new ArrayList<>();
         for(int i=0; i<data.size();i++){
             JSONObject object1 = data1.getJSONObject(i);
-//            if(object1.getString("type").equals("state_diagram")){
-//                StateDiagram stateDiagram = new StateDiagram();
-//                stateDiagram.setId(object1.getString("id"));
-//                stateDiagram.setName(object1.getString("name"));
-//            }
-            if(object1.getString("type").equals("state")){
+            //组件的type是state,保存状态相关信息
+//            if(object1.getString("type").equals("state")){
+            if(object1.getString("type").equals("1")||object1.getString("type").equals("2")||object1.getString("type").equals("3")){
                 Location location = new Location();
                 location.setAbscissa(object1.getInt("abscissa"));
                 location.setOrdinate(object1.getInt("ordinate"));
                 location.setId(object1.getString("id"));
                 location.setSdgId(object1.getString("sdg_id"));
-                location.setIsInit(object1.getBoolean("is_init"));
-                location.setIsFinal(object1.getBoolean("is_final"));
-                System.out.println(object1.getJSONObject("name"));
+                if(object1.getString("type").equals("1")){
+                    location.setIsInit(true);
+                    location.setIsFinal(false);
+                }
+                if(object1.getString("type").equals("2")){
+                    location.setIsInit(false);
+                    location.setIsFinal(true);
+                }
+                if(object1.getString("type").equals("3")){
+                    location.setIsInit(false);
+                    location.setIsFinal(false);
+                }
+//                location.setIsInit(object1.getBoolean("is_init"));
+//                location.setIsFinal(object1.getBoolean("is_final"));
                 Name name = new Name();
                 JSONObject name1 = object1.getJSONObject("name");
                 name.setAbscissa(name1.getInt("abscissa"));
@@ -82,6 +101,7 @@ public class DataController {
                 name.setContent(name1.getString("content"));
                 name.setStateId(name1.getString("state_id"));
                 location.setName(name.getContent());
+                //保存状态标签的相关信息
                 Label label = new Label();
                 JSONObject label1 = object1.getJSONObject("label");
                 label.setAbscissa(label1.getInt("abscissa"));
@@ -93,6 +113,7 @@ public class DataController {
 
                 current_states.add(location.getId());
 
+                //如果数据库中没有该状态，则新建；有则更新
                 if(stategramDAO.selectState(location.getId())==null){
                     stategramDAO.newState(location);
                     stategramDAO.newName(name);
@@ -106,12 +127,15 @@ public class DataController {
 
             }
 
-            if(object1.getString("type").equals("transition")){
+            //组件的type是transition，保存transition的相关信息
+//            if(object1.getString("type").equals("transition")){
+              if(object1.getString("type").equals("4")||object1.getString("type").equals("5")){
                 Transition transition1 = new Transition();
                 transition1.setId(object1.getString("id"));
                 transition1.setSdgId(object1.getString("sdg_id"));
                 transition1.setSource(object1.getString("source"));
                 transition1.setTarget(object1.getString("target"));
+                //保存transition的label的相关信息
                 Label label = new Label();
                 JSONObject label1 = object1.getJSONObject("label");
                 label.setAbscissa(label1.getInt("abscissa"));
@@ -122,6 +146,7 @@ public class DataController {
 
                 current_transitions.add(transition1.getId());
 
+                //如果数据库中没有该transition，则新建；有则更新
                 if(stategramDAO.selectTransition(transition1.getId())==null){
                     stategramDAO.newTransition(transition1);
                     stategramDAO.newLabel(label);
@@ -131,18 +156,34 @@ public class DataController {
                     stategramDAO.updateLabel(label);
                 }
 
-            }
+              }
 
+              //保存branch point 相关信息
+            if(object1.getString("type").equals("6")){
+                BranchPoint branchPoint = new BranchPoint();
+                branchPoint.setId(object1.getString("id"));
+                branchPoint.setSdgId(object1.getString("sdg_id"));
+                branchPoint.setAbscissa(object1.getInt("abscissa"));
+                branchPoint.setOrdinate(object1.getInt("ordinate"));
+
+                current_branch_points.add(branchPoint.getId());
+                if(stategramDAO.selectBranchPoint(branchPoint.getId())==null){
+                    stategramDAO.newBranchPoint(branchPoint);
+                }
+                else{
+                    stategramDAO.updateBranchPoint(branchPoint);
+                }
+            }
         }
 
 
-        //判断前端绘图是否删除了之前保存的state和transition
-
-        System.out.println(stategramDAO.select_state_ids());
-        System.out.println(stategramDAO.select_transition_ids());
+        //判断前端绘图是否删除了之前保存的state、transition和branch_point
+//        System.out.println(stategramDAO.select_state_ids());
+//        System.out.println(stategramDAO.select_transition_ids());
 
         List<String> old_states = stategramDAO.select_state_ids();
         List<String> old_transitions = stategramDAO.select_transition_ids();
+        List<String> old_branch_points = stategramDAO.select_branch_point_ids();
 
 
         for(String t : current_states){
@@ -155,11 +196,16 @@ public class DataController {
                 old_transitions.remove(t);
             }
         }
+        for(String t : current_branch_points){
+            if(old_branch_points.contains(t)){
+                old_branch_points.remove(t);
+            }
+        }
 
-        System.out.println(old_states);
-        System.out.println(old_transitions);
+//        System.out.println(old_states);
+//        System.out.println(old_transitions);
 
-        //完成上述操作后，old_states和old_transitions中剩余的id就是需要删除的state和transition的id
+        //完成上述操作后，old_states、old_transitions和old_branch_points中剩余的id就是需要删除的state、transition和branch_point的id
         if(old_states.size()>0){
             stategramDAO.deleteState(old_states);
             stategramDAO.deleteName(old_states);
@@ -169,13 +215,17 @@ public class DataController {
             stategramDAO.deleteTransition(old_transitions);
             stategramDAO.deleteLabel(old_transitions);
         }
+        if(old_branch_points.size()>0){
+            stategramDAO.deleteBranchPoint(old_branch_points);
+        }
 
+        //定义向前端返回的result
         Result result = new Result();
         if (data!=null){
-            result.setId("00");
+            result.setCode("00");
             return result;
         }
-        result.setId("01");
+        result.setCode("01");
         return result;
     }
 
@@ -196,17 +246,14 @@ public class DataController {
 
         // add xml elements
         Element declaration = doc.createElement("declaration");
-        // add staff to root
+        // add to root
         rootElement.appendChild(declaration);
         // add xml attribute
         declaration.setTextContent("");
 
-        // alternative
-        // Attr attr = doc.createAttribute("id");
-        // attr.setValue("1001");
-        // staff.setAttributeNode(attr);
 
         //template
+        //todo 多张状态机图存储到同一个xml中？
         Element template = doc.createElement("template");
         rootElement.appendChild(template);
 
@@ -222,58 +269,88 @@ public class DataController {
         declaration1.setTextContent("");//从前端获取template的declaration
         template.appendChild(declaration1);
 
-//        // add xml comment
-//        Comment comment = doc.createComment(
-//                "for special characters like < &, need CDATA");
-//        staff.appendChild(comment);
 
         //状态
-        //todo 查询数据库中state表，每个state对应一个location
-        //todo 如果状态是起始或者结束状态，那么在该状态下面打上init/final标签
+        List<Location> list_s = stategramDAO.select_all_states();
+        for(Location l : list_s) {
 
-        Element location = doc.createElement("location");
-        location.setAttribute("y","");
-        location.setAttribute("x","");
-        location.setAttribute("id","");
-        template.appendChild(location);
+            Element location = doc.createElement("location");
+            String ordinate_s = Integer.toString(l.getOrdinate());
+            location.setAttribute("y", ordinate_s);
+            String abscissa_s = Integer.toString(l.getAbscissa());
+            location.setAttribute("x", abscissa_s);
+            String id_s = l.getId();
+            location.setAttribute("id", id_s);
+            template.appendChild(location);
 
-        Element name1 = doc.createElement("name");
-        name1.setAttribute("y","");
-        name1.setAttribute("x","");
-        name1.setTextContent("");
-        location.appendChild(name1);
+            Name name_ = stategramDAO.selectStateName(id_s);
+            Element name1 = doc.createElement("name");
+            String ordinate_n = Integer.toString(name_.getOrdinate());
+            name1.setAttribute("y", ordinate_n);
+            String abscissa_n = Integer.toString(name_.getAbscissa());
+            name1.setAttribute("x", abscissa_n);
+            String content_n = name_.getContent();
+            name1.setTextContent(content_n);
+            location.appendChild(name1);
 
-        Element label = doc.createElement("label");
-        label.setAttribute("y","");
-        label.setAttribute("x","");
-        label.setAttribute("kind","");
-        label.setTextContent("");
-        location.appendChild(label);
+            List<Label> list_l = stategramDAO.selectLabels(id_s);
+            for(Label la : list_l) {
+                Element label = doc.createElement("label");
+                String ordinate_l = Integer.toString(la.getOrdinate());
+                label.setAttribute("y", ordinate_l);
+                String abscissa_l = Integer.toString(la.getAbscissa());
+                label.setAttribute("x", abscissa_l);
+                String kind_l = la.getKind();
+                label.setAttribute("kind", kind_l);
+                String content_l = la.getContent();
+                label.setTextContent(content_l);
+                location.appendChild(label);
+            }
+
+            if(l.getIsInit()==true){
+                Element init = doc.createElement("init");
+                init.setAttribute("ref",l.getId());
+                template.appendChild(init);
+            }
+            if(l.getIsFinal()==true){
+                Element fin = doc.createElement("fin");
+                fin.setAttribute("ref",l.getId());
+                template.appendChild(fin);
+            }
+        }
 
 
         // 迁移
-        Element transition = doc.createElement("transition");
-        template.appendChild(transition);
+        List<Transition> list_t = stategramDAO.select_all_transitions();
+        for(Transition t:list_t) {
+            Element transition = doc.createElement("transition");
+            template.appendChild(transition);
 
-        Element source = doc.createElement("source");
-        source.setAttribute("ref","");//transition的source
-        transition.appendChild(source);
+            Element source = doc.createElement("source");
+            source.setAttribute("ref", t.getSource());//transition的source
+            transition.appendChild(source);
 
-        Element target = doc.createElement("target");
-        target.setAttribute("ref","");//transition的target
-        transition.appendChild(target);
+            Element target = doc.createElement("target");
+            target.setAttribute("ref", t.getTarget());//transition的target
+            transition.appendChild(target);
 
-        Element label1 = doc.createElement("label");
-        label1.setAttribute("y","");
-        label1.setAttribute("x","");
-        label1.setAttribute("kind","");
-        label1.setTextContent("");
-        transition.appendChild(label1);
+            List<Label> list_la = stategramDAO.selectLabels(t.getId());
+            for(Label la:list_la) {
+                Element label1 = doc.createElement("label");
+                String ordinate_la = Integer.toString(la.getOrdinate());
+                label1.setAttribute("y", ordinate_la);
+                String abscissa_la = Integer.toString(la.getAbscissa());
+                label1.setAttribute("x", abscissa_la);
+                label1.setAttribute("kind", la.getKind());
+                label1.setTextContent(la.getContent());
+                transition.appendChild(label1);
+            }
 
-        Element nail = doc.createElement("nail");
-        nail.setAttribute("y","");//transition上调整的点的纵坐标
-        nail.setAttribute("x","");//transition上调整的点的横坐标
-        transition.appendChild(nail);
+            Element nail = doc.createElement("nail");
+            nail.setAttribute("y", "");//transition上调整的点的纵坐标
+            nail.setAttribute("x", "");//transition上调整的点的横坐标
+            transition.appendChild(nail);
+        }
 
         Element system = doc.createElement("system");
         rootElement.appendChild(system);
@@ -304,10 +381,10 @@ public class DataController {
 
         Result result = new Result();
         if (docFactory!=null){
-            result.setId("00");
+            result.setCode("00");
             return result;
         }
-        result.setId("01");
+        result.setCode("01");
         return result;
     }
 

@@ -6,6 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Result {
-    private String id;
+    private String code;
     private Object data;
+    private String errmsg;
 }

@@ -15,6 +15,8 @@ public interface StategramDAO {
 
     void newState(@Param("location")Location location);
 
+    void newBranchPoint(@Param("branch_point")BranchPoint branchPoint);
+
     void newName(@Param("name") Name name);
 
     void newLabel(@Param("label")Label label);
@@ -25,17 +27,21 @@ public interface StategramDAO {
 
     String selectTransition(String id1);
 
+    String selectBranchPoint(String id2);
+
     List<String> select_state_ids();
 
     List<String> select_transition_ids();
+
+    List<String> select_branch_point_ids();
 
     List<Location> select_all_states();
 
     List<Transition> select_all_transitions();
 
-    List<Name> select_all_names();
+    Name selectStateName(@Param("id") String id);
 
-    List<Label> select_all_labels();
+    List<Label> selectLabels(@Param(("id")) String id);
 
     void updateState(@Param("location") Location location);
 
@@ -45,9 +51,13 @@ public interface StategramDAO {
 
     void updateTransition(@Param("transition") Transition transition);
 
+    void updateBranchPoint(@Param("branch_point")BranchPoint branchPoint);
+
     void deleteState(List<String> s_delete);
 
     void deleteTransition(List<String> t_delete);
+
+    void deleteBranchPoint(List<String> b_delete);
 
     void deleteName(List<String> to_delete);
 
