@@ -61,7 +61,7 @@ function binarySearch({arr, val, cmp}) {
     }
 };
 
-let state_diagram_id = 0;
+let state_diagram_id = -1;
 
 /**
  * 建模元素画布
@@ -89,7 +89,7 @@ class StateDiagramSVG {
 
     write_xml(){
         $.ajax({
-            url:"http://127.0.0.1//write_xml",
+            url:"http://127.0.0.1:80//write_xml",
             type:"get",
             success:function (){
                 alert("write success")
@@ -108,11 +108,11 @@ class StateDiagramSVG {
         let that = this;
         $.ajax({
             contentType: "application/json;charset=utf-8",
-            url: "http://127.0.0.1:80/save_state_diagram",
+            url: "http://127.0.0.1:80/add_state_diagram",
             type: "post",
             data: JSON.stringify(state_diagram),
             success:function (res){
-                alert("成功创建状态机图"+res.data)
+                alert(res.id);
                 state_diagram_id = res.data;
 
             }

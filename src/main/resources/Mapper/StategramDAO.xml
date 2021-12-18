@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.ecnu.mosiv.dao.StategramDAO">
+
+    <resultMap id="State" type="cn.ecnu.mosiv.Pojo.Location">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="sdg_id" jdbcType="VARCHAR" property="sdgId"></result>
+        <result column="abscissa" jdbcType="INTEGER" property="abscissa"></result>
+        <result column="ordinate" jdbcType="INTEGER" property="ordinate"></result>
+        <result column="is_init" jdbcType="BOOLEAN" property="isInit"></result>
+        <result column="is_final" jdbcType="BOOLEAN" property="isFinal"></result>
+        <result column="name" jdbcType="VARCHAR" property="name"></result>
+    </resultMap>
+
+    <resultMap id="Transition" type="cn.ecnu.mosiv.Pojo.Transition">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="sdg_id" jdbcType="VARCHAR" property="sdgId"></result>
+        <result column="source" jdbcType="VARCHAR" property="source"></result>
+        <result column="target" jdbcType="VARCHAR" property="target"></result>
+    </resultMap>
+
+    <resultMap id="Name" type="cn.ecnu.mosiv.Pojo.Name">
+        <result column="abscissa" jdbcType="INTEGER" property="abscissa"></result>
+        <result column="ordinate" jdbcType="INTEGER" property="ordinate"></result>
+        <result column="content" jdbcType="VARCHAR" property="content"></result>
+        <result column="state_id" jdbcType="VARCHAR" property="stateId"></result>
+    </resultMap>
+
+    <resultMap id="Label" type="cn.ecnu.mosiv.Pojo.Label">
+        <result column="abscissa" jdbcType="INTEGER" property="abscissa"></result>
+        <result column="ordinate" jdbcType="INTEGER" property="ordinate"></result>
+        <result column="kind" jdbcType="VARCHAR" property="kind"></result>
+        <result column="content" jdbcType="VARCHAR" property="content"></result>
+        <result column="component_id" jdbcType="VARCHAR" property="componentId"></result>
+    </resultMap>
+
+    <insert id = "newStateDiagram" parameterType="cn.ecnu.mosiv.Pojo.StateDiagram" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+        insert into state_gram values(#{stateDiagram.id},#{stateDiagram.name})
+    </insert>
+
+    <insert id="newState" parameterType="cn.ecnu.mosiv.Pojo.Location">
+        insert into state values(#{location.id},
+                                 #{location.sdgId},
+                                 #{location.name},
+                                 #{location.abscissa},
+                                 #{location.ordinate},
+                                 #{location.isInit},
+                                 #{location.isFinal})
+    </insert>
+
+    <insert id="newBranchPoint" parameterType="cn.ecnu.mosiv.Pojo.BranchPoint">
+        insert into branchpoints values(#{branch_point.id},
+                                 #{branch_point.abscissa},
+                                 #{branch_point.ordinate},
+                                 #{branch_point.sdgId})
+    </insert>
+
+    <insert id="newName" parameterType="cn.ecnu.mosiv.Pojo.Name">
+        insert into names values(#{name.abscissa},
+                                #{name.ordinate},
+                                #{name.content},
+                                #{name.stateId}
+                                )
+    </insert>
+
+    <insert id="newLabel" parameterType="cn.ecnu.mosiv.Pojo.Label">
+        insert into labels values(
+                                #{label.abscissa},
+                                #{label.ordinate},
+                                #{label.kind},
+                                #{label.content},
+                                #{label.componentId}
+        )
+    </insert>
+
+    <insert id="newTransition" parameterType="cn.ecnu.mosiv.Pojo.Transition" >
+        insert into transition values(#{transition.id},#{transition.sdgId},#{transition.source},#{transition.target})
+    </insert>
+
+    <select id="selectState" parameterType="String" resultType="String">
+        select id from state where id = #{id};
+    </select>
+
+    <select id="selectTransition" parameterType="String" resultType="String">
+        select id from transition where id = #{id1};
+    </select>
+
+    <select id="selectBranchPoint" parameterType="String" resultType="String">
+        select id from branchpoints where id = #{id};
+    </select>
+
+    <select id="select_state_ids" resultType="java.lang.String" >
+        select id from state;
+    </select>
+
+    <select id="select_branch_point_ids" resultType="java.lang.String" >
+        select id from branchpoints;
+    </select>
+
+    <select id="select_transition_ids" resultType="java.lang.String">
+        select id from transition;
+    </select>
+
+    <select id="select_all_states" resultMap="State">
+        select * from state;
+    </select>
+
+    <select id="select_all_transitions" resultMap="Transition">
+        select * from transition;
+    </select>
+
+    <select id="selectStateName" resultMap="Name">
+        select * from names
+        where state_id = #{id};
+    </select>
+
+    <select id="selectLabels" resultMap="Label">
+        select * from labels
+        where component_id = #{id};
+    </select>
+
+    <update id="updateState" parameterType="cn.ecnu.mosiv.Pojo.Location">
+        update state
+            set name = #{location.name},
+                abscissa = #{location.abscissa},
+                ordinate = #{location.ordinate},
+                is_init = #{location.isInit},
+                is_final = #{location.isFinal}
+            where id = #{location.id}
+    </update>
+
+    <update id="updateName" parameterType="cn.ecnu.mosiv.Pojo.Name">
+        update names
+            set abscissa = #{name.abscissa},
+                ordinate = #{name.ordinate},
+                content = #{name.content}
+            where state_id = #{name.stateId}
+    </update>
+
+    <update id="updateLabel" parameterType="cn.ecnu.mosiv.Pojo.Label">
+        update labels
+            set abscissa = #{label.abscissa},
+                ordinate = #{label.ordinate},
+                kind = #{label.kind},
+                content = #{label.content}
+            where component_id = #{label.componentId}
+    </update>
+
+    <update id="updateTransition" parameterType="cn.ecnu.mosiv.Pojo.Transition">
+        update transition
+            set source = #{transition.source},
+                target = #{transition.target}
+            where id = #{transition.id}
+    </update>
+
+    <update id="updateBranchPoint" parameterType="cn.ecnu.mosiv.Pojo.BranchPoint">
+        update branchpoints
+            set abscissa = #{branch_point.abscissa},
+                ordinate = #{branch_point.ordinate}
+            where id = #{branch_point.id}
+    </update>
+
+    <delete id="deleteState" parameterType="java.util.List">
+        delete from state where id in(
+        <foreach collection="list" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        );
+
+    </delete>
+
+    <delete id="deleteBranchPoint" parameterType="java.util.List">
+        delete from branchpoints where id in(
+        <foreach collection="list" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        );
+
+    </delete>
+
+    <delete id="deleteName" parameterType="java.util.List">
+        delete from names where state_id in(
+        <foreach collection="list" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        )
+    </delete>
+
+    <delete id="deleteLabel" parameterType="java.util.List">
+        delete from labels where component_id in(
+        <foreach collection="list" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        )
+    </delete>
+
+    <delete id="deleteTransition" parameterType="java.util.List">
+        delete from transition where id in(
+        <foreach collection="list" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        );
+
+    </delete>
+
+</mapper>
+
