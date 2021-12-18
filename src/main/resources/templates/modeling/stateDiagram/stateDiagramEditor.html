@@ -12,6 +12,8 @@
           th:href="@{/css/ace.min.css}">
     <link rel="stylesheet" href="../../../static/css/stateDiagramEditor.css"
           th:href="@{/css/stateDiagramEditor.css}">
+
+
 </head>
 <body class="no-skin">
 <div id="app">
@@ -59,9 +61,19 @@
         <div class="footer">
             <div class="footer-inner">
                 <div class="footer-content">
-                <span class="bigger-120">
+                    <button onclick = "tojson()" >
+                        Save(Test)
+                    </button>
+                    <button onclick = "save_diagram()" >
+                        Add diagram(Test)
+                    </button>
+                    <button onclick = "write_xml()" >
+                        Write xml(Test)
+                    </button>
+
+                    <span class="bigger-120">
                      &copy; 2021 MoSiV-Online
-                </span>
+                    </span>
                 </div>
             </div>
         </div>
@@ -81,7 +93,7 @@
 <script src="../../../static/js/vue.min.js" th:src="@{/js/vue.min.js}"></script>
 <script src="../../../static/js/d3.min.js" th:src="@{/js/d3.min.js}"></script>
 <script src="../../../static/js/util.js" th:src="@{/js/util.js}"></script>
-<script src="../../../static/kld-intersections.js" th:src="@{/js/kld-intersections.js}"></script>
+<script src="../../../static/js/kld-intersections.js" th:src="@{/js/kld-intersections.js}"></script>
 <script src="../../../static/js/mosiv.js" th:src="@{/js/mosiv.js}"></script>
 <script>
     $(function () {
@@ -106,8 +118,9 @@
         let components = [{name: "Cursor", obj: null},
             {name: "StartState", obj: StartState},
             {name: "EndState", obj: EndState},
-            {name: "CommonTransition", obj: CommonTransition},
-            {name: "ProTransition", obj: ProTransition}]
+            {name: "CommonState", obj: CommonState},
+            {name: "Transition", obj: Transition},
+            {name: "BranchPoint", obj: BranchPoint}]
 
         my_palette.selectAll("div")
                     .data(components)
@@ -133,8 +146,6 @@
                         // TODO 建模元素高亮
                     })
 
-        let diagram = new StateDiagramSVG();
-
         // 建模元素工具栏
         // let palette = new StateDiagramPalette({
         //     el: "#myPalette", // canvas 的id
@@ -147,5 +158,16 @@
                 .style('height', my_diagram_wrapper.node().getBoundingClientRect().height)
         });
     });
+    let diagram = new StateDiagramSVG();
+    function save_diagram(){
+        diagram.save_diagram();
+    }
+    function write_xml(){
+        diagram.write_xml();
+    }
+
+    function tojson(){
+        diagram.stateDiagram.toJSON();
+    }
 </script>
 </html>
