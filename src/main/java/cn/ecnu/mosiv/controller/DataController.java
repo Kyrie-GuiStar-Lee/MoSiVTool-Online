@@ -28,7 +28,9 @@ import org.springframework.stereotype.Controller;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.DataFormatException;
 
 @Controller
@@ -47,6 +49,7 @@ public class DataController {
         Result result = new Result();
         try {
             stateDiagram.setName(jsonObject.getString("name"));
+            stateDiagram.setJson("");
         } catch (JSONException e) {
             e.printStackTrace();
             result.setErrmsg("JSON reading error");
@@ -71,10 +74,12 @@ public class DataController {
     public Result save_state(@RequestBody List<Object> data) throws JSONException {
         Result result = new Result();
         JSONArray data1 = JSONArray.fromObject(data);
+        JSONObject object = data1.getJSONObject(0);
+        String sdgId = object.getString("id");
         List<String> current_states = new ArrayList<>();
         List<String> current_transitions = new ArrayList<>();
         List<String> current_branch_points = new ArrayList<>();
-        for (int i = 0; i < data.size(); i++) {
+        for (int i = 1; i < data.size(); i++) {
             JSONObject object1 = data1.getJSONObject(i);
             //组件的type是state,保存状态相关信息
 //            if(object1.getString("type").equals("state")){
@@ -106,6 +111,7 @@ public class DataController {
                     name.setOrdinate(name1.getInt("ordinate"));
                     name.setContent(name1.getString("content"));
                     name.setStateId(name1.getString("state_id"));
+                    name.setSdgId(location.getSdgId());
                     location.setName(name.getContent());
                 }
                 //保存状态标签的相关信息
@@ -118,6 +124,7 @@ public class DataController {
                     label.setKind(label1.getString("kind"));
                     label.setContent(label1.getString("content"));
                     label.setComponentId(label1.getString("component_id"));
+                    label.setSdgId(location.getSdgId());
                 } catch (JSONException e) {
                     e.printStackTrace();
 
@@ -128,7 +135,10 @@ public class DataController {
 
                 //如果数据库中没有该状态，则新建；有则更新
                 try {
-                    if (stategramDAO.selectState(location.getId()) == null) {
+                    Map<String,Object> map = new HashMap<>(8);
+                    map.put("id",location.getId());
+                    map.put("sdgId",location.getSdgId());
+                    if (stategramDAO.selectState(map) == null) {
                         stategramDAO.newState(location);
                         if (name != null) {
                             stategramDAO.newName(name);
@@ -172,6 +182,7 @@ public class DataController {
                     label.setKind(label1.getString("kind"));
                     label.setContent(label1.getString("content"));
                     label.setComponentId(label1.getString("component_id"));
+                    label.setSdgId(transition1.getSdgId());
                 } catch (JSONException e) {
                     e.printStackTrace();
 
@@ -180,7 +191,10 @@ public class DataController {
                 current_transitions.add(transition1.getId());
 
                 //如果数据库中没有该transition，则新建；有则更新
-                if (stategramDAO.selectTransition(transition1.getId()) == null) {
+                Map<String,Object> map = new HashMap<>(8);
+                map.put("id",transition1.getId());
+                map.put("sdgId",transition1.getSdgId());
+                if (stategramDAO.selectTransition(map) == null) {
                     stategramDAO.newTransition(transition1);
                     if (label != null) {
                         stategramDAO.newLabel(label);
@@ -203,7 +217,10 @@ public class DataController {
                 branchPoint.setOrdinate(object1.getInt("ordinate"));
 
                 current_branch_points.add(branchPoint.getId());
-                if (stategramDAO.selectBranchPoint(branchPoint.getId()) == null) {
+                Map<String,Object> map = new HashMap<>(8);
+                map.put("id",branchPoint.getId());
+                map.put("sdgId",branchPoint.getSdgId());
+                if (stategramDAO.selectBranchPoint(map) == null) {
                     stategramDAO.newBranchPoint(branchPoint);
                 } else {
                     stategramDAO.updateBranchPoint(branchPoint);
@@ -216,9 +233,9 @@ public class DataController {
 //        System.out.println(stategramDAO.select_state_ids());
 //        System.out.println(stategramDAO.select_transition_ids());
 
-        List<String> old_states = stategramDAO.select_state_ids();
-        List<String> old_transitions = stategramDAO.select_transition_ids();
-        List<String> old_branch_points = stategramDAO.select_branch_point_ids();
+        List<String> old_states = stategramDAO.select_state_ids(sdgId);
+        List<String> old_transitions = stategramDAO.select_transition_ids(sdgId);
+        List<String> old_branch_points = stategramDAO.select_branch_point_ids(sdgId);
 
 
         for (String t : current_states) {
@@ -242,16 +259,16 @@ public class DataController {
 
         //完成上述操作后，old_states、old_transitions和old_branch_points中剩余的id就是需要删除的state、transition和branch_point的id
         if (old_states.size() > 0) {
-            stategramDAO.deleteState(old_states);
-            stategramDAO.deleteName(old_states);
-            stategramDAO.deleteLabel(old_states);
+            stategramDAO.deleteState(old_states,sdgId);
+            stategramDAO.deleteName(old_states,sdgId);
+            stategramDAO.deleteLabel(old_states,sdgId);
         }
         if (old_transitions.size() > 0) {
-            stategramDAO.deleteTransition(old_transitions);
-            stategramDAO.deleteLabel(old_transitions);
+            stategramDAO.deleteTransition(old_transitions,sdgId);
+            stategramDAO.deleteLabel(old_transitions,sdgId);
         }
         if (old_branch_points.size() > 0) {
-            stategramDAO.deleteBranchPoint(old_branch_points);
+            stategramDAO.deleteBranchPoint(old_branch_points,sdgId);
         }
 
         //定义向前端返回的result
@@ -267,8 +284,8 @@ public class DataController {
 
     @CrossOrigin
     @ResponseBody
-    @GetMapping(value = "/write_xml")
-    public Result XmlWriter()
+    @PostMapping(value = "/write_xml")
+    public Result XmlWriter(@RequestBody String sdgId)
             throws ParserConfigurationException, TransformerException {
         Result result = new Result();
 
@@ -310,7 +327,7 @@ public class DataController {
 
         //状态
         try {
-            List<Location> list_s = stategramDAO.select_all_states();
+            List<Location> list_s = stategramDAO.select_all_states(sdgId);
 
             for (Location l : list_s) {
 
@@ -323,7 +340,7 @@ public class DataController {
                 location.setAttribute("id", id_s);
                 template.appendChild(location);
 
-                Name name_ = stategramDAO.selectStateName(id_s);
+                Name name_ = stategramDAO.selectStateName(id_s,sdgId);
                 Element name1 = doc.createElement("name");
                 String ordinate_n = Integer.toString(name_.getOrdinate());
                 name1.setAttribute("y", ordinate_n);
@@ -333,7 +350,7 @@ public class DataController {
                 name1.setTextContent(content_n);
                 location.appendChild(name1);
 
-                List<Label> list_l = stategramDAO.selectLabels(id_s);
+                List<Label> list_l = stategramDAO.selectLabels(id_s,sdgId);
                 for (Label la : list_l) {
                     Element label = doc.createElement("label");
                     String ordinate_l = Integer.toString(la.getOrdinate());
@@ -366,7 +383,7 @@ public class DataController {
         }
 
         //branchpoint
-        List<BranchPoint> list_b = stategramDAO.select_all_branch_points();
+        List<BranchPoint> list_b = stategramDAO.select_all_branch_points(sdgId);
         for (BranchPoint t : list_b) {
             Element branch_point = doc.createElement("branchpoint");
             branch_point.setAttribute("y", Integer.toString(t.getOrdinate()));
@@ -378,7 +395,7 @@ public class DataController {
 
 
         // 迁移
-        List<Transition> list_t = stategramDAO.select_all_transitions();
+        List<Transition> list_t = stategramDAO.select_all_transitions(sdgId);
         for (Transition t : list_t) {
             Element transition = doc.createElement("transition");
             template.appendChild(transition);
@@ -391,7 +408,7 @@ public class DataController {
             target.setAttribute("ref", t.getTarget());//transition的target
             transition.appendChild(target);
 
-            List<Label> list_la = stategramDAO.selectLabels(t.getId());
+            List<Label> list_la = stategramDAO.selectLabels(t.getId(),sdgId);
             for (Label la : list_la) {
                 Element label1 = doc.createElement("label");
                 String ordinate_la = Integer.toString(la.getOrdinate());

@@ -43,7 +43,7 @@
     </resultMap>
 
     <insert id = "newStateDiagram" parameterType="cn.ecnu.mosiv.Pojo.StateDiagram" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
-        insert into state_gram values(#{stateDiagram.id},#{stateDiagram.name})
+        insert into state_gram values(#{stateDiagram.id},#{stateDiagram.name},#{stateDiagram.json})
     </insert>
 
     <insert id="newState" parameterType="cn.ecnu.mosiv.Pojo.Location">
@@ -67,7 +67,8 @@
         insert into names values(#{name.abscissa},
                                 #{name.ordinate},
                                 #{name.content},
-                                #{name.stateId}
+                                #{name.stateId},
+                                #{name.sdgId}
                                 )
     </insert>
 
@@ -77,7 +78,8 @@
                                 #{label.ordinate},
                                 #{label.kind},
                                 #{label.content},
-                                #{label.componentId}
+                                #{label.componentId},
+                                #{label.sdgId}
         )
     </insert>
 
@@ -85,50 +87,52 @@
         insert into transition values(#{transition.id},#{transition.sdgId},#{transition.source},#{transition.target})
     </insert>
 
-    <select id="selectState" parameterType="String" resultType="String">
-        select id from state where id = #{id};
+    <select id="selectState" parameterType="java.util.Map" resultType="String">
+        select id from state where id = #{id} and sdg_id = #{sdgId};
     </select>
 
-    <select id="selectTransition" parameterType="String" resultType="String">
-        select id from transition where id = #{id1};
+    <select id="selectTransition" parameterType="java.util.Map" resultType="String">
+        select id from transition where id = #{id1} and sdg_id = #{sdgId};
     </select>
 
-    <select id="selectBranchPoint" parameterType="String" resultType="String">
-        select id from branchpoints where id = #{id};
+    <select id="selectBranchPoint" parameterType="java.util.Map" resultType="String">
+        select id from branchpoints where id = #{id} and sdg_id = #{sdgId};
     </select>
 
-    <select id="select_state_ids" resultType="java.lang.String" >
-        select id from state;
+    <select id="select_state_ids" parameterType="String" resultType="java.lang.String" >
+        select id from state where sdg_id = #{sdgId};
     </select>
 
-    <select id="select_branch_point_ids" resultType="java.lang.String" >
-        select id from branchpoints;
+    <select id="select_branch_point_ids" parameterType="String" resultType="java.lang.String" >
+        select id from branchpoints where sdg_id = #{sdgId};
     </select>
 
-    <select id="select_transition_ids" resultType="java.lang.String">
-        select id from transition;
+    <select id="select_transition_ids" parameterType="String" resultType="java.lang.String">
+        select id from transition where sdg_id = #{sdgId};
     </select>
 
-    <select id="select_all_states" resultMap="State">
-        select * from state;
+    <select id="select_all_states" parameterType="String" resultMap="State">
+        select * from state where sdg_id = #{sdgId};
     </select>
 
-    <select id="select_all_transitions" resultMap="Transition">
-        select * from transition;
+    <select id="select_all_transitions" parameterType="String" resultMap="Transition">
+        select * from transition where sdg_id = #{sdgId};
     </select>
 
-    <select id="select_all_branch_points" resultMap="BranchPoint">
-        select * from branchpoints;
+    <select id="select_all_branch_points" parameterType="String" resultMap="BranchPoint">
+        select * from branchpoints where sdg_id = #{sdgId};
     </select>
 
     <select id="selectStateName" resultMap="Name">
         select * from names
-        where state_id = #{id};
+        where state_id = #{id}
+        and sdg_id = #{sdgId};
     </select>
 
     <select id="selectLabels" resultMap="Label">
         select * from labels
-        where component_id = #{id};
+        where component_id = #{id}
+        and sdg_id = #{sdgId};
     </select>
 
     <update id="updateState" parameterType="cn.ecnu.mosiv.Pojo.Location">
@@ -139,7 +143,9 @@
                 is_init = #{location.isInit},
                 is_final = #{location.isFinal}
             where id = #{location.id}
+            and sdg_id = #{location.sdgId}
     </update>
+
 
     <update id="updateName" parameterType="cn.ecnu.mosiv.Pojo.Name">
         update names
@@ -147,6 +153,7 @@
                 ordinate = #{name.ordinate},
                 content = #{name.content}
             where state_id = #{name.stateId}
+            and sdg_id = #{name.sdgId}
     </update>
 
     <update id="updateLabel" parameterType="cn.ecnu.mosiv.Pojo.Label">
@@ -156,6 +163,7 @@
                 kind = #{label.kind},
                 content = #{label.content}
             where component_id = #{label.componentId}
+            and sdg_id = #{label.sdgId}
     </update>
 
     <update id="updateTransition" parameterType="cn.ecnu.mosiv.Pojo.Transition">
@@ -163,6 +171,7 @@
             set source = #{transition.source},
                 target = #{transition.target}
             where id = #{transition.id}
+            and sdg_id = #{transition.sdgId}
     </update>
 
     <update id="updateBranchPoint" parameterType="cn.ecnu.mosiv.Pojo.BranchPoint">
@@ -170,15 +179,15 @@
             set abscissa = #{branch_point.abscissa},
                 ordinate = #{branch_point.ordinate}
             where id = #{branch_point.id}
+            and sdg_id = #{branch_point.sdgId}
     </update>
 
-    <delete id="deleteState" parameterType="java.util.List">
+    <delete id="deleteState" >
         delete from state where id in(
         <foreach collection="list" item="id" index="index" separator=",">
             #{id}
         </foreach>
-        );
-
+        ) and sdg_id = #{sdgId};
     </delete>
 
     <delete id="deleteBranchPoint" parameterType="java.util.List">
@@ -186,8 +195,7 @@
         <foreach collection="list" item="id" index="index" separator=",">
             #{id}
         </foreach>
-        );
-
+        )and sdg_id = #{sdgId};
     </delete>
 
     <delete id="deleteName" parameterType="java.util.List">
@@ -195,7 +203,7 @@
         <foreach collection="list" item="id" index="index" separator=",">
             #{id}
         </foreach>
-        )
+        )and sdg_id = #{sdgId};
     </delete>
 
     <delete id="deleteLabel" parameterType="java.util.List">
@@ -203,7 +211,7 @@
         <foreach collection="list" item="id" index="index" separator=",">
             #{id}
         </foreach>
-        )
+        )and sdg_id = #{sdgId};
     </delete>
 
     <delete id="deleteTransition" parameterType="java.util.List">
@@ -211,8 +219,7 @@
         <foreach collection="list" item="id" index="index" separator=",">
             #{id}
         </foreach>
-        );
-
+        )and sdg_id = #{sdgId};
     </delete>
 
 </mapper>

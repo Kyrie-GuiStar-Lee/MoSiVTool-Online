@@ -11,4 +11,5 @@ public class Label {
     private String kind;
     private String content;
     private String componentId;
+    private String sdgId;
 }

@@ -10,6 +10,7 @@ public class Name{
     private int ordinate;
     private String content;
     private String stateId;
+    private String sdgId;
 
 }
 

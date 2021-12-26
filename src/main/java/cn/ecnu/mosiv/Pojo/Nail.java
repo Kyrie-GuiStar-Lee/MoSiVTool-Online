@@ -9,5 +9,6 @@ public class Nail {
     private int abscissa;
     private int ordinate;
     private String transitionId;
+    private String sdgId;
 
 }

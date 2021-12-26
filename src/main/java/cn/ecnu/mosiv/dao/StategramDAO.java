@@ -1,11 +1,13 @@
 package cn.ecnu.mosiv.dao;
 
 import cn.ecnu.mosiv.Pojo.*;
+import net.sf.json.JSONArray;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 @Repository
@@ -23,31 +25,33 @@ public interface StategramDAO {
 
     void newTransition(@Param("transition") Transition transition);
 
-    String selectState(String id);
+    String selectState(@Param("map") Map map);
 
-    String selectTransition(String id1);
+    String selectTransition(@Param("map") Map map);
 
-    String selectBranchPoint(String id2);
+    String selectBranchPoint(@Param("map") Map map);
 
-    List<String> select_state_ids();
+    List<String> select_state_ids(String sdgId);
 
-    List<String> select_transition_ids();
+    List<String> select_transition_ids(String sdgId);
 
-    List<String> select_branch_point_ids();
+    List<String> select_branch_point_ids(String sdgId);
 
-    List<Location> select_all_states();
+    List<Location> select_all_states(String sdgId);
 
-    List<Transition> select_all_transitions();
+    List<Transition> select_all_transitions(String sdgId);
 
-    List<BranchPoint> select_all_branch_points();
+    List<BranchPoint> select_all_branch_points(String sdgId);
 
-    Name selectStateName(@Param("id") String id);
+    Name selectStateName(@Param("id") String id,@Param("sdgId") String sdgId);
 
-    List<Label> selectLabels(@Param(("id")) String id);
+    List<Label> selectLabels(@Param(("id")) String id,@Param("sdgId") String sdgId);
 
     void updateState(@Param("location") Location location);
 
     void updateName(@Param("name") Name name);
+
+    //void updateJson(@Param("json") );
 
     void updateLabel(@Param("label") Label label);
 
@@ -55,14 +59,14 @@ public interface StategramDAO {
 
     void updateBranchPoint(@Param("branch_point")BranchPoint branchPoint);
 
-    void deleteState(List<String> s_delete);
+    void deleteState(@Param("s_delete") List<String> s_delete,@Param("sdgId") String sdgId);
 
-    void deleteTransition(List<String> t_delete);
+    void deleteTransition(@Param("t_delete") List<String> t_delete,@Param("sdgId") String sdgId);
 
-    void deleteBranchPoint(List<String> b_delete);
+    void deleteBranchPoint(@Param("b_delete")List<String> b_delete,@Param("sdgId")String sdgId);
 
-    void deleteName(List<String> to_delete);
+    void deleteName(@Param("to_delete")List<String> to_delete,@Param("sdgId")String sdgId);
 
-    void deleteLabel(List<String> to_delete);
+    void deleteLabel(@Param("to_delete")List<String> to_delete,@Param("sdgId")String sdgId);
 
 }

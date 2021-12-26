@@ -9,5 +9,6 @@ public class StateDiagram {
 
     private int id;
     private String name;
+    private String json;
 //    private String local_declaration;
 }
