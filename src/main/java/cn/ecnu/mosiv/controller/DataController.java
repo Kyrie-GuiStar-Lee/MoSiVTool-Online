@@ -104,15 +104,17 @@ public class DataController {
 //                location.setIsInit(object1.getBoolean("is_init"));
 //                location.setIsFinal(object1.getBoolean("is_final"));
                 Name name = null;
-                if (object1.getString("name") != null) {
-                    name = new Name();
+                try{
                     JSONObject name1 = object1.getJSONObject("name");
+                    name = new Name();
                     name.setAbscissa(name1.getInt("abscissa"));
                     name.setOrdinate(name1.getInt("ordinate"));
                     name.setContent(name1.getString("content"));
                     name.setStateId(name1.getString("state_id"));
                     name.setSdgId(location.getSdgId());
                     location.setName(name.getContent());
+                }catch (JSONException e) {
+
                 }
                 //保存状态标签的相关信息
                 Label label = null;
@@ -135,10 +137,7 @@ public class DataController {
 
                 //如果数据库中没有该状态，则新建；有则更新
                 try {
-                    Map<String,Object> map = new HashMap<>(8);
-                    map.put("id",location.getId());
-                    map.put("sdgId",location.getSdgId());
-                    if (stategramDAO.selectState(map) == null) {
+                    if (stategramDAO.selectState(location.getId(),sdgId) == null) {
                         stategramDAO.newState(location);
                         if (name != null) {
                             stategramDAO.newName(name);
@@ -191,10 +190,7 @@ public class DataController {
                 current_transitions.add(transition1.getId());
 
                 //如果数据库中没有该transition，则新建；有则更新
-                Map<String,Object> map = new HashMap<>(8);
-                map.put("id",transition1.getId());
-                map.put("sdgId",transition1.getSdgId());
-                if (stategramDAO.selectTransition(map) == null) {
+                if (stategramDAO.selectTransition(transition1.getId(),sdgId) == null) {
                     stategramDAO.newTransition(transition1);
                     if (label != null) {
                         stategramDAO.newLabel(label);
@@ -217,10 +213,7 @@ public class DataController {
                 branchPoint.setOrdinate(object1.getInt("ordinate"));
 
                 current_branch_points.add(branchPoint.getId());
-                Map<String,Object> map = new HashMap<>(8);
-                map.put("id",branchPoint.getId());
-                map.put("sdgId",branchPoint.getSdgId());
-                if (stategramDAO.selectBranchPoint(map) == null) {
+                if (stategramDAO.selectBranchPoint(branchPoint.getId(),sdgId) == null) {
                     stategramDAO.newBranchPoint(branchPoint);
                 } else {
                     stategramDAO.updateBranchPoint(branchPoint);

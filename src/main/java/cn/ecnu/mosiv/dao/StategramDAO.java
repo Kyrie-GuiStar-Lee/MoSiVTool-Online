@@ -25,11 +25,11 @@ public interface StategramDAO {
 
     void newTransition(@Param("transition") Transition transition);
 
-    String selectState(@Param("map") Map map);
+    String selectState(@Param("id") String id,@Param("sdgId")String sdgId);
 
-    String selectTransition(@Param("map") Map map);
+    String selectTransition(@Param("id") String id,@Param("sdgId")String sdgId);
 
-    String selectBranchPoint(@Param("map") Map map);
+    String selectBranchPoint(@Param("id") String id,@Param("sdgId")String sdgId);
 
     List<String> select_state_ids(String sdgId);
 

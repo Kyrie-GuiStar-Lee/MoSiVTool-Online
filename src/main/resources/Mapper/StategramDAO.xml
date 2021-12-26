@@ -87,15 +87,15 @@
         insert into transition values(#{transition.id},#{transition.sdgId},#{transition.source},#{transition.target})
     </insert>
 
-    <select id="selectState" parameterType="java.util.Map" resultType="String">
+    <select id="selectState" resultType="String">
         select id from state where id = #{id} and sdg_id = #{sdgId};
     </select>
 
-    <select id="selectTransition" parameterType="java.util.Map" resultType="String">
-        select id from transition where id = #{id1} and sdg_id = #{sdgId};
+    <select id="selectTransition" resultType="String">
+        select id from transition where id = #{id} and sdg_id = #{sdgId};
     </select>
 
-    <select id="selectBranchPoint" parameterType="java.util.Map" resultType="String">
+    <select id="selectBranchPoint" resultType="String">
         select id from branchpoints where id = #{id} and sdg_id = #{sdgId};
     </select>
 
