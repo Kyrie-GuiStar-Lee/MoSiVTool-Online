@@ -114,6 +114,7 @@ public class DataController {
                     name.setSdgId(location.getSdgId());
                     location.setName(name.getContent());
                 }catch (JSONException e) {
+                    e.printStackTrace();
 
                 }
                 //保存状态标签的相关信息
@@ -139,7 +140,7 @@ public class DataController {
                 try {
                     if (stategramDAO.selectState(location.getId(),sdgId) == null) {
                         stategramDAO.newState(location);
-                        if (name != null) {
+                        if (name.getContent() != null) {
                             stategramDAO.newName(name);
                         }
                         if (label != null) {
