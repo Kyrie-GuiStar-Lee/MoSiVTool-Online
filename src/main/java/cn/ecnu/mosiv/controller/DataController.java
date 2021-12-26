@@ -163,23 +163,33 @@ public class DataController {
                 transition1.setSource(object1.getString("source"));
                 transition1.setTarget(object1.getString("target"));
                 //保存transition的label的相关信息
-                Label label = new Label();
-                JSONObject label1 = object1.getJSONObject("label");
-                label.setAbscissa(label1.getInt("abscissa"));
-                label.setOrdinate(label1.getInt("ordinate"));
-                label.setKind(label1.getString("kind"));
-                label.setContent(label1.getString("content"));
-                label.setComponentId(label1.getString("component_id"));
+                Label label = null;
+                try {
+                    JSONObject label1 = object1.getJSONObject("label");
+                    label = new Label();
+                    label.setAbscissa(label1.getInt("abscissa"));
+                    label.setOrdinate(label1.getInt("ordinate"));
+                    label.setKind(label1.getString("kind"));
+                    label.setContent(label1.getString("content"));
+                    label.setComponentId(label1.getString("component_id"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+
+                }
 
                 current_transitions.add(transition1.getId());
 
                 //如果数据库中没有该transition，则新建；有则更新
                 if (stategramDAO.selectTransition(transition1.getId()) == null) {
                     stategramDAO.newTransition(transition1);
-                    stategramDAO.newLabel(label);
+                    if (label != null) {
+                        stategramDAO.newLabel(label);
+                    }
                 } else {
                     stategramDAO.updateTransition(transition1);
-                    stategramDAO.updateLabel(label);
+                    if (label != null) {
+                        stategramDAO.updateLabel(label);
+                    }
                 }
 
             }
