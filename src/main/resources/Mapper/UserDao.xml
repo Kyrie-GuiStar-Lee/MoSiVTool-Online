@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.ecnu.mosiv.dao.UserDao">
+
+    <insert id="newUser" parameterType="cn.ecnu.mosiv.Pojo.User" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+        insert into user values (
+            #{user.id},
+            #{user.email},
+            #{user.username},
+            #{user.password},
+            #{user.phoneNumber}
+        )
+    </insert>
+
+    <select id="searchUser" parameterType="String" resultType="String">
+        select username from user where
+            username = #{username}
+    </select>
+
+    <select id="searchPassword" parameterType="String" resultType="String">
+        select password from user where
+            username = #{username}
+    </select>
+
+
+</mapper>
+
