@@ -3,6 +3,7 @@ package cn.ecnu.mosiv.controller;
 import cn.ecnu.mosiv.Pojo.*;
 import cn.ecnu.mosiv.Pojo.Result;
 import jdk.nashorn.internal.objects.annotations.Getter;
+import org.springframework.dao.DataAccessException;
 import org.springframework.web.bind.annotation.*;
 import org.w3c.dom.CDATASection;
 import org.w3c.dom.Comment;
@@ -25,8 +26,10 @@ import cn.ecnu.mosiv.dao.StategramDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.DataFormatException;
 
 @Controller
 
@@ -66,6 +69,7 @@ public class DataController {
     @ResponseBody
     @PostMapping (value = "/save_json" )
     public Result save_state(@RequestBody List<Object> data) throws JSONException {
+        Result result = new Result();
         JSONArray data1 = JSONArray.fromObject(data);
         List<String> current_states = new ArrayList<>();
         List<String> current_transitions = new ArrayList<>();
@@ -114,15 +118,21 @@ public class DataController {
                 current_states.add(location.getId());
 
                 //如果数据库中没有该状态，则新建；有则更新
-                if(stategramDAO.selectState(location.getId())==null){
-                    stategramDAO.newState(location);
-                    stategramDAO.newName(name);
-                    stategramDAO.newLabel(label);
-                }
-                else{
-                    stategramDAO.updateState(location);
-                    stategramDAO.updateName(name);
-                    stategramDAO.updateLabel(label);
+                try {
+                    if (stategramDAO.selectState(location.getId()) == null) {
+                        stategramDAO.newState(location);
+                        stategramDAO.newName(name);
+                        stategramDAO.newLabel(label);
+                    } else {
+                        stategramDAO.updateState(location);
+                        stategramDAO.updateName(name);
+                        stategramDAO.updateLabel(label);
+                    }
+                }catch (DataAccessException e){
+                    e.printStackTrace();
+                    result.setErrmsg("Data access error");
+                    result.setCode("01");
+                    return result;
                 }
 
             }
@@ -220,12 +230,14 @@ public class DataController {
         }
 
         //定义向前端返回的result
-        Result result = new Result();
         if (data!=null){
             result.setCode("00");
             return result;
         }
-        result.setCode("01");
+        else{
+            result.setCode("10");
+            result.setErrmsg("JSON reading error");
+        }
         return result;
     }
 
@@ -234,6 +246,8 @@ public class DataController {
     @GetMapping(value = "/write_xml" )
     public Result XmlWriter()
             throws ParserConfigurationException, TransformerException {
+        Result result = new Result();
+
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 
@@ -271,7 +285,9 @@ public class DataController {
 
 
         //状态
-        List<Location> list_s = stategramDAO.select_all_states();
+        try{
+            List<Location> list_s = stategramDAO.select_all_states();
+
         for(Location l : list_s) {
 
             Element location = doc.createElement("location");
@@ -317,6 +333,11 @@ public class DataController {
                 fin.setAttribute("ref",l.getId());
                 template.appendChild(fin);
             }
+        }}catch (DataAccessException e){
+            e.printStackTrace();
+            result.setCode("01");
+            result.setErrmsg("data access exception");
+            return result;
         }
 
         //branchpoint
@@ -388,14 +409,10 @@ public class DataController {
             writeXml(doc, output);
         } catch (IOException e) {
             e.printStackTrace();
+            result.setCode("02");
+            result.setErrmsg("xml file write error");
         }
 
-        Result result = new Result();
-        if (docFactory!=null){
-            result.setCode("00");
-            return result;
-        }
-        result.setCode("01");
         return result;
     }
 
