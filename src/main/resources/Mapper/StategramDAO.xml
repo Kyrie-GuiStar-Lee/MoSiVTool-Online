@@ -10,6 +10,8 @@
         <result column="ordinate" jdbcType="INTEGER" property="ordinate"></result>
         <result column="is_init" jdbcType="BOOLEAN" property="isInit"></result>
         <result column="is_final" jdbcType="BOOLEAN" property="isFinal"></result>
+        <result column="is_committed" jdbcType="BOOLEAN" property="isCommitted"></result>
+        <result column="is_urgent" jdbcType="BOOLEAN" property="isUrgent"></result>
         <result column="name" jdbcType="VARCHAR" property="name"></result>
     </resultMap>
 
@@ -53,7 +55,9 @@
                                  #{location.abscissa},
                                  #{location.ordinate},
                                  #{location.isInit},
-                                 #{location.isFinal})
+                                 #{location.isFinal},
+                                 #{location.isCommitted},
+                                 #{location.isUrgent})
     </insert>
 
     <insert id="newBranchPoint" parameterType="cn.ecnu.mosiv.Pojo.BranchPoint">
@@ -135,13 +139,27 @@
         and sdg_id = #{sdgId};
     </select>
 
+    <select id="selectIsCommitted" resultType="Boolean">
+        select is_committed from state
+        where state_id = #{id}
+        and sdg_id = #{sdgId};
+    </select>
+
+    <select id="selectIsUrgent" resultType="Boolean">
+        select is_committed from state
+        where state_id = #{id}
+        and sdg_id = #{sdgId};
+    </select>
+
     <update id="updateState" parameterType="cn.ecnu.mosiv.Pojo.Location">
         update state
             set name = #{location.name},
                 abscissa = #{location.abscissa},
                 ordinate = #{location.ordinate},
                 is_init = #{location.isInit},
-                is_final = #{location.isFinal}
+                is_final = #{location.isFinal},
+                is_committed = #{location.isCommitted},
+                is_urgent = #{location.isUrgent}
             where id = #{location.id}
             and sdg_id = #{location.sdgId}
     </update>

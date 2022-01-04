@@ -43,6 +43,10 @@ public interface StategramDAO {
 
     List<BranchPoint> select_all_branch_points(String sdgId);
 
+    Boolean selectIsCommitted(String id, String sdgId);
+
+    Boolean selectIsUrgent(String id, String sdgId);
+
     Name selectStateName(@Param("id") String id,@Param("sdgId") String sdgId);
 
     List<Label> selectLabels(@Param(("id")) String id,@Param("sdgId") String sdgId);

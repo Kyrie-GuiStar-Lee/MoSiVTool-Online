@@ -92,6 +92,8 @@ public class DataController {
                 location.setOrdinate(object1.getInt("ordinate"));
                 location.setId(object1.getString("id"));
                 location.setSdgId(object1.getString("sdg_id"));
+                location.setIsCommitted(object1.getBoolean("isCommitted"));
+                location.setIsUrgent(object1.getBoolean("isUrgent"));
                 if (object1.getString("type").equals("1")) {
                     location.setIsInit(true);
                     location.setIsFinal(false);
@@ -123,17 +125,16 @@ public class DataController {
                 //保存状态标签的相关信息
                 Label label = null;
                 try {
-                    JSONObject label1 = object1.getJSONObject("label");
+                    JSONObject label1 = object1.getJSONObject("invariant");
                     label = new Label();
                     label.setAbscissa(label1.getInt("abscissa"));
                     label.setOrdinate(label1.getInt("ordinate"));
-                    label.setKind(label1.getString("kind"));
+                    label.setKind("invariant");
                     label.setContent(label1.getString("content"));
                     label.setComponentId(label1.getString("component_id"));
                     label.setSdgId(location.getSdgId());
                 } catch (JSONException e) {
                     e.printStackTrace();
-
                 }
 
 
@@ -360,6 +361,17 @@ public class DataController {
                     label.setTextContent(content_l);
                     location.appendChild(label);
                 }
+
+                if(stategramDAO.selectIsCommitted(id_s,sdgId)) {
+                    Element committed = doc.createElement("committed");
+                    location.appendChild(committed);
+                }
+
+                if(stategramDAO.selectIsUrgent(id_s,sdgId)) {
+                    Element urgent = doc.createElement("urgent");
+                    location.appendChild(urgent);
+                }
+
 
                 if (l.getIsInit() == true) {
                     Element init = doc.createElement("init");

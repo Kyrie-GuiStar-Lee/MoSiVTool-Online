@@ -14,6 +14,8 @@ public class Location {
     private Boolean isInit;
     private Boolean isFinal;
     private String name;
+    private Boolean isCommitted;
+    private Boolean isUrgent;
 
 
 }
