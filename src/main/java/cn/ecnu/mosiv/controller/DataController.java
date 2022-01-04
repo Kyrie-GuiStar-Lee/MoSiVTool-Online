@@ -455,6 +455,16 @@ public class DataController {
         return result;
     }
 
+    @CrossOrigin
+    @ResponseBody
+    @GetMapping(value = "/parse_xml")
+    public Result XmlParser(){
+        Result result = new Result();
+
+        return result;
+    }
+
+
     // write doc to output stream
     private static void writeXml(Document doc,
                                  OutputStream output)
