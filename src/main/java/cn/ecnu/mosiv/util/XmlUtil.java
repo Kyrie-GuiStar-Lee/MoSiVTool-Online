@@ -16,7 +16,6 @@ import javax.xml.bind.Unmarshaller;
  * 封装了XML转换成object，object转换成XML的代码
  *
  * @author Steven
- *
  */
 public class XmlUtil {
     /**

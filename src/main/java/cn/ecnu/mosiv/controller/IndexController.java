@@ -14,5 +14,5 @@ public class IndexController {
     public String toIndex() {
         return "index";
     }
-    
+
 }

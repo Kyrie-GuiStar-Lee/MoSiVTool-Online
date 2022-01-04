@@ -11,8 +11,8 @@ public interface UserDao {
 
     void newUser(@Param("user") User user);
 
-    String searchUser(@Param("username")String username);
+    String searchUser(@Param("username") String username);
 
-    String searchPassword(@Param("username")String username);
+    String searchPassword(@Param("username") String username);
 
 }

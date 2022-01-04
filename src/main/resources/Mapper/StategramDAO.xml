@@ -44,7 +44,8 @@
         <result column="sdg_id" jdbcType="VARCHAR" property="sdgId"></result>
     </resultMap>
 
-    <insert id = "newStateDiagram" parameterType="cn.ecnu.mosiv.Pojo.StateDiagram" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+    <insert id="newStateDiagram" parameterType="cn.ecnu.mosiv.Pojo.StateDiagram" useGeneratedKeys="true" keyColumn="id"
+            keyProperty="id">
         insert into state_gram values(#{stateDiagram.id},#{stateDiagram.name},#{stateDiagram.json})
     </insert>
 
@@ -87,7 +88,7 @@
         )
     </insert>
 
-    <insert id="newTransition" parameterType="cn.ecnu.mosiv.Pojo.Transition" >
+    <insert id="newTransition" parameterType="cn.ecnu.mosiv.Pojo.Transition">
         insert into transition values(#{transition.id},#{transition.sdgId},#{transition.source},#{transition.target})
     </insert>
 
@@ -103,11 +104,11 @@
         select id from branchpoints where id = #{id} and sdg_id = #{sdgId};
     </select>
 
-    <select id="select_state_ids" parameterType="String" resultType="java.lang.String" >
+    <select id="select_state_ids" parameterType="String" resultType="java.lang.String">
         select id from state where sdg_id = #{sdgId};
     </select>
 
-    <select id="select_branch_point_ids" parameterType="String" resultType="java.lang.String" >
+    <select id="select_branch_point_ids" parameterType="String" resultType="java.lang.String">
         select id from branchpoints where sdg_id = #{sdgId};
     </select>
 
@@ -200,7 +201,7 @@
             and sdg_id = #{branch_point.sdgId}
     </update>
 
-    <delete id="deleteState" >
+    <delete id="deleteState">
         delete from state where id in(
         <foreach collection="list" item="id" index="index" separator=",">
             #{id}

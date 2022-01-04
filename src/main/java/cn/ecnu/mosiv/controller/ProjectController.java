@@ -21,7 +21,7 @@ public class ProjectController {
     @CrossOrigin
     @ResponseBody
     @PostMapping(value = "/addProject")
-    public Result newProject(@RequestBody Object object){
+    public Result newProject(@RequestBody Object object) {
         Result result = new Result();
         JSONObject jsonObject = JSONObject.fromObject(object);
         Project project = new Project();

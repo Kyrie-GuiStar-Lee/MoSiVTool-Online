@@ -21,25 +21,25 @@ public class LoginController {
     @CrossOrigin
     @ResponseBody
     @PostMapping(value = "/newUser")
-    public Result newUser(@RequestBody Object object) throws JSONException{
+    public Result newUser(@RequestBody Object object) throws JSONException {
         Result result = new Result();
         JSONObject jsonObject = JSONObject.fromObject(object);
         User user = new User();
-        try{
+        try {
             user.setEmail(jsonObject.getString("email"));
             user.setUsername(jsonObject.getString("username"));
             user.setPassword(jsonObject.getString("password"));
             user.setPhoneNumber(jsonObject.getString("phoneNumber"));
-        }catch(JSONException e){
+        } catch (JSONException e) {
             e.printStackTrace();
             result.setErrmsg("JSON reading error");
             result.setCode("10");
             return result;
         }
 
-        if(userDao.searchUser(user.getUsername())==null){
+        if (userDao.searchUser(user.getUsername()) == null) {
             userDao.newUser(user);
-        }else{
+        } else {
             result.setErrmsg("用户名已存在，请修改用户名");
             result.setCode("100");
             return result;
@@ -54,10 +54,10 @@ public class LoginController {
         Result result = new Result();
         JSONObject jsonObject = JSONObject.fromObject(object);
         User user = new User();
-        try{
+        try {
             user.setUsername(jsonObject.getString("username"));
             user.setPassword(jsonObject.getString("password"));
-        }catch(JSONException e){
+        } catch (JSONException e) {
             e.printStackTrace();
             result.setErrmsg("JSON reading error");
             result.setCode("10");
@@ -66,15 +66,15 @@ public class LoginController {
 
         String username = user.getUsername();
         String password = user.getPassword();
-        if(userDao.searchUser(username)==null){
+        if (userDao.searchUser(username) == null) {
             result.setErrmsg("用户名不存在");
             result.setCode("101");
-        }else{
+        } else {
             String res = userDao.searchPassword(username);
-            if(password==res){
+            if (password == res) {
                 result.setData("登录成功");
                 result.setCode("00");
-            }else{
+            } else {
                 result.setErrmsg("用户名或密码不正确");
                 result.setCode("102");
             }

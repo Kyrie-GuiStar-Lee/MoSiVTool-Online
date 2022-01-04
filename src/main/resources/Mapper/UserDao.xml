@@ -3,7 +3,8 @@
 
 <mapper namespace="cn.ecnu.mosiv.dao.UserDao">
 
-    <insert id="newUser" parameterType="cn.ecnu.mosiv.Pojo.User" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+    <insert id="newUser" parameterType="cn.ecnu.mosiv.Pojo.User" useGeneratedKeys="true" keyColumn="id"
+            keyProperty="id">
         insert into user values (
             #{user.id},
             #{user.email},

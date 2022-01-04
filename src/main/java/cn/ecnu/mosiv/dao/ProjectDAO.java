@@ -13,6 +13,6 @@ import java.util.Map;
 @Repository
 public interface ProjectDAO {
 
-    void newProject(@Param("project")Project project);
+    void newProject(@Param("project") Project project);
 
 }
