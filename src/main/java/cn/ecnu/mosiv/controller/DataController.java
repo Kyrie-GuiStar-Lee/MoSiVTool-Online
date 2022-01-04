@@ -191,6 +191,7 @@ public class DataController {
                     e.printStackTrace();
 
                 }
+
                 Label label2 = null;
                 try {
                     JSONObject label1 = object1.getJSONObject("update");
@@ -205,6 +206,7 @@ public class DataController {
                     e.printStackTrace();
 
                 }
+
                 Label label3 = null;
                 try {
                     JSONObject label1 = object1.getJSONObject("guard");
@@ -219,13 +221,14 @@ public class DataController {
                     e.printStackTrace();
 
                 }
+
                 Label label4 = null;
                 try {
                     JSONObject label1 = object1.getJSONObject("synchronisation");
                     label4 = new Label();
                     label4.setAbscissa(label1.getInt("abscissa"));
                     label4.setOrdinate(label1.getInt("ordinate"));
-                    label4.setKind(label1.getString("kind"));
+                    label4.setKind("synchronisation");
                     label4.setContent(label1.getString("content"));
                     label4.setComponentId(label1.getString("component_id"));
                     label4.setSdgId(transition1.getSdgId());
@@ -233,13 +236,14 @@ public class DataController {
                     e.printStackTrace();
 
                 }
+
                 Label label5 = null;
                 try {
                     JSONObject label1 = object1.getJSONObject("probability-weight");
                     label5 = new Label();
                     label5.setAbscissa(label1.getInt("abscissa"));
                     label5.setOrdinate(label1.getInt("ordinate"));
-                    label5.setKind(label1.getString("kind"));
+                    label5.setKind("probability-weight");
                     label5.setContent(label1.getString("content"));
                     label5.setComponentId(label1.getString("component_id"));
                     label5.setSdgId(transition1.getSdgId());
