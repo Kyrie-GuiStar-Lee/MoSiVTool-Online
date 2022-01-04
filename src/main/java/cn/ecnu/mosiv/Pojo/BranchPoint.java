@@ -6,8 +6,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class BranchPoint {
-    private int abscissa;
-    private int ordinate;
+    private double abscissa;
+    private double ordinate;
     private String id;
     private String sdgId;
 }

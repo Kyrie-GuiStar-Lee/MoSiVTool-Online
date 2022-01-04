@@ -88,8 +88,8 @@ public class DataController {
 //            if(object1.getString("type").equals("state")){
             if (object1.getString("type").equals("1") || object1.getString("type").equals("2") || object1.getString("type").equals("3")) {
                 Location location = new Location();
-                location.setAbscissa(object1.getInt("abscissa"));
-                location.setOrdinate(object1.getInt("ordinate"));
+                location.setAbscissa(object1.getDouble("abscissa"));
+                location.setOrdinate(object1.getDouble("ordinate"));
                 location.setId(object1.getString("id"));
                 location.setSdgId(object1.getString("sdg_id"));
                 location.setIsCommitted(object1.getBoolean("isCommitted"));
@@ -112,8 +112,8 @@ public class DataController {
                 try {
                     JSONObject name1 = object1.getJSONObject("name");
                     name = new Name();
-                    name.setAbscissa(name1.getInt("abscissa"));
-                    name.setOrdinate(name1.getInt("ordinate"));
+                    name.setAbscissa(name1.getDouble("abscissa"));
+                    name.setOrdinate(name1.getDouble("ordinate"));
                     name.setContent(name1.getString("content"));
                     name.setStateId(name1.getString("state_id"));
                     name.setSdgId(location.getSdgId());
@@ -127,8 +127,8 @@ public class DataController {
                 try {
                     JSONObject label1 = object1.getJSONObject("invariant");
                     label = new Label();
-                    label.setAbscissa(label1.getInt("abscissa"));
-                    label.setOrdinate(label1.getInt("ordinate"));
+                    label.setAbscissa(label1.getDouble("abscissa"));
+                    label.setOrdinate(label1.getDouble("ordinate"));
                     label.setKind("invariant");
                     label.setContent(label1.getString("content"));
                     label.setComponentId(label1.getString("component_id"));
@@ -181,8 +181,8 @@ public class DataController {
                 try {
                     JSONObject label1 = object1.getJSONObject("select");
                     label = new Label();
-                    label.setAbscissa(label1.getInt("abscissa"));
-                    label.setOrdinate(label1.getInt("ordinate"));
+                    label.setAbscissa(label1.getDouble("abscissa"));
+                    label.setOrdinate(label1.getDouble("ordinate"));
                     label.setKind("select");
                     label.setContent(label1.getString("content"));
                     label.setComponentId(label1.getString("component_id"));
@@ -196,8 +196,8 @@ public class DataController {
                 try {
                     JSONObject label1 = object1.getJSONObject("update");
                     label2 = new Label();
-                    label2.setAbscissa(label1.getInt("abscissa"));
-                    label2.setOrdinate(label1.getInt("ordinate"));
+                    label2.setAbscissa(label1.getDouble("abscissa"));
+                    label2.setOrdinate(label1.getDouble("ordinate"));
                     label2.setKind("update");
                     label2.setContent(label1.getString("content"));
                     label2.setComponentId(label1.getString("component_id"));
@@ -211,8 +211,8 @@ public class DataController {
                 try {
                     JSONObject label1 = object1.getJSONObject("guard");
                     label3 = new Label();
-                    label3.setAbscissa(label1.getInt("abscissa"));
-                    label3.setOrdinate(label1.getInt("ordinate"));
+                    label3.setAbscissa(label1.getDouble("abscissa"));
+                    label3.setOrdinate(label1.getDouble("ordinate"));
                     label3.setKind("guard");
                     label3.setContent(label1.getString("content"));
                     label3.setComponentId(label1.getString("component_id"));
@@ -226,8 +226,8 @@ public class DataController {
                 try {
                     JSONObject label1 = object1.getJSONObject("synchronisation");
                     label4 = new Label();
-                    label4.setAbscissa(label1.getInt("abscissa"));
-                    label4.setOrdinate(label1.getInt("ordinate"));
+                    label4.setAbscissa(label1.getDouble("abscissa"));
+                    label4.setOrdinate(label1.getDouble("ordinate"));
                     label4.setKind("synchronisation");
                     label4.setContent(label1.getString("content"));
                     label4.setComponentId(label1.getString("component_id"));
@@ -241,8 +241,8 @@ public class DataController {
                 try {
                     JSONObject label1 = object1.getJSONObject("probability-weight");
                     label5 = new Label();
-                    label5.setAbscissa(label1.getInt("abscissa"));
-                    label5.setOrdinate(label1.getInt("ordinate"));
+                    label5.setAbscissa(label1.getDouble("abscissa"));
+                    label5.setOrdinate(label1.getDouble("ordinate"));
                     label5.setKind("probability-weight");
                     label5.setContent(label1.getString("content"));
                     label5.setComponentId(label1.getString("component_id"));
@@ -298,8 +298,8 @@ public class DataController {
                 BranchPoint branchPoint = new BranchPoint();
                 branchPoint.setId(object1.getString("id"));
                 branchPoint.setSdgId(object1.getString("sdg_id"));
-                branchPoint.setAbscissa(object1.getInt("abscissa"));
-                branchPoint.setOrdinate(object1.getInt("ordinate"));
+                branchPoint.setAbscissa(object1.getDouble("abscissa"));
+                branchPoint.setOrdinate(object1.getDouble("ordinate"));
 
                 current_branch_points.add(branchPoint.getId());
                 if (stategramDAO.selectBranchPoint(branchPoint.getId(), sdgId) == null) {
@@ -414,9 +414,9 @@ public class DataController {
             for (Location l : list_s) {
 
                 Element location = doc.createElement("location");
-                String ordinate_s = Integer.toString(l.getOrdinate());
+                String ordinate_s = Double.toString(l.getOrdinate());
                 location.setAttribute("y", ordinate_s);
-                String abscissa_s = Integer.toString(l.getAbscissa());
+                String abscissa_s = Double.toString(l.getAbscissa());
                 location.setAttribute("x", abscissa_s);
                 String id_s = l.getId();
                 location.setAttribute("id", id_s);
@@ -424,9 +424,9 @@ public class DataController {
 
                 Name name_ = stategramDAO.selectStateName(id_s, sdgId);
                 Element name1 = doc.createElement("name");
-                String ordinate_n = Integer.toString(name_.getOrdinate());
+                String ordinate_n = Double.toString(name_.getOrdinate());
                 name1.setAttribute("y", ordinate_n);
-                String abscissa_n = Integer.toString(name_.getAbscissa());
+                String abscissa_n = Double.toString(name_.getAbscissa());
                 name1.setAttribute("x", abscissa_n);
                 String content_n = name_.getContent();
                 name1.setTextContent(content_n);
@@ -435,9 +435,9 @@ public class DataController {
                 List<Label> list_l = stategramDAO.selectLabels(id_s, sdgId);
                 for (Label la : list_l) {
                     Element label = doc.createElement("label");
-                    String ordinate_l = Integer.toString(la.getOrdinate());
+                    String ordinate_l = Double.toString(la.getOrdinate());
                     label.setAttribute("y", ordinate_l);
-                    String abscissa_l = Integer.toString(la.getAbscissa());
+                    String abscissa_l = Double.toString(la.getAbscissa());
                     label.setAttribute("x", abscissa_l);
                     String kind_l = la.getKind();
                     label.setAttribute("kind", kind_l);
@@ -479,8 +479,8 @@ public class DataController {
         List<BranchPoint> list_b = stategramDAO.select_all_branch_points(sdgId);
         for (BranchPoint t : list_b) {
             Element branch_point = doc.createElement("branchpoint");
-            branch_point.setAttribute("y", Integer.toString(t.getOrdinate()));
-            branch_point.setAttribute("x", Integer.toString(t.getAbscissa()));
+            branch_point.setAttribute("y", Double.toString(t.getOrdinate()));
+            branch_point.setAttribute("x", Double.toString(t.getAbscissa()));
             branch_point.setAttribute("id", t.getId());
             template.appendChild(branch_point);
 
@@ -504,9 +504,9 @@ public class DataController {
             List<Label> list_la = stategramDAO.selectLabels(t.getId(), sdgId);
             for (Label la : list_la) {
                 Element label1 = doc.createElement("label");
-                String ordinate_la = Integer.toString(la.getOrdinate());
+                String ordinate_la = Double.toString(la.getOrdinate());
                 label1.setAttribute("y", ordinate_la);
-                String abscissa_la = Integer.toString(la.getAbscissa());
+                String abscissa_la = Double.toString(la.getAbscissa());
                 label1.setAttribute("x", abscissa_la);
                 label1.setAttribute("kind", la.getKind());
                 label1.setTextContent(la.getContent());

@@ -6,8 +6,8 @@ import lombok.Setter;
 @Setter
 @Getter
 public class Nail {
-    private int abscissa;
-    private int ordinate;
+    private double abscissa;
+    private double ordinate;
     private String transitionId;
     private String sdgId;
 

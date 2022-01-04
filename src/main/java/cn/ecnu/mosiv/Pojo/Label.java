@@ -6,8 +6,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Label {
-    private int abscissa;
-    private int ordinate;
+    private double abscissa;
+    private double ordinate;
     private String kind;
     private String content;
     private String componentId;

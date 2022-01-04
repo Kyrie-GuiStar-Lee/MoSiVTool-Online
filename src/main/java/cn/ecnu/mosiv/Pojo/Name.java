@@ -6,8 +6,8 @@ import lombok.Setter;
 @Setter
 @Getter
 public class Name{
-    private int abscissa;
-    private int ordinate;
+    private double abscissa;
+    private double ordinate;
     private String content;
     private String stateId;
     private String sdgId;

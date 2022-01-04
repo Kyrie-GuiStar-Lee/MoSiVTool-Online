@@ -8,8 +8,8 @@ import lombok.Setter;
 @Setter
 public class Location {
     private String id;
-    private int abscissa;//横坐标
-    private int ordinate;//纵坐标
+    private double abscissa;//横坐标
+    private double ordinate;//纵坐标
     private String sdgId;
     private Boolean isInit;
     private Boolean isFinal;
