@@ -260,10 +260,34 @@ public class DataController {
                     if (label != null) {
                         stategramDAO.newLabel(label);
                     }
+                    if (label2 != null) {
+                        stategramDAO.newLabel(label2);
+                    }
+                    if (label3 != null) {
+                        stategramDAO.newLabel(label3);
+                    }
+                    if (label4 != null) {
+                        stategramDAO.newLabel(label4);
+                    }
+                    if (label5 != null) {
+                        stategramDAO.newLabel(label5);
+                    }
                 } else {
                     stategramDAO.updateTransition(transition1);
                     if (label != null) {
                         stategramDAO.updateLabel(label);
+                    }
+                    if (label2 != null) {
+                        stategramDAO.updateLabel(label2);
+                    }
+                    if (label3 != null) {
+                        stategramDAO.updateLabel(label3);
+                    }
+                    if (label4 != null) {
+                        stategramDAO.updateLabel(label4);
+                    }
+                    if (label5 != null) {
+                        stategramDAO.updateLabel(label5);
                     }
                 }
 
