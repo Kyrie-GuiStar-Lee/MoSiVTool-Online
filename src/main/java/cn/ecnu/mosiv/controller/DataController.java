@@ -179,14 +179,70 @@ public class DataController {
                 //保存transition的label的相关信息
                 Label label = null;
                 try {
-                    JSONObject label1 = object1.getJSONObject("label");
+                    JSONObject label1 = object1.getJSONObject("select");
                     label = new Label();
                     label.setAbscissa(label1.getInt("abscissa"));
                     label.setOrdinate(label1.getInt("ordinate"));
-                    label.setKind(label1.getString("kind"));
+                    label.setKind("select");
                     label.setContent(label1.getString("content"));
                     label.setComponentId(label1.getString("component_id"));
                     label.setSdgId(transition1.getSdgId());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+
+                }
+                Label label2 = null;
+                try {
+                    JSONObject label1 = object1.getJSONObject("update");
+                    label2 = new Label();
+                    label2.setAbscissa(label1.getInt("abscissa"));
+                    label2.setOrdinate(label1.getInt("ordinate"));
+                    label2.setKind("update");
+                    label2.setContent(label1.getString("content"));
+                    label2.setComponentId(label1.getString("component_id"));
+                    label2.setSdgId(transition1.getSdgId());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+
+                }
+                Label label3 = null;
+                try {
+                    JSONObject label1 = object1.getJSONObject("guard");
+                    label3 = new Label();
+                    label3.setAbscissa(label1.getInt("abscissa"));
+                    label3.setOrdinate(label1.getInt("ordinate"));
+                    label3.setKind("guard");
+                    label3.setContent(label1.getString("content"));
+                    label3.setComponentId(label1.getString("component_id"));
+                    label3.setSdgId(transition1.getSdgId());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+
+                }
+                Label label4 = null;
+                try {
+                    JSONObject label1 = object1.getJSONObject("synchronisation");
+                    label4 = new Label();
+                    label4.setAbscissa(label1.getInt("abscissa"));
+                    label4.setOrdinate(label1.getInt("ordinate"));
+                    label4.setKind(label1.getString("kind"));
+                    label4.setContent(label1.getString("content"));
+                    label4.setComponentId(label1.getString("component_id"));
+                    label4.setSdgId(transition1.getSdgId());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+
+                }
+                Label label5 = null;
+                try {
+                    JSONObject label1 = object1.getJSONObject("probability-weight");
+                    label5 = new Label();
+                    label5.setAbscissa(label1.getInt("abscissa"));
+                    label5.setOrdinate(label1.getInt("ordinate"));
+                    label5.setKind(label1.getString("kind"));
+                    label5.setContent(label1.getString("content"));
+                    label5.setComponentId(label1.getString("component_id"));
+                    label5.setSdgId(transition1.getSdgId());
                 } catch (JSONException e) {
                     e.printStackTrace();
 

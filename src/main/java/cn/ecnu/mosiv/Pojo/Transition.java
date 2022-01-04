@@ -13,4 +13,5 @@ public class Transition {
     private String source;
     private String target;
     private String sdgId;
+
 }
