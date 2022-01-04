@@ -40,6 +40,9 @@ public class DataController {
     @Autowired
     StategramDAO stategramDAO;
 
+    //todo 能够导入之前绘制的模型，实现工具的互操作
+
+
     @CrossOrigin
     @ResponseBody
     @PostMapping(value = "/add_state_diagram")
