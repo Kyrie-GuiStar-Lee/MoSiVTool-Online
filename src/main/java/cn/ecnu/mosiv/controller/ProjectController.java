@@ -27,13 +27,17 @@ public class ProjectController {
         Project project = new Project();
         try {
             project.setName(jsonObject.getString("name"));
-            project.setAuthorName(jsonObject.getString("author"));
-            project.setDescription(jsonObject.getString("description"));
         } catch (JSONException e) {
             e.printStackTrace();
             result.setErrmsg("JSON reading error");
             result.setCode("10");
             return result;
+        }
+        try {
+            project.setAuthorName(jsonObject.getString("author"));
+            project.setDescription(jsonObject.getString("description"));
+        } catch (JSONException e) {
+
         }
         projectDAO.newProject(project);
         if (project.getId() != -1) {
