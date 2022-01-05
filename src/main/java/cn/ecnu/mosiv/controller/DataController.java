@@ -77,10 +77,17 @@ public class DataController {
     @PostMapping(value = "/save_json")
     public Result save_state(@RequestBody List<Object> data) throws JSONException {
         Result result = new Result();
-        JSONArray data1 = JSONArray.fromObject(data);//data1是前端传来的JSON数组
-        JSONObject object = data1.getJSONObject(0);
+        StateDiagram stateDiagram = new StateDiagram();
+        JSONArray data1 = JSONArray.fromObject(data);//data1是前端传来的整个的JSON数组
+
+        JSONObject data2 = data1.getJSONObject(0);//data2中装的是base64数据
+        stateDiagram.setBase64(data2.getString("base64"));
+
+        JSONArray data3 = data1.getJSONArray(1);//data3中装的是包含状态图id和各个组件的JSON数组
+        JSONObject object = data3.getJSONObject(0);
         String sdgId = object.getString("id");
-        //todo 将整张图的json数组保存到数据库，在数据库中根据图ID搜索JSON发送到前端
+        //todo 根据图ID将整张图的json数组保存到数据库，在数据库中根据图ID搜索JSON发送到前端
+        //todo 根据图ID将整张图的base64数据存到数据库
         String str = data1.toString();
         System.out.println(str);
         List<String> current_states = new ArrayList<>();
