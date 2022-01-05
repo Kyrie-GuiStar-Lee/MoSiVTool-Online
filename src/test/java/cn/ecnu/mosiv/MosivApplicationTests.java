@@ -1,10 +1,5 @@
 package cn.ecnu.mosiv;
 
-import cn.ecnu.mosiv.Pojo.Project;
-import cn.ecnu.mosiv.Pojo.User;
-import cn.ecnu.mosiv.Pojo.nta;
-import cn.ecnu.mosiv.util.JsonUtils;
-import cn.ecnu.mosiv.util.XmlUtil;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
 import org.json.XML;
@@ -23,7 +18,7 @@ class MosivApplicationTests {
 
     @Test
     void XmlParser() throws IOException {
-        InputStream in = JsonUtils.class.getResourceAsStream("/test-dom.xml");
+        InputStream in = MosivApplicationTests.class.getResourceAsStream("/test-dom.xml");
         System.out.println(in);
         String xml = IOUtils.toString(in);
         JSONObject xmlJSONObj = XML.toJSONObject(xml);

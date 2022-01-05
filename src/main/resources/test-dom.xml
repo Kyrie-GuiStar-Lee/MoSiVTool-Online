@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<nta>
+<declaration/>
+<template>
+<name/>
+<parameter/>
+<declaration/>
+<location id="0" x="127" y="158">
+<name x="0" y="0">test</name>
+<label kind="default" x="0" y="0">null</label>
+</location>
+<init ref="0"/>
+<location id="1" x="411" y="269">
+<name x="0" y="0">test</name>
+<label kind="default" x="0" y="0">null</label>
+</location>
+<fin ref="1"/>
+<location id="2" x="195" y="334">
+<name x="0" y="0">test</name>
+<label kind="default" x="0" y="0">null</label>
+</location>
+<transition>
+<source ref="0"/>
+<target ref="2"/>
+<label kind="default" x="0" y="0">null</label>
+<nail x="" y=""/>
+</transition>
+<transition>
+<source ref="2"/>
+<target ref="1"/>
+<label kind="default" x="0" y="0">null</label>
+<nail x="" y=""/>
+</transition>
+</template>
+<system/>
+<queries>
+<query>
+<formula/>
+<comment/>
+</query>
+</queries>
+</nta>
