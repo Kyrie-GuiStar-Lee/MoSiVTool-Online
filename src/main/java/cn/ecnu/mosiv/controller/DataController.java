@@ -53,6 +53,7 @@ public class DataController {
         try {
             stateDiagram.setName(jsonObject.getString("name"));
             stateDiagram.setJson("");
+            stateDiagram.setBase64("");
         } catch (JSONException e) {
             e.printStackTrace();
             result.setErrmsg("JSON reading error");
@@ -76,9 +77,12 @@ public class DataController {
     @PostMapping(value = "/save_json")
     public Result save_state(@RequestBody List<Object> data) throws JSONException {
         Result result = new Result();
-        JSONArray data1 = JSONArray.fromObject(data);
+        JSONArray data1 = JSONArray.fromObject(data);//data1是前端传来的JSON数组
         JSONObject object = data1.getJSONObject(0);
         String sdgId = object.getString("id");
+        //todo 将整张图的json数组保存到数据库，在数据库中根据图ID搜索JSON发送到前端
+        String str = data1.toString();
+        System.out.println(str);
         List<String> current_states = new ArrayList<>();
         List<String> current_transitions = new ArrayList<>();
         List<String> current_branch_points = new ArrayList<>();

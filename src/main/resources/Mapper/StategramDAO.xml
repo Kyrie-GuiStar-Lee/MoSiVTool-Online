@@ -46,7 +46,7 @@
 
     <insert id="newStateDiagram" parameterType="cn.ecnu.mosiv.Pojo.StateDiagram" useGeneratedKeys="true" keyColumn="id"
             keyProperty="id">
-        insert into state_gram values(#{stateDiagram.id},#{stateDiagram.name},#{stateDiagram.json})
+        insert into state_gram values(#{stateDiagram.id},#{stateDiagram.name},#{stateDiagram.json},#{stateDiagram.base64})
     </insert>
 
     <insert id="newState" parameterType="cn.ecnu.mosiv.Pojo.Location">
