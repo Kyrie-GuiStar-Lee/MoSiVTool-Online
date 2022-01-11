@@ -142,13 +142,13 @@
 
     <select id="selectIsCommitted" resultType="Boolean">
         select is_committed from state
-        where state_id = #{id}
+        where id = #{id}
         and sdg_id = #{sdgId};
     </select>
 
     <select id="selectIsUrgent" resultType="Boolean">
         select is_committed from state
-        where state_id = #{id}
+        where id = #{id}
         and sdg_id = #{sdgId};
     </select>
 

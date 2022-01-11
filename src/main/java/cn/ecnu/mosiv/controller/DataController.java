@@ -3,6 +3,7 @@ package cn.ecnu.mosiv.controller;
 import cn.ecnu.mosiv.Pojo.*;
 import cn.ecnu.mosiv.Pojo.Result;
 import jdk.nashorn.internal.objects.annotations.Getter;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.web.bind.annotation.*;
 import org.w3c.dom.CDATASection;
@@ -10,16 +11,16 @@ import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 
 import net.sf.json.*;
 import cn.ecnu.mosiv.dao.StategramDAO;
@@ -377,8 +378,8 @@ public class DataController {
 
     @CrossOrigin
     @ResponseBody
-    @PostMapping(value = "/write_xml")
-    public Result XmlWriter(@RequestBody String sdgId)
+    @RequestMapping(value = "/download_xml")
+    public Result XmlWriter(@RequestParam String sdgId, HttpServletResponse response)
             throws ParserConfigurationException, TransformerException {
         Result result = new Result();
 
@@ -558,6 +559,19 @@ public class DataController {
             result.setCode("02");
             result.setErrmsg("xml file write error");
         }
+
+        File file = new File("E:\\test\\test-dom.xml");
+        try(InputStream inputStream =  new FileInputStream(file);
+            OutputStream outputStream = response.getOutputStream();){
+            response.setContentType("application/x-download");
+            response.addHeader("Content-Disposition", "attachment;filename=test.xml");
+            IOUtils.copy(inputStream, outputStream);
+            outputStream.flush();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+
 
         return result;
     }
