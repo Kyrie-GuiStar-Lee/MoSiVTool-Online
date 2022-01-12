@@ -6,8 +6,8 @@
     <resultMap id="State" type="cn.ecnu.mosiv.Pojo.Location">
         <result column="id" jdbcType="VARCHAR" property="id"></result>
         <result column="sdg_id" jdbcType="VARCHAR" property="sdgId"></result>
-        <result column="abscissa" jdbcType="INTEGER" property="abscissa"></result>
-        <result column="ordinate" jdbcType="INTEGER" property="ordinate"></result>
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
         <result column="is_init" jdbcType="BOOLEAN" property="isInit"></result>
         <result column="is_final" jdbcType="BOOLEAN" property="isFinal"></result>
         <result column="is_committed" jdbcType="BOOLEAN" property="isCommitted"></result>
@@ -23,24 +23,31 @@
     </resultMap>
 
     <resultMap id="Name" type="cn.ecnu.mosiv.Pojo.Name">
-        <result column="abscissa" jdbcType="INTEGER" property="abscissa"></result>
-        <result column="ordinate" jdbcType="INTEGER" property="ordinate"></result>
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
         <result column="content" jdbcType="VARCHAR" property="content"></result>
         <result column="state_id" jdbcType="VARCHAR" property="stateId"></result>
     </resultMap>
 
     <resultMap id="Label" type="cn.ecnu.mosiv.Pojo.Label">
-        <result column="abscissa" jdbcType="INTEGER" property="abscissa"></result>
-        <result column="ordinate" jdbcType="INTEGER" property="ordinate"></result>
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
         <result column="kind" jdbcType="VARCHAR" property="kind"></result>
         <result column="content" jdbcType="VARCHAR" property="content"></result>
         <result column="component_id" jdbcType="VARCHAR" property="componentId"></result>
     </resultMap>
 
+    <resultMap id="Nail" type="cn.ecnu.mosiv.Pojo.Nail">
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
+        <result column="transition_id" jdbcType="VARCHAR" property="transitionId"></result>
+        <result column="sdg_id" jdbcType="VARCHAR" property="sdgId"></result>
+    </resultMap>
+
     <resultMap id="BranchPoint" type="cn.ecnu.mosiv.Pojo.BranchPoint">
         <result column="id" jdbcType="VARCHAR" property="id"></result>
-        <result column="abscissa" jdbcType="INTEGER" property="abscissa"></result>
-        <result column="ordinate" jdbcType="INTEGER" property="ordinate"></result>
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
         <result column="sdg_id" jdbcType="VARCHAR" property="sdgId"></result>
     </resultMap>
 
@@ -85,6 +92,15 @@
                                 #{label.content},
                                 #{label.componentId},
                                 #{label.sdgId}
+        )
+    </insert>
+
+    <insert id="newNail" parameterType="cn.ecnu.mosiv.Pojo.Nail">
+        insert into nails values(
+                                #{nail.abscissa},
+                                #{nail.ordinate},
+                                #{nail.transitionId},
+                                #{nail.sdgId}
         )
     </insert>
 
@@ -140,6 +156,12 @@
         and sdg_id = #{sdgId};
     </select>
 
+    <select id="selectNails" resultMap="Nail">
+        select * from nails
+        where transition_id = #{id}
+        and sdg_id = #{sdgId};
+    </select>
+
     <select id="selectIsCommitted" resultType="Boolean">
         select is_committed from state
         where id = #{id}
@@ -192,6 +214,14 @@
             and sdg_id = #{label.sdgId}
     </update>
 
+    <update id="updateNail" parameterType="cn.ecnu.mosiv.Pojo.Nail">
+        update nails
+            set abscissa = #{nail.abscissa},
+                ordinate = #{nail.ordinate},
+            where transition_id = #{nail.transitionId}
+            and sdg_id = #{nail.sdgId}
+    </update>
+
     <update id="updateTransition" parameterType="cn.ecnu.mosiv.Pojo.Transition">
         update transition
             set source = #{transition.source},
@@ -210,7 +240,7 @@
 
     <delete id="deleteState">
         delete from state where id in(
-        <foreach collection="list" item="id" index="index" separator=",">
+        <foreach collection="s_delete" item="id" index="index" separator=",">
             #{id}
         </foreach>
         ) and sdg_id = #{sdgId};
@@ -218,7 +248,7 @@
 
     <delete id="deleteBranchPoint" parameterType="java.util.List">
         delete from branchpoints where id in(
-        <foreach collection="list" item="id" index="index" separator=",">
+        <foreach collection="b_delete" item="id" index="index" separator=",">
             #{id}
         </foreach>
         )and sdg_id = #{sdgId};
@@ -226,7 +256,7 @@
 
     <delete id="deleteName" parameterType="java.util.List">
         delete from names where state_id in(
-        <foreach collection="list" item="id" index="index" separator=",">
+        <foreach collection="to_delete" item="id" index="index" separator=",">
             #{id}
         </foreach>
         )and sdg_id = #{sdgId};
@@ -234,15 +264,23 @@
 
     <delete id="deleteLabel" parameterType="java.util.List">
         delete from labels where component_id in(
-        <foreach collection="list" item="id" index="index" separator=",">
+        <foreach collection="to_delete" item="id" index="index" separator=",">
             #{id}
         </foreach>
         )and sdg_id = #{sdgId};
     </delete>
 
+    <delete id="deleteNail" parameterType="java.util.List">
+        delete from nails where transition_id in (
+        <foreach collection="to_delete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        ) and sdg_id = #{sdgId}
+    </delete>
+
     <delete id="deleteTransition" parameterType="java.util.List">
         delete from transition where id in(
-        <foreach collection="list" item="id" index="index" separator=",">
+        <foreach collection="t_delete" item="id" index="index" separator=",">
             #{id}
         </foreach>
         )and sdg_id = #{sdgId};

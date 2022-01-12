@@ -23,6 +23,8 @@ public interface StategramDAO {
 
     void newLabel(@Param("label")Label label);
 
+    void newNail(@Param("nail") Nail nail);
+
     void newTransition(@Param("transition") Transition transition);
 
     String selectState(@Param("id") String id,@Param("sdgId")String sdgId);
@@ -49,7 +51,9 @@ public interface StategramDAO {
 
     Name selectStateName(@Param("id") String id,@Param("sdgId") String sdgId);
 
-    List<Label> selectLabels(@Param(("id")) String id,@Param("sdgId") String sdgId);
+    List<Label> selectLabels(@Param("id") String id,@Param("sdgId") String sdgId);
+
+    List<Nail> selectNails(@Param("id") String id,@Param("sdgId") String sdgId);
 
     void updateState(@Param("location") Location location);
 
@@ -58,6 +62,8 @@ public interface StategramDAO {
     void updateDiagram(@Param("stateDiagram") StateDiagram stateDiagram, @Param("sdgId") String sdgId);
 
     void updateLabel(@Param("label") Label label);
+
+    void updateNail(@Param("nail") Nail nail);
 
     void updateTransition(@Param("transition") Transition transition);
 
@@ -72,5 +78,7 @@ public interface StategramDAO {
     void deleteName(@Param("to_delete")List<String> to_delete,@Param("sdgId")String sdgId);
 
     void deleteLabel(@Param("to_delete")List<String> to_delete,@Param("sdgId")String sdgId);
+
+    void deleteNail(@Param("to_delete") List<String> to_delete, @Param("sdgId") String sdgId);
 
 }

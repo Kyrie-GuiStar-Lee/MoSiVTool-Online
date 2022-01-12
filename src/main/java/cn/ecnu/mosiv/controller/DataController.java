@@ -271,6 +271,19 @@ public class DataController {
 
                 }
 
+                Nail nail = null;
+                try{
+                    JSONObject nail1 = object1.getJSONObject("nail");
+                    nail = new Nail();
+                    nail.setAbscissa(nail1.getDouble("abscissa"));
+                    nail.setOrdinate(nail1.getDouble("ordinate"));
+                    nail.setTransitionId(nail1.getString("transition_id"));
+                    nail.setSdgId(nail1.getString("sdg_id"));
+                }catch (JSONException e) {
+                    e.printStackTrace();
+
+                }
+
                 current_transitions.add(transition1.getId());
 
                 //如果数据库中没有该transition，则新建；有则更新
@@ -291,6 +304,9 @@ public class DataController {
                     if (label5 != null) {
                         stategramDAO.newLabel(label5);
                     }
+                    if( nail != null ) {
+                        stategramDAO.newNail(nail);
+                    }
                 } else {
                     stategramDAO.updateTransition(transition1);
                     if (label != null) {
@@ -307,6 +323,9 @@ public class DataController {
                     }
                     if (label5 != null) {
                         stategramDAO.updateLabel(label5);
+                    }
+                    if( nail != null) {
+                        stategramDAO.updateNail(nail);
                     }
                 }
 
@@ -367,6 +386,7 @@ public class DataController {
         if (old_transitions.size() > 0) {
             stategramDAO.deleteTransition(old_transitions, sdgId);
             stategramDAO.deleteLabel(old_transitions, sdgId);
+            stategramDAO.deleteNail(old_transitions,sdgId);
         }
         if (old_branch_points.size() > 0) {
             stategramDAO.deleteBranchPoint(old_branch_points, sdgId);
@@ -425,27 +445,31 @@ public class DataController {
                 template.appendChild(location);
 
                 Name name_ = stategramDAO.selectStateName(id_s, sdgId);
-                Element name1 = doc.createElement("name");
-                String ordinate_n = Double.toString(name_.getOrdinate());
-                name1.setAttribute("y", ordinate_n);
-                String abscissa_n = Double.toString(name_.getAbscissa());
-                name1.setAttribute("x", abscissa_n);
-                String content_n = name_.getContent();
-                name1.setTextContent(content_n);
-                location.appendChild(name1);
+                if(name_!=null) {
+                    Element name1 = doc.createElement("name");
+                    String ordinate_n = Double.toString(name_.getOrdinate());
+                    name1.setAttribute("y", ordinate_n);
+                    String abscissa_n = Double.toString(name_.getAbscissa());
+                    name1.setAttribute("x", abscissa_n);
+                    String content_n = name_.getContent();
+                    name1.setTextContent(content_n);
+                    location.appendChild(name1);
+                }
 
                 List<Label> list_l = stategramDAO.selectLabels(id_s, sdgId);
-                for (Label la : list_l) {
-                    Element label = doc.createElement("label");
-                    String ordinate_l = Double.toString(la.getOrdinate());
-                    label.setAttribute("y", ordinate_l);
-                    String abscissa_l = Double.toString(la.getAbscissa());
-                    label.setAttribute("x", abscissa_l);
-                    String kind_l = la.getKind();
-                    label.setAttribute("kind", kind_l);
-                    String content_l = la.getContent();
-                    label.setTextContent(content_l);
-                    location.appendChild(label);
+                if(list_l!=null) {
+                    for (Label la : list_l) {
+                        Element label = doc.createElement("label");
+                        String ordinate_l = Double.toString(la.getOrdinate());
+                        label.setAttribute("y", ordinate_l);
+                        String abscissa_l = Double.toString(la.getAbscissa());
+                        label.setAttribute("x", abscissa_l);
+                        String kind_l = la.getKind();
+                        label.setAttribute("kind", kind_l);
+                        String content_l = la.getContent();
+                        label.setTextContent(content_l);
+                        location.appendChild(label);
+                    }
                 }
 
                 if (stategramDAO.selectIsCommitted(id_s, sdgId)) {
@@ -479,13 +503,15 @@ public class DataController {
 
         //branchpoint
         List<BranchPoint> list_b = stategramDAO.select_all_branch_points(sdgId);
-        for (BranchPoint t : list_b) {
-            Element branch_point = doc.createElement("branchpoint");
-            branch_point.setAttribute("y", Double.toString(t.getOrdinate()));
-            branch_point.setAttribute("x", Double.toString(t.getAbscissa()));
-            branch_point.setAttribute("id", t.getId());
-            template.appendChild(branch_point);
+        if(list_b!=null) {
+            for (BranchPoint t : list_b) {
+                Element branch_point = doc.createElement("branchpoint");
+                branch_point.setAttribute("y", Double.toString(t.getOrdinate()));
+                branch_point.setAttribute("x", Double.toString(t.getAbscissa()));
+                branch_point.setAttribute("id", t.getId());
+                template.appendChild(branch_point);
 
+            }
         }
 
 
@@ -504,21 +530,33 @@ public class DataController {
             transition.appendChild(target);
 
             List<Label> list_la = stategramDAO.selectLabels(t.getId(), sdgId);
-            for (Label la : list_la) {
-                Element label1 = doc.createElement("label");
-                String ordinate_la = Double.toString(la.getOrdinate());
-                label1.setAttribute("y", ordinate_la);
-                String abscissa_la = Double.toString(la.getAbscissa());
-                label1.setAttribute("x", abscissa_la);
-                label1.setAttribute("kind", la.getKind());
-                label1.setTextContent(la.getContent());
-                transition.appendChild(label1);
+            if(list_la!=null) {
+                for (Label la : list_la) {
+                    Element label1 = doc.createElement("label");
+                    String ordinate_la = Double.toString(la.getOrdinate());
+                    label1.setAttribute("y", ordinate_la);
+                    String abscissa_la = Double.toString(la.getAbscissa());
+                    label1.setAttribute("x", abscissa_la);
+                    label1.setAttribute("kind", la.getKind());
+                    label1.setTextContent(la.getContent());
+                    transition.appendChild(label1);
+                }
             }
 
-            Element nail = doc.createElement("nail");
-            nail.setAttribute("y", "");//transition上调整的点的纵坐标
-            nail.setAttribute("x", "");//transition上调整的点的横坐标
-            transition.appendChild(nail);
+            //todo nail的数据库相关操作
+
+            List<Nail> list_na = stategramDAO.selectNails(t.getId(), sdgId);
+            if(list_na!=null) {
+                for (Nail na : list_na) {
+                    Element nail1 = doc.createElement("nail");
+                    String ordinate_na = Double.toString(na.getOrdinate());
+                    nail1.setAttribute("y", ordinate_na);
+                    String abscissa_na = Double.toString(na.getAbscissa());
+                    nail1.setAttribute("x", abscissa_na);
+                    transition.appendChild(nail1);
+                }
+            }
+
         }
 
         Element system = doc.createElement("system");
@@ -568,186 +606,8 @@ public class DataController {
     public Result XmlWriter(@RequestParam String sdgId, HttpServletResponse response)
             throws ParserConfigurationException, TransformerException {
         Result result = new Result();
-/*
 
-        DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-
-        // root elements
-        Document doc = docBuilder.newDocument();
-        Element rootElement = doc.createElement("nta");
-        doc.appendChild(rootElement);
-
-        // declaration
-
-        // add xml elements
-        Element declaration = doc.createElement("declaration");
-        // add to root
-        rootElement.appendChild(declaration);
-        // add xml attribute
-        declaration.setTextContent("");
-
-
-        //template
-        //todo 多张状态机图存储到同一个xml中？
-        Element template = doc.createElement("template");
-        rootElement.appendChild(template);
-
-        Element name = doc.createElement("name");
-        name.setTextContent("");//状态图名称
-        template.appendChild(name);
-
-        Element parameter = doc.createElement("parameter");
-        parameter.setTextContent("");//从前端获取parameter
-        template.appendChild(parameter);
-
-        Element declaration1 = doc.createElement("declaration");
-        declaration1.setTextContent("");//从前端获取template的declaration
-        template.appendChild(declaration1);
-
-
-        //状态
-        try {
-            List<Location> list_s = stategramDAO.select_all_states(sdgId);
-
-            for (Location l : list_s) {
-
-                Element location = doc.createElement("location");
-                String ordinate_s = Double.toString(l.getOrdinate());
-                location.setAttribute("y", ordinate_s);
-                String abscissa_s = Double.toString(l.getAbscissa());
-                location.setAttribute("x", abscissa_s);
-                String id_s = l.getId();
-                location.setAttribute("id", id_s);
-                template.appendChild(location);
-
-                Name name_ = stategramDAO.selectStateName(id_s, sdgId);
-                Element name1 = doc.createElement("name");
-                String ordinate_n = Double.toString(name_.getOrdinate());
-                name1.setAttribute("y", ordinate_n);
-                String abscissa_n = Double.toString(name_.getAbscissa());
-                name1.setAttribute("x", abscissa_n);
-                String content_n = name_.getContent();
-                name1.setTextContent(content_n);
-                location.appendChild(name1);
-
-                List<Label> list_l = stategramDAO.selectLabels(id_s, sdgId);
-                for (Label la : list_l) {
-                    Element label = doc.createElement("label");
-                    String ordinate_l = Double.toString(la.getOrdinate());
-                    label.setAttribute("y", ordinate_l);
-                    String abscissa_l = Double.toString(la.getAbscissa());
-                    label.setAttribute("x", abscissa_l);
-                    String kind_l = la.getKind();
-                    label.setAttribute("kind", kind_l);
-                    String content_l = la.getContent();
-                    label.setTextContent(content_l);
-                    location.appendChild(label);
-                }
-
-                if (stategramDAO.selectIsCommitted(id_s, sdgId)) {
-                    Element committed = doc.createElement("committed");
-                    location.appendChild(committed);
-                }
-
-                if (stategramDAO.selectIsUrgent(id_s, sdgId)) {
-                    Element urgent = doc.createElement("urgent");
-                    location.appendChild(urgent);
-                }
-
-
-                if (l.getIsInit() == true) {
-                    Element init = doc.createElement("init");
-                    init.setAttribute("ref", l.getId());
-                    template.appendChild(init);
-                }
-                if (l.getIsFinal() == true) {
-                    Element fin = doc.createElement("fin");
-                    fin.setAttribute("ref", l.getId());
-                    template.appendChild(fin);
-                }
-            }
-        } catch (DataAccessException e) {
-            e.printStackTrace();
-            result.setCode("01");
-            result.setErrmsg("data access exception");
-            return result;
-        }
-
-        //branchpoint
-        List<BranchPoint> list_b = stategramDAO.select_all_branch_points(sdgId);
-        for (BranchPoint t : list_b) {
-            Element branch_point = doc.createElement("branchpoint");
-            branch_point.setAttribute("y", Double.toString(t.getOrdinate()));
-            branch_point.setAttribute("x", Double.toString(t.getAbscissa()));
-            branch_point.setAttribute("id", t.getId());
-            template.appendChild(branch_point);
-
-        }
-
-
-        // 迁移
-        List<Transition> list_t = stategramDAO.select_all_transitions(sdgId);
-        for (Transition t : list_t) {
-            Element transition = doc.createElement("transition");
-            template.appendChild(transition);
-
-            Element source = doc.createElement("source");
-            source.setAttribute("ref", t.getSource());//transition的source
-            transition.appendChild(source);
-
-            Element target = doc.createElement("target");
-            target.setAttribute("ref", t.getTarget());//transition的target
-            transition.appendChild(target);
-
-            List<Label> list_la = stategramDAO.selectLabels(t.getId(), sdgId);
-            for (Label la : list_la) {
-                Element label1 = doc.createElement("label");
-                String ordinate_la = Double.toString(la.getOrdinate());
-                label1.setAttribute("y", ordinate_la);
-                String abscissa_la = Double.toString(la.getAbscissa());
-                label1.setAttribute("x", abscissa_la);
-                label1.setAttribute("kind", la.getKind());
-                label1.setTextContent(la.getContent());
-                transition.appendChild(label1);
-            }
-
-            Element nail = doc.createElement("nail");
-            nail.setAttribute("y", "");//transition上调整的点的纵坐标
-            nail.setAttribute("x", "");//transition上调整的点的横坐标
-            transition.appendChild(nail);
-        }
-
-        Element system = doc.createElement("system");
-        rootElement.appendChild(system);
-        system.setTextContent("");
-
-        Element queries = doc.createElement("queries");
-        rootElement.appendChild(queries);
-
-        Element query = doc.createElement("query");
-        queries.appendChild(query);
-
-        Element formula = doc.createElement("formula");
-        query.appendChild(formula);
-        formula.setTextContent("");
-
-        Element comment = doc.createElement("comment");
-        query.appendChild(comment);
-        comment.setTextContent("");
-
-
-        // print XML to system console
-        try (FileOutputStream output =
-                     new FileOutputStream("E:\\test\\test-dom.xml")) {
-            writeXml(doc, output);
-        } catch (IOException e) {
-            e.printStackTrace();
-            result.setCode("02");
-            result.setErrmsg("xml file write error");
-        }
-*/
-
+        //todo 判断要传的xml文件的名称
         File file = new File("E:\\test\\test-dom.xml");
         try(InputStream inputStream =  new FileInputStream(file);
             OutputStream outputStream = response.getOutputStream();){
