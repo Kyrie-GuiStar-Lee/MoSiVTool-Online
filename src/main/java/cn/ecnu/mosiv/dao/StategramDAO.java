@@ -23,7 +23,7 @@ public interface StategramDAO {
 
     void newLabel(@Param("label")Label label);
 
-    void newNail(@Param("nail") Nail nail);
+    void newNails(@Param("nails") List<Nail> nails);
 
     void newTransition(@Param("transition") Transition transition);
 
@@ -63,7 +63,7 @@ public interface StategramDAO {
 
     void updateLabel(@Param("label") Label label);
 
-    void updateNail(@Param("nail") Nail nail);
+    void updateNails(@Param("nails") List<Nail> nails);
 
     void updateTransition(@Param("transition") Transition transition);
 

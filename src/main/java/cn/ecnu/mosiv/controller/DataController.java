@@ -271,18 +271,39 @@ public class DataController {
 
                 }
 
-                Nail nail = null;
+
+                //todo nails从前端接收到之后的处理
+                List<Nail> list_n = new ArrayList<>() ;
+                try{
+                    JSONArray nails = object1.getJSONArray("nails");
+                    for(int t=0; t<nails.size(); t++){
+                        Nail nail = new Nail();
+                        nail.setAbscissa(nails.getJSONObject(t).getDouble("abscissa"));
+                        nail.setOrdinate(nails.getJSONObject(t).getDouble("ordinate"));
+                        nail.setTransitionId(transition1.getId());
+                        nail.setSdgId(sdgId);
+                        list_n.add(nail);
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+
+                }
+
+               /* Nail nail = null;
                 try{
                     JSONObject nail1 = object1.getJSONObject("nail");
                     nail = new Nail();
                     nail.setAbscissa(nail1.getDouble("abscissa"));
                     nail.setOrdinate(nail1.getDouble("ordinate"));
-                    nail.setTransitionId(nail1.getString("transition_id"));
-                    nail.setSdgId(nail1.getString("sdg_id"));
+                    nail.setTransitionId(transition1.getId());
+                    nail.setSdgId(sdgId);
                 }catch (JSONException e) {
                     e.printStackTrace();
 
-                }
+                }*/
+
+
 
                 current_transitions.add(transition1.getId());
 
@@ -304,8 +325,8 @@ public class DataController {
                     if (label5 != null) {
                         stategramDAO.newLabel(label5);
                     }
-                    if( nail != null ) {
-                        stategramDAO.newNail(nail);
+                    if( list_n != null ) {
+                        stategramDAO.newNails(list_n);
                     }
                 } else {
                     stategramDAO.updateTransition(transition1);
@@ -324,8 +345,8 @@ public class DataController {
                     if (label5 != null) {
                         stategramDAO.updateLabel(label5);
                     }
-                    if( nail != null) {
-                        stategramDAO.updateNail(nail);
+                    if( list_n != null) {
+                        stategramDAO.updateNails(list_n);
                     }
                 }
 

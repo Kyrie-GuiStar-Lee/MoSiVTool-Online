@@ -95,13 +95,16 @@
         )
     </insert>
 
-    <insert id="newNail" parameterType="cn.ecnu.mosiv.Pojo.Nail">
-        insert into nails values(
+    <insert id="newNails" parameterType="cn.ecnu.mosiv.Pojo.Nail">
+    insert into nails values
+        <foreach collection="nails" item="nail" index="index" separator="," >
+            (
                                 #{nail.abscissa},
                                 #{nail.ordinate},
                                 #{nail.transitionId},
                                 #{nail.sdgId}
-        )
+            )
+        </foreach>
     </insert>
 
     <insert id="newTransition" parameterType="cn.ecnu.mosiv.Pojo.Transition">
@@ -214,12 +217,14 @@
             and sdg_id = #{label.sdgId}
     </update>
 
-    <update id="updateNail" parameterType="cn.ecnu.mosiv.Pojo.Nail">
-        update nails
+    <update id="updateNails" parameterType="cn.ecnu.mosiv.Pojo.Nail">
+        <foreach collection="nails" item="nail" index="index" separator="," >
+            update nails
             set abscissa = #{nail.abscissa},
                 ordinate = #{nail.ordinate},
             where transition_id = #{nail.transitionId}
             and sdg_id = #{nail.sdgId}
+        </foreach>
     </update>
 
     <update id="updateTransition" parameterType="cn.ecnu.mosiv.Pojo.Transition">
