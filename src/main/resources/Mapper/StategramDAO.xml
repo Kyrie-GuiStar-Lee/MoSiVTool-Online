@@ -175,6 +175,13 @@
             and sdg_id = #{name.sdgId}
     </update>
 
+    <update id="updateDiagram">
+        update state_gram
+            set json = #{stateDiagram.json},
+                base64 = #{stateDiagram.base64}
+            where id = #{sdgId}
+    </update>
+
     <update id="updateLabel" parameterType="cn.ecnu.mosiv.Pojo.Label">
         update labels
             set abscissa = #{label.abscissa},

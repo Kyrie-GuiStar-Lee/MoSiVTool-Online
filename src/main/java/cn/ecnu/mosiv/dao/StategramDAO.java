@@ -55,7 +55,7 @@ public interface StategramDAO {
 
     void updateName(@Param("name") Name name);
 
-    //void updateJson(@Param("json") );
+    void updateDiagram(@Param("stateDiagram") StateDiagram stateDiagram, @Param("sdgId") String sdgId);
 
     void updateLabel(@Param("label") Label label);
 
