@@ -36,7 +36,7 @@ import java.util.zip.DataFormatException;
 
 @Controller
 
-public class DataController {
+public class SdgDataController {
 
     @Autowired
     StategramDAO stategramDAO;
@@ -46,53 +46,23 @@ public class DataController {
 
     @CrossOrigin
     @ResponseBody
-    @PostMapping(value = "/add_state_diagram")
-    public Result save_state_diagram(@RequestBody Object object) throws JSONException {
-        JSONObject jsonObject = JSONObject.fromObject(object);
-        StateDiagram stateDiagram = new StateDiagram();
+    @PostMapping(value = "/save_json_sdg")//***这里的url修改过了 2022.1.25
+    public Result save_state_sdg(@RequestBody List<Object> data) throws JSONException, ParserConfigurationException {
         Result result = new Result();
-        try {
-            stateDiagram.setName(jsonObject.getString("name"));
-            stateDiagram.setJson("");
-            stateDiagram.setBase64("");
-        } catch (JSONException e) {
-            e.printStackTrace();
-            result.setErrmsg("JSON reading error");
-            result.setCode("10");
-            return result;
-        }
-        stategramDAO.newStateDiagram(stateDiagram);
-        if (stateDiagram.getId() != -1) {
-            result.setCode("00");
-            result.setData(stateDiagram.getId());
-            return result;
-        }
-        result.setCode("01");
-        result.setErrmsg("getting id from database error");
-        return result;
-    }
-
-
-    @CrossOrigin
-    @ResponseBody
-    @PostMapping(value = "/save_json")
-    public Result save_state(@RequestBody List<Object> data) throws JSONException, ParserConfigurationException {
-        Result result = new Result();
-        StateDiagram stateDiagram = new StateDiagram();
+        Diagram stateDiagram = new Diagram();
 //        JSONObject data4 = JSONObject.fromObject(data);
 //        data4.getString("")
         JSONArray data1 = JSONArray.fromObject(data);//data1是前端传来的整个的JSON数组
         System.out.println(data1);
 
-        JSONObject data2 = data1.getJSONObject(0);//data2中装的是base64数据
+        JSONObject data2 = data1.getJSONObject(0);//data2中装的是 sdgId 和 base64 数据
         String sdgId = data2.getString("id");
 
         stateDiagram.setBase64(data2.getString("base64"));
 
-        //todo 根据图ID将整张图的json数组保存到数据库，在数据库中根据图ID搜索JSON发送到前端
-        //todo 根据图ID将整张图的base64数据存到数据库
+        //todo 在数据库中根据图ID搜索JSON发送到前端
         String str = data1.toString();
-        System.out.println(str);
+//        System.out.println(str);
         stateDiagram.setJson(str);
 
         stategramDAO.updateDiagram(stateDiagram,sdgId);
@@ -272,7 +242,6 @@ public class DataController {
                 }
 
 
-                //todo nails从前端接收到之后的处理
                 List<Nail> list_n = new ArrayList<>() ;
                 try{
                     JSONArray nails = object1.getJSONArray("nails");
@@ -564,7 +533,6 @@ public class DataController {
                 }
             }
 
-            //todo nail的数据库相关操作
 
             List<Nail> list_na = stategramDAO.selectNails(t.getId(), sdgId);
             if(list_na!=null) {

@@ -13,5 +13,6 @@ public class Project {
     private String authorName;
     private String description;
     private String declaration;
+    private int userId;
 
 }

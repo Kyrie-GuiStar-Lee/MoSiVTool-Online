@@ -1,54 +1,46 @@
 package cn.ecnu.mosiv.controller;
 
-import cn.ecnu.mosiv.Pojo.Project;
+import cn.ecnu.mosiv.Pojo.Diagram;
 import cn.ecnu.mosiv.Pojo.Result;
-import cn.ecnu.mosiv.dao.ProjectDAO;
+import cn.ecnu.mosiv.dao.DiagramDAO;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.ArrayList;
 import java.util.List;
 
-@Controller
-public class ProjectController {
+public class DiagramController {
 
     @Autowired
-    ProjectDAO projectDAO;
+    DiagramDAO diagramDAO;
 
     @CrossOrigin
     @ResponseBody
-    @PostMapping(value = "/addProject")
-    public Result newProject(@RequestBody Object object) {
-        //需要传入的数据有：name（必传）, userId（必传）, author, description
-        Result result = new Result();
+    @PostMapping(value = "/add_state_diagram")
+    public Result save_state_diagram(@RequestBody Object object) throws JSONException {
         JSONObject jsonObject = JSONObject.fromObject(object);
-        Project project = new Project();
+        Diagram stateDiagram = new Diagram();
+        Result result = new Result();
         try {
-            project.setName(jsonObject.getString("name"));
-            project.setUserId(jsonObject.getInt("userId"));
+            stateDiagram.setName(jsonObject.getString("name"));
+            stateDiagram.setType(1);//在每个图对应的新建接口中将TYPE写死，1对应的是状态机图
+            stateDiagram.setJson("");
+            stateDiagram.setBase64("");
         } catch (JSONException e) {
             e.printStackTrace();
             result.setErrmsg("JSON reading error");
             result.setCode("10");
             return result;
         }
-        try {
-            project.setAuthorName(jsonObject.getString("author"));
-            project.setDescription(jsonObject.getString("description"));
-        } catch (JSONException e) {
-
-        }
-        projectDAO.newProject(project);
-        if (project.getId() != -1) {
+        diagramDAO.newStateDiagram(stateDiagram);
+        if (stateDiagram.getId() != -1) {
             result.setCode("00");
-            result.setData(project.getId());
+            result.setData(stateDiagram.getId());
             return result;
         }
         result.setCode("01");
@@ -58,13 +50,13 @@ public class ProjectController {
 
     @CrossOrigin
     @ResponseBody
-    @PostMapping(value = "/showProjects")
-    public Result showProjects(@RequestBody Object object) {
+    @PostMapping(value = "/showDiagrams")
+    public Result showDiagrams(@RequestBody Object object) {
         Result result = new Result();
         JSONObject jsonObject = JSONObject.fromObject(object);
-        List<Integer> list;
+        List<String> list;
         try{
-            list = projectDAO.searchProjectByUserId(jsonObject.getInt("userId"));
+            list = diagramDAO.searchDiagramByProjectId(jsonObject.getInt("projectId"));
             result.setData(list);
         }catch(DataAccessException e){
             result.setErrmsg("Data access error");
@@ -74,8 +66,4 @@ public class ProjectController {
         result.setCode("00");
         return result;
     }
-
-
-
-
 }

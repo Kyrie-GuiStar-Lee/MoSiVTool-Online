@@ -8,8 +8,14 @@
             #{project.id},
             #{project.name},
             #{project.authorName},
-            #{project.description})
+            #{project.description},
+            #{project.userId})
     </insert>
+
+    <select id="searchProjectByUserId" parameterType="int">
+        select id from project
+            where userId = #{userId}
+    </select>
 
 </mapper>
 

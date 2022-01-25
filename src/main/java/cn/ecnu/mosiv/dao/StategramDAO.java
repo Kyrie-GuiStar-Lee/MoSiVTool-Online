@@ -13,8 +13,6 @@ import java.util.Map;
 @Repository
 public interface StategramDAO {
 
-    void newStateDiagram(@Param("stateDiagram") StateDiagram stateDiagram);
-
     void newState(@Param("location")Location location);
 
     void newBranchPoint(@Param("branch_point")BranchPoint branchPoint);
@@ -59,7 +57,7 @@ public interface StategramDAO {
 
     void updateName(@Param("name") Name name);
 
-    void updateDiagram(@Param("stateDiagram") StateDiagram stateDiagram, @Param("sdgId") String sdgId);
+    void updateDiagram(@Param("stateDiagram") Diagram stateDiagram, @Param("sdgId") String sdgId);
 
     void updateLabel(@Param("label") Label label);
 
