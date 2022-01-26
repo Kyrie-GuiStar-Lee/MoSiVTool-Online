@@ -601,7 +601,7 @@ public class DataController {
 
         // print XML to system console
         try (FileOutputStream output =
-                     new FileOutputStream("E:\\test\\sdg"+sdgId+".xml")) {
+                     new FileOutputStream("/Users/zhanghaoqi/Documents/ECNU/毕业论文/test/stateDiagram"+sdgId+".xml")) {
             writeXml(doc, output);
         } catch (IOException | TransformerException e) {
             e.printStackTrace();
@@ -629,11 +629,11 @@ public class DataController {
         Result result = new Result();
 
         //todo 判断要传的xml文件的名称
-        File file = new File("E:\\test\\test-dom.xml");
+        File file = new File("/Users/zhanghaoqi/Documents/ECNU/毕业论文/test/stateDiagram"+sdgId+".xml");
         try(InputStream inputStream =  new FileInputStream(file);
             OutputStream outputStream = response.getOutputStream();){
             response.setContentType("application/x-download");
-            response.addHeader("Content-Disposition", "attachment;filename=test.xml");
+            response.addHeader("Content-Disposition", "attachment;filename=stateDiagram.xml");
             IOUtils.copy(inputStream, outputStream);
             outputStream.flush();
         }catch (Exception e){
