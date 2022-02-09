@@ -36,17 +36,14 @@ import java.util.zip.DataFormatException;
 
 @Controller
 
-public class SdgDataController {
+public class BddDataController {
 
     @Autowired
     StategramDAO stategramDAO;
 
-    //todo 能够导入之前绘制的模型，实现工具的互操作
-
-
     @CrossOrigin
     @ResponseBody
-    @PostMapping(value = "/save_json_sdg")//***这里的url修改过了 2022.1.25
+    @PostMapping(value = "/save_json_bdd")//***这里的url修改过了 2022.1.25
     public Result save_state_sdg(@RequestBody List<Object> data) throws JSONException, ParserConfigurationException {
         Result result = new Result();
         Diagram stateDiagram = new Diagram();
@@ -591,7 +588,7 @@ public class SdgDataController {
 
     @CrossOrigin
     @ResponseBody
-    @RequestMapping(value = "/download_xml_sdg")//***这里的url修改过了 2022.2.9
+    @RequestMapping(value = "/download_xml_bdd")//***这里的url修改过了 2022.2.9
     public Result XmlWriter(@RequestParam String sdgId, HttpServletResponse response)
             throws ParserConfigurationException, TransformerException {
         Result result = new Result();
@@ -612,16 +609,6 @@ public class SdgDataController {
 
         return result;
     }
-
-    @CrossOrigin
-    @ResponseBody
-    @GetMapping(value = "/parse_xml")
-    public Result XmlParser() {
-        Result result = new Result();
-
-        return result;
-    }
-
 
     // write doc to output stream
     private static void writeXml(Document doc,

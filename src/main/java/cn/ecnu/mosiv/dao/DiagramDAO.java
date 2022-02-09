@@ -14,7 +14,7 @@ import java.util.Map;
 
 public interface DiagramDAO {
 
-    void newStateDiagram(@Param("stateDiagram") Diagram stateDiagram);
+    void newDiagram(@Param("diagram") Diagram diagram);
 
     List<String> searchDiagramByProjectId(@Param("projectId") int projectId);
 }

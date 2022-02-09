@@ -51,7 +51,7 @@
         <result column="sdg_id" jdbcType="VARCHAR" property="sdgId"></result>
     </resultMap>
 
-    <insert id="newStateDiagram" parameterType="cn.ecnu.mosiv.Pojo.StateDiagram" useGeneratedKeys="true" keyColumn="id"
+    <insert id="newStateDiagram" parameterType="cn.ecnu.mosiv.Pojo.Diagram" useGeneratedKeys="true" keyColumn="id"
             keyProperty="id">
         insert into diagrams values(#{stateDiagram.id},#{stateDiagram.name},#{stateDiagram.json},#{stateDiagram.base64},#{stateDiagram.type})
     </insert>

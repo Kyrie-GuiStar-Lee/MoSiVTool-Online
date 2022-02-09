@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.ecnu.mosiv.dao.DiagramDAO">
+    <resultMap id="Diagram" type="cn.ecnu.mosiv.Pojo.Diagram">
+        <result column="id" jdbcType="INTEGER" property="id"></result>
+        <result column="name" jdbcType="VARCHAR" property="name"></result>
+        <result column="json" jdbcType="LONGVARCHAR" property="json"></result>
+        <result column="base64" jdbcType="LONGVARCHAR" property="base64"></result>
+        <result column="type" jdbcType="INTEGER" property="type"></result>
+        <result column="projectId" jdbcType="INTEGER" property="projectId"></result>
+    </resultMap>
+
+    <insert id="newDiagram" parameterType="cn.ecnu.mosiv.Pojo.Diagram" useGeneratedKeys="true" keyColumn="id"
+            keyProperty="id">
+        insert into diagrams values(#{diagram.id},#{diagram.name},#{diagram.json},#{diagram.base64},#{diagram.type})
+    </insert>
+
+    <select id="searchDiagramByProjectId" parameterType="int" resultMap="Diagram">
+        select id from diagrams where projectId = #{projectId}
+    </select>
+
+</mapper>
+

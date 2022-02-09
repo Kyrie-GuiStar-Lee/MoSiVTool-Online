@@ -24,23 +24,24 @@ public class DiagramController {
     @PostMapping(value = "/add_state_diagram")
     public Result save_state_diagram(@RequestBody Object object) throws JSONException {
         JSONObject jsonObject = JSONObject.fromObject(object);
-        Diagram stateDiagram = new Diagram();
+        Diagram diagram = new Diagram();
         Result result = new Result();
         try {
-            stateDiagram.setName(jsonObject.getString("name"));
-            stateDiagram.setType(1);//在每个图对应的新建接口中将TYPE写死，1对应的是状态机图
-            stateDiagram.setJson("");
-            stateDiagram.setBase64("");
+            diagram.setName(jsonObject.getString("name"));
+            diagram.setType(jsonObject.getInt("type"));//1对应状态机图，2对应活动图，3对应BDD，4对应IBD
+            diagram.setProjectId(jsonObject.getInt("projectId"));
+            diagram.setJson("");
+            diagram.setBase64("");
         } catch (JSONException e) {
             e.printStackTrace();
             result.setErrmsg("JSON reading error");
             result.setCode("10");
             return result;
         }
-        diagramDAO.newStateDiagram(stateDiagram);
-        if (stateDiagram.getId() != -1) {
+        diagramDAO.newDiagram(diagram);
+        if (diagram.getId() != -1) {
             result.setCode("00");
-            result.setData(stateDiagram.getId());
+            result.setData(diagram.getId());
             return result;
         }
         result.setCode("01");
