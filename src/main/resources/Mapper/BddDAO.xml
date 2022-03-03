@@ -56,7 +56,7 @@
 
 
     <insert id="newBlock" parameterType="cn.ecnu.mosiv.Pojo.BDD.Block">
-        insert into state values(#{block.id},
+        insert into blocks values(#{block.id},
                                  #{block.abscissa},
                                  #{block.ordinate},
                                  #{block.bddId},
@@ -65,7 +65,7 @@
     </insert>
 
     <insert id="newPort" parameterType="cn.ecnu.mosiv.Pojo.BDD.Port">
-        insert into branchpoints values(#{port.id},
+        insert into ports values(#{port.id},
                                  #{port.bddId},
                                  #{port.type},
                                  #{port.abscissa},
@@ -73,7 +73,7 @@
     </insert>
 
     <insert id="newProperty" parameterType="cn.ecnu.mosiv.Pojo.BDD.Property">
-        insert into names values(#{property.blockId},
+        insert into properties values(#{property.blockId},
                                 #{property.value},
                                 #{property.part},
                                 #{property.references},
@@ -81,7 +81,7 @@
     </insert>
 
     <insert id="newMLComponent" parameterType="cn.ecnu.mosiv.Pojo.BDD.MLComponent">
-        insert into labels values(
+        insert into mlcomponents values(
                                 #{mlComponent.blockId},
                                 #{mlComponent.name},
                                 #{mlComponent.type},
@@ -102,7 +102,7 @@
 
 
     <insert id="newRelationship" parameterType="cn.ecnu.mosiv.Pojo.BDD.Relationship">
-        insert into transition values(#{relationship.id},#{relationship.bddId},#{relationship.source},#{relationship.target})
+        insert into relationships values(#{relationship.id},#{relationship.bddId},#{relationship.type},#{relationship.source},#{relationship.target})
     </insert>
 
     <select id="selectBlock" resultType="String">
@@ -203,7 +203,8 @@
     <update id="updateRelationship" parameterType="cn.ecnu.mosiv.Pojo.BDD.Relationship">
         update relationships
             set source = #{relationship.source},
-                target = #{relationship.target}
+                target = #{relationship.target},
+                type = #{relationship.type}
             where id = #{relationship.id}
             and bddId = #{relationship.bddId}
     </update>
@@ -226,7 +227,7 @@
     </delete>
 
     <delete id="deletePort" parameterType="java.util.List">
-        delete from branchpoints where id in(
+        delete from ports where id in(
         <foreach collection="p_delete" item="id" index="index" separator=",">
             #{id}
         </foreach>
@@ -234,7 +235,7 @@
     </delete>
 
     <delete id="deleteProperty" parameterType="java.util.List">
-        delete from names where state_id in(
+        delete from properties where state_id in(
         <foreach collection="to_delete" item="id" index="index" separator=",">
             #{id}
         </foreach>
@@ -242,7 +243,7 @@
     </delete>
 
     <delete id="deleteMLComponent" parameterType="java.util.List">
-        delete from labels where component_id in(
+        delete from mlcomponents where component_id in(
         <foreach collection="to_delete" item="id" index="index" separator=",">
             #{id}
         </foreach>
@@ -250,7 +251,7 @@
     </delete>
 
     <delete id="deleteRelationship" parameterType="java.util.List">
-        delete from transition where id in(
+        delete from relationships where id in(
         <foreach collection="r_delete" item="id" index="index" separator=",">
             #{id}
         </foreach>

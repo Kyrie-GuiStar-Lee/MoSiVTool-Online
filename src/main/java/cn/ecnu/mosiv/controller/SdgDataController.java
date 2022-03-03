@@ -2,17 +2,13 @@ package cn.ecnu.mosiv.controller;
 
 import cn.ecnu.mosiv.Pojo.*;
 import cn.ecnu.mosiv.Pojo.Result;
-import jdk.nashorn.internal.objects.annotations.Getter;
+import cn.ecnu.mosiv.Pojo.StateMachineDiagram.*;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.web.bind.annotation.*;
-import org.w3c.dom.CDATASection;
-import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -27,12 +23,8 @@ import cn.ecnu.mosiv.dao.StategramDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.zip.DataFormatException;
 
 @Controller
 

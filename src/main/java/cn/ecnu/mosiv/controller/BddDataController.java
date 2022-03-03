@@ -1,18 +1,16 @@
 package cn.ecnu.mosiv.controller;
 
 import cn.ecnu.mosiv.Pojo.*;
+import cn.ecnu.mosiv.Pojo.BDD.*;
 import cn.ecnu.mosiv.Pojo.Result;
-import jdk.nashorn.internal.objects.annotations.Getter;
+import cn.ecnu.mosiv.Pojo.StateMachineDiagram.*;
+import cn.ecnu.mosiv.dao.BddDAO;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.web.bind.annotation.*;
-import org.w3c.dom.CDATASection;
-import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -23,126 +21,114 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 
 import net.sf.json.*;
-import cn.ecnu.mosiv.dao.StategramDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.zip.DataFormatException;
 
 @Controller
 
 public class BddDataController {
 
     @Autowired
-    StategramDAO stategramDAO;
+    BddDAO bddDAO;
 
     @CrossOrigin
     @ResponseBody
     @PostMapping(value = "/save_json_bdd")//***这里的url修改过了 2022.1.25
-    public Result save_state_sdg(@RequestBody List<Object> data) throws JSONException, ParserConfigurationException {
+    public Result save_bdd(@RequestBody List<Object> data) throws JSONException, ParserConfigurationException {
         Result result = new Result();
-        Diagram stateDiagram = new Diagram();
+        Diagram bdd = new Diagram();
 //        JSONObject data4 = JSONObject.fromObject(data);
 //        data4.getString("")
         JSONArray data1 = JSONArray.fromObject(data);//data1是前端传来的整个的JSON数组
         System.out.println(data1);
 
-        JSONObject data2 = data1.getJSONObject(0);//data2中装的是 sdgId 和 base64 数据
-        String sdgId = data2.getString("id");
+        JSONObject data2 = data1.getJSONObject(0);//data2中装的是 bdId 和 base64 数据
+        String bddId = data2.getString("id");
 
-        stateDiagram.setBase64(data2.getString("base64"));
+        bdd.setBase64(data2.getString("base64"));
 
         //todo 在数据库中根据图ID搜索JSON发送到前端
         String str = data1.toString();
 //        System.out.println(str);
-        stateDiagram.setJson(str);
+        bdd.setJson(str);
 
-        stategramDAO.updateDiagram(stateDiagram,sdgId);
+        bddDAO.updateDiagram(bdd,bddId);
 
 
-        List<String> current_states = new ArrayList<>();
-        List<String> current_transitions = new ArrayList<>();
-        List<String> current_branch_points = new ArrayList<>();
+        List<String> current_blocks = new ArrayList<>();
+        List<String> current_relationships = new ArrayList<>();
+        List<String> current_ports = new ArrayList<>();
         for (int i = 1; i < data.size(); i++) {
             JSONObject object1 = data1.getJSONObject(i);
-            //组件的type是state,保存状态相关信息
-//            if(object1.getString("type").equals("state")){
-            if (object1.getString("type").equals("1") || object1.getString("type").equals("2") || object1.getString("type").equals("3")) {
-                Location location = new Location();
-                location.setAbscissa(object1.getDouble("abscissa"));
-                location.setOrdinate(object1.getDouble("ordinate"));
-                location.setId(object1.getString("id"));
-                location.setSdgId(object1.getString("sdg_id"));
-                location.setIsCommitted(object1.getBoolean("isCommitted"));
-                location.setIsUrgent(object1.getBoolean("isUrgent"));
-                if (object1.getString("type").equals("1")) {
-                    location.setIsInit(true);
-                    location.setIsFinal(false);
-                }
-                if (object1.getString("type").equals("2")) {
-                    location.setIsInit(false);
-                    location.setIsFinal(true);
-                }
-                if (object1.getString("type").equals("3")) {
-                    location.setIsInit(false);
-                    location.setIsFinal(false);
-                }
-//                location.setIsInit(object1.getBoolean("is_init"));
-//                location.setIsFinal(object1.getBoolean("is_final"));
-                Name name = null;
+            //组件的type是block,保存block相关信息
+            if (object1.getString("type").equals("block")) {
+                Block block = new Block();
+                block.setAbscissa(object1.getDouble("abscissa"));
+                block.setOrdinate(object1.getDouble("ordinate"));
+                block.setId(object1.getString("id"));
+                block.setBddId(bddId);
+                block.setOperation(object1.getString("operation"));
+                block.setConstraint(object1.getString("constraint"));
+
+                Property property = null;
                 try {
-                    JSONObject name1 = object1.getJSONObject("name");
-                    name = new Name();
-                    name.setAbscissa(name1.getDouble("abscissa"));
-                    name.setOrdinate(name1.getDouble("ordinate"));
-                    name.setContent(name1.getString("content"));
-                    name.setStateId(name1.getString("state_id"));
-                    name.setSdgId(location.getSdgId());
-                    location.setName(name.getContent());
+                    JSONObject property1 = object1.getJSONObject("property");
+                    property = new Property();
+                    property.setBlockId(block.getId());
+                    property.setValue(property1.getString("value"));
+                    property.setPart(property1.getString("part"));
+                    property.setReferences(property1.getString("references"));
+                    property.setBddId(bddId);
                 } catch (JSONException e) {
                     e.printStackTrace();
 
                 }
                 //保存状态标签的相关信息
-                Label label = null;
+                MLComponent mlComponent = null;
                 try {
-                    JSONObject label1 = object1.getJSONObject("invariant");
-                    label = new Label();
-                    label.setAbscissa(label1.getDouble("abscissa"));
-                    label.setOrdinate(label1.getDouble("ordinate"));
-                    label.setKind("invariant");
-                    label.setContent(label1.getString("content"));
-                    label.setComponentId(label1.getString("component_id"));
-                    label.setSdgId(location.getSdgId());
+                    JSONObject mlComponent1 = object1.getJSONObject("mlComponent");
+                    mlComponent.setBlockId(block.getId());
+                    mlComponent.setBddId(bddId);
+                    mlComponent.setName(mlComponent1.getString("name"));
+                    mlComponent.setType(mlComponent1.getString("type"));
+                    mlComponent.setDescription(mlComponent1.getString("description"));
+                    mlComponent.setAuthors(mlComponent1.getString("authors"));
+                    mlComponent.setIntendedUse(mlComponent1.getString("intendedUse"));
+                    mlComponent.setNetwork(mlComponent1.getString("network"));
+                    mlComponent.setInput(mlComponent1.getString("input"));
+                    mlComponent.setOutput(mlComponent1.getString("output"));
+                    mlComponent.setFactor(mlComponent1.getString("factor"));
+                    mlComponent.setMetric(mlComponent1.getString("metric"));
+                    mlComponent.setAnalyses(mlComponent1.getString("analyses"));
+                    mlComponent.setAdditionalInformation(mlComponent1.getString("additionalInformation"));
+                    mlComponent.setEthic(mlComponent1.getString("ethic"));
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
 
 
-                current_states.add(location.getId());
+                current_blocks.add(block.getId());
 
                 //如果数据库中没有该状态，则新建；有则更新
                 try {
-                    if (stategramDAO.selectState(location.getId(), sdgId) == null) {
-                        stategramDAO.newState(location);
-                        if (name.getContent() != null) {
-                            stategramDAO.newName(name);
+                    if (bddDAO.selectBlock(block.getId(), bddId) == null) {
+                        bddDAO.newBlock(block);
+                        if (property.getBlockId() != null) {
+                            bddDAO.newProperty(property);
                         }
-                        if (label != null) {
-                            stategramDAO.newLabel(label);
+                        if (mlComponent != null) {
+                            bddDAO.newMLComponent(mlComponent);
                         }
                     } else {
-                        stategramDAO.updateState(location);
-                        if (name != null) {
-                            stategramDAO.updateName(name);
+                        bddDAO.updateBlock(block);
+                        if (property != null) {
+                            bddDAO.updateProperty(property);
                         }
-                        if (label != null) {
-                            stategramDAO.updateLabel(label);
+                        if (mlComponent != null) {
+                            bddDAO.updateMLComponent(mlComponent);
                         }
                     }
                 } catch (DataAccessException e) {
@@ -154,183 +140,43 @@ public class BddDataController {
 
             }
 
-            //组件的type是transition，保存transition的相关信息
-//            if(object1.getString("type").equals("transition")){
-            if (object1.getString("type").equals("4") || object1.getString("type").equals("5")) {
-                Transition transition1 = new Transition();
-                transition1.setId(object1.getString("id"));
-                transition1.setSdgId(object1.getString("sdg_id"));
-                transition1.setSource(object1.getString("source"));
-                transition1.setTarget(object1.getString("target"));
-                //保存transition的label的相关信息
-                Label label = null;
-                try {
-                    JSONObject label1 = object1.getJSONObject("select");
-                    label = new Label();
-                    label.setAbscissa(label1.getDouble("abscissa"));
-                    label.setOrdinate(label1.getDouble("ordinate"));
-                    label.setKind("select");
-                    label.setContent(label1.getString("content"));
-                    label.setComponentId(label1.getString("component_id"));
-                    label.setSdgId(transition1.getSdgId());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-
-                }
-
-                Label label2 = null;
-                try {
-                    JSONObject label1 = object1.getJSONObject("update");
-                    label2 = new Label();
-                    label2.setAbscissa(label1.getDouble("abscissa"));
-                    label2.setOrdinate(label1.getDouble("ordinate"));
-                    label2.setKind("update");
-                    label2.setContent(label1.getString("content"));
-                    label2.setComponentId(label1.getString("component_id"));
-                    label2.setSdgId(transition1.getSdgId());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-
-                }
-
-                Label label3 = null;
-                try {
-                    JSONObject label1 = object1.getJSONObject("guard");
-                    label3 = new Label();
-                    label3.setAbscissa(label1.getDouble("abscissa"));
-                    label3.setOrdinate(label1.getDouble("ordinate"));
-                    label3.setKind("guard");
-                    label3.setContent(label1.getString("content"));
-                    label3.setComponentId(label1.getString("component_id"));
-                    label3.setSdgId(transition1.getSdgId());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-
-                }
-
-                Label label4 = null;
-                try {
-                    JSONObject label1 = object1.getJSONObject("synchronisation");
-                    label4 = new Label();
-                    label4.setAbscissa(label1.getDouble("abscissa"));
-                    label4.setOrdinate(label1.getDouble("ordinate"));
-                    label4.setKind("synchronisation");
-                    label4.setContent(label1.getString("content"));
-                    label4.setComponentId(label1.getString("component_id"));
-                    label4.setSdgId(transition1.getSdgId());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-
-                }
-
-                Label label5 = null;
-                try {
-                    JSONObject label1 = object1.getJSONObject("probability-weight");
-                    label5 = new Label();
-                    label5.setAbscissa(label1.getDouble("abscissa"));
-                    label5.setOrdinate(label1.getDouble("ordinate"));
-                    label5.setKind("probability-weight");
-                    label5.setContent(label1.getString("content"));
-                    label5.setComponentId(label1.getString("component_id"));
-                    label5.setSdgId(transition1.getSdgId());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-
-                }
+            //组件的type是relationship，保存relationship的相关信息
+                //目前假设relationship只有generalization, dependency, association三种类型
+            if (object1.getString("type").equals("generalization") || object1.getString("type").equals("dependency")|| object1.getString("type").equals("association")) {
+                Relationship relationship = new Relationship();
+                relationship.setId(object1.getString("id"));
+                relationship.setBddId(bddId);
+                relationship.setType(object1.getString("type"));
+                relationship.setSource(object1.getString("source"));
+                relationship.setTarget(object1.getString("target"));
 
 
-                List<Nail> list_n = new ArrayList<>() ;
-                try{
-                    JSONArray nails = object1.getJSONArray("nails");
-                    for(int t=0; t<nails.size(); t++){
-                        Nail nail = new Nail();
-                        nail.setAbscissa(nails.getJSONObject(t).getDouble("abscissa"));
-                        nail.setOrdinate(nails.getJSONObject(t).getDouble("ordinate"));
-                        nail.setTransitionId(transition1.getId());
-                        nail.setSdgId(sdgId);
-                        list_n.add(nail);
-                    }
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-
-                }
-
-               /* Nail nail = null;
-                try{
-                    JSONObject nail1 = object1.getJSONObject("nail");
-                    nail = new Nail();
-                    nail.setAbscissa(nail1.getDouble("abscissa"));
-                    nail.setOrdinate(nail1.getDouble("ordinate"));
-                    nail.setTransitionId(transition1.getId());
-                    nail.setSdgId(sdgId);
-                }catch (JSONException e) {
-                    e.printStackTrace();
-
-                }*/
-
-
-
-                current_transitions.add(transition1.getId());
+                current_relationships.add(relationship.getId());
 
                 //如果数据库中没有该transition，则新建；有则更新
-                if (stategramDAO.selectTransition(transition1.getId(), sdgId) == null) {
-                    stategramDAO.newTransition(transition1);
-                    if (label != null) {
-                        stategramDAO.newLabel(label);
-                    }
-                    if (label2 != null) {
-                        stategramDAO.newLabel(label2);
-                    }
-                    if (label3 != null) {
-                        stategramDAO.newLabel(label3);
-                    }
-                    if (label4 != null) {
-                        stategramDAO.newLabel(label4);
-                    }
-                    if (label5 != null) {
-                        stategramDAO.newLabel(label5);
-                    }
-                    if( list_n != null ) {
-                        stategramDAO.newNails(list_n);
-                    }
+                if (bddDAO.selectRelationship(relationship.getId(), bddId) == null) {
+                    bddDAO.newRelationship(relationship);
                 } else {
-                    stategramDAO.updateTransition(transition1);
-                    if (label != null) {
-                        stategramDAO.updateLabel(label);
-                    }
-                    if (label2 != null) {
-                        stategramDAO.updateLabel(label2);
-                    }
-                    if (label3 != null) {
-                        stategramDAO.updateLabel(label3);
-                    }
-                    if (label4 != null) {
-                        stategramDAO.updateLabel(label4);
-                    }
-                    if (label5 != null) {
-                        stategramDAO.updateLabel(label5);
-                    }
-                    if( list_n != null) {
-                        stategramDAO.updateNails(list_n);
-                    }
+                    bddDAO.updateRelationship(relationship);
                 }
 
             }
 
-            //保存branch point 相关信息
-            if (object1.getString("type").equals("6")) {
-                BranchPoint branchPoint = new BranchPoint();
-                branchPoint.setId(object1.getString("id"));
-                branchPoint.setSdgId(object1.getString("sdg_id"));
-                branchPoint.setAbscissa(object1.getDouble("abscissa"));
-                branchPoint.setOrdinate(object1.getDouble("ordinate"));
+            //保存port 相关信息
+                //目前假设port只有standardPort和flowPort两种类型
+            if (object1.getString("type").equals("standardPort")||object1.getString("type").equals("flowPort")) {
+                Port port = new Port();
+                port.setId(object1.getString("id"));
+                port.setBddId(bddId);
+                port.setType(object1.getString("type"));
+                port.setAbscissa(object1.getDouble("abscissa"));
+                port.setOrdinate(object1.getDouble("ordinate"));
 
-                current_branch_points.add(branchPoint.getId());
-                if (stategramDAO.selectBranchPoint(branchPoint.getId(), sdgId) == null) {
-                    stategramDAO.newBranchPoint(branchPoint);
+                current_ports.add(port.getId());
+                if (bddDAO.selectPort(port.getId(), bddId) == null) {
+                    bddDAO.newPort(port);
                 } else {
-                    stategramDAO.updateBranchPoint(branchPoint);
+                    bddDAO.updatePort(port);
                 }
             }
         }
@@ -340,24 +186,24 @@ public class BddDataController {
 //        System.out.println(stategramDAO.select_state_ids());
 //        System.out.println(stategramDAO.select_transition_ids());
 
-        List<String> old_states = stategramDAO.select_state_ids(sdgId);
-        List<String> old_transitions = stategramDAO.select_transition_ids(sdgId);
-        List<String> old_branch_points = stategramDAO.select_branch_point_ids(sdgId);
+        List<String> old_blocks = bddDAO.select_block_ids(bddId);
+        List<String> old_relationships = bddDAO.select_relationship_ids(bddId);
+        List<String> old_ports = bddDAO.select_port_ids(bddId);
 
 
-        for (String t : current_states) {
-            if (old_states.contains(t)) {
-                old_states.remove(t);
+        for (String t : current_blocks) {
+            if (old_blocks.contains(t)) {
+                old_blocks.remove(t);
             }
         }
-        for (String t : current_transitions) {
-            if (old_transitions.contains(t)) {
-                old_transitions.remove(t);
+        for (String t : current_relationships) {
+            if (old_relationships.contains(t)) {
+                old_relationships.remove(t);
             }
         }
-        for (String t : current_branch_points) {
-            if (old_branch_points.contains(t)) {
-                old_branch_points.remove(t);
+        for (String t : current_ports) {
+            if (old_ports.contains(t)) {
+                old_ports.remove(t);
             }
         }
 
@@ -365,21 +211,24 @@ public class BddDataController {
 //        System.out.println(old_transitions);
 
         //完成上述操作后，old_states、old_transitions和old_branch_points中剩余的id就是需要删除的state、transition和branch_point的id
-        if (old_states.size() > 0) {
-            stategramDAO.deleteState(old_states, sdgId);
-            stategramDAO.deleteName(old_states, sdgId);
-            stategramDAO.deleteLabel(old_states, sdgId);
+        if (old_blocks.size() > 0) {
+            bddDAO.deleteBlock(old_blocks, bddId);
+            bddDAO.deleteProperty(old_blocks, bddId);
+            bddDAO.deleteMLComponent(old_blocks, bddId);
         }
-        if (old_transitions.size() > 0) {
-            stategramDAO.deleteTransition(old_transitions, sdgId);
-            stategramDAO.deleteLabel(old_transitions, sdgId);
-            stategramDAO.deleteNail(old_transitions,sdgId);
+        if (old_relationships.size() > 0) {
+            bddDAO.deleteRelationship(old_relationships, bddId);
         }
-        if (old_branch_points.size() > 0) {
-            stategramDAO.deleteBranchPoint(old_branch_points, sdgId);
+        if (old_ports.size() > 0) {
+            bddDAO.deletePort(old_ports, bddId);
         }
 
 
+        /*
+        以下部分为写xml文件的功能实现
+        需要进行修改
+
+         */
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 
@@ -416,173 +265,173 @@ public class BddDataController {
         template.appendChild(declaration1);
 
 
-        //状态
-        try {
-            List<Location> list_s = stategramDAO.select_all_states(sdgId);
-
-            for (Location l : list_s) {
-
-                Element location = doc.createElement("location");
-                String ordinate_s = Double.toString(l.getOrdinate());
-                location.setAttribute("y", ordinate_s);
-                String abscissa_s = Double.toString(l.getAbscissa());
-                location.setAttribute("x", abscissa_s);
-                String id_s = l.getId();
-                location.setAttribute("id", id_s);
-                template.appendChild(location);
-
-                Name name_ = stategramDAO.selectStateName(id_s, sdgId);
-                if(name_!=null) {
-                    Element name1 = doc.createElement("name");
-                    String ordinate_n = Double.toString(name_.getOrdinate());
-                    name1.setAttribute("y", ordinate_n);
-                    String abscissa_n = Double.toString(name_.getAbscissa());
-                    name1.setAttribute("x", abscissa_n);
-                    String content_n = name_.getContent();
-                    name1.setTextContent(content_n);
-                    location.appendChild(name1);
-                }
-
-                List<Label> list_l = stategramDAO.selectLabels(id_s, sdgId);
-                if(list_l!=null) {
-                    for (Label la : list_l) {
-                        Element label = doc.createElement("label");
-                        String ordinate_l = Double.toString(la.getOrdinate());
-                        label.setAttribute("y", ordinate_l);
-                        String abscissa_l = Double.toString(la.getAbscissa());
-                        label.setAttribute("x", abscissa_l);
-                        String kind_l = la.getKind();
-                        label.setAttribute("kind", kind_l);
-                        String content_l = la.getContent();
-                        label.setTextContent(content_l);
-                        location.appendChild(label);
-                    }
-                }
-
-                if (stategramDAO.selectIsCommitted(id_s, sdgId)) {
-                    Element committed = doc.createElement("committed");
-                    location.appendChild(committed);
-                }
-
-                if (stategramDAO.selectIsUrgent(id_s, sdgId)) {
-                    Element urgent = doc.createElement("urgent");
-                    location.appendChild(urgent);
-                }
-
-
-                if (l.getIsInit() == true) {
-                    Element init = doc.createElement("init");
-                    init.setAttribute("ref", l.getId());
-                    template.appendChild(init);
-                }
-                if (l.getIsFinal() == true) {
-                    Element fin = doc.createElement("fin");
-                    fin.setAttribute("ref", l.getId());
-                    template.appendChild(fin);
-                }
-            }
-        } catch (DataAccessException e) {
-            e.printStackTrace();
-            result.setCode("01");
-            result.setErrmsg("data access exception");
-            return result;
-        }
-
-        //branchpoint
-        List<BranchPoint> list_b = stategramDAO.select_all_branch_points(sdgId);
-        if(list_b!=null) {
-            for (BranchPoint t : list_b) {
-                Element branch_point = doc.createElement("branchpoint");
-                branch_point.setAttribute("y", Double.toString(t.getOrdinate()));
-                branch_point.setAttribute("x", Double.toString(t.getAbscissa()));
-                branch_point.setAttribute("id", t.getId());
-                template.appendChild(branch_point);
-
-            }
-        }
-
-
-        // 迁移
-        List<Transition> list_t = stategramDAO.select_all_transitions(sdgId);
-        for (Transition t : list_t) {
-            Element transition = doc.createElement("transition");
-            template.appendChild(transition);
-
-            Element source = doc.createElement("source");
-            source.setAttribute("ref", t.getSource());//transition的source
-            transition.appendChild(source);
-
-            Element target = doc.createElement("target");
-            target.setAttribute("ref", t.getTarget());//transition的target
-            transition.appendChild(target);
-
-            List<Label> list_la = stategramDAO.selectLabels(t.getId(), sdgId);
-            if(list_la!=null) {
-                for (Label la : list_la) {
-                    Element label1 = doc.createElement("label");
-                    String ordinate_la = Double.toString(la.getOrdinate());
-                    label1.setAttribute("y", ordinate_la);
-                    String abscissa_la = Double.toString(la.getAbscissa());
-                    label1.setAttribute("x", abscissa_la);
-                    label1.setAttribute("kind", la.getKind());
-                    label1.setTextContent(la.getContent());
-                    transition.appendChild(label1);
-                }
-            }
-
-
-            List<Nail> list_na = stategramDAO.selectNails(t.getId(), sdgId);
-            if(list_na!=null) {
-                for (Nail na : list_na) {
-                    Element nail1 = doc.createElement("nail");
-                    String ordinate_na = Double.toString(na.getOrdinate());
-                    nail1.setAttribute("y", ordinate_na);
-                    String abscissa_na = Double.toString(na.getAbscissa());
-                    nail1.setAttribute("x", abscissa_na);
-                    transition.appendChild(nail1);
-                }
-            }
-
-        }
-
-        Element system = doc.createElement("system");
-        rootElement.appendChild(system);
-        system.setTextContent("");
-
-        Element queries = doc.createElement("queries");
-        rootElement.appendChild(queries);
-
-        Element query = doc.createElement("query");
-        queries.appendChild(query);
-
-        Element formula = doc.createElement("formula");
-        query.appendChild(formula);
-        formula.setTextContent("");
-
-        Element comment = doc.createElement("comment");
-        query.appendChild(comment);
-        comment.setTextContent("");
-
-
-        // print XML to system console
-        try (FileOutputStream output =
-                     new FileOutputStream("E:\\test\\sdg"+sdgId+".xml")) {
-            writeXml(doc, output);
-        } catch (IOException | TransformerException e) {
-            e.printStackTrace();
-            result.setCode("02");
-            result.setErrmsg("xml file write error");
-        }
-
-
-        //定义向前端返回的result
-        if (data != null) {
-            result.setCode("00");
-            return result;
-        } else {
-            result.setCode("10");
-            result.setErrmsg("JSON reading error");
-        }
+//        //状态
+//        try {
+//            List<Location> list_s = stategramDAO.select_all_states(sdgId);
+//
+//            for (Location l : list_s) {
+//
+//                Element location = doc.createElement("location");
+//                String ordinate_s = Double.toString(l.getOrdinate());
+//                location.setAttribute("y", ordinate_s);
+//                String abscissa_s = Double.toString(l.getAbscissa());
+//                location.setAttribute("x", abscissa_s);
+//                String id_s = l.getId();
+//                location.setAttribute("id", id_s);
+//                template.appendChild(location);
+//
+//                Name name_ = stategramDAO.selectStateName(id_s, sdgId);
+//                if(name_!=null) {
+//                    Element name1 = doc.createElement("name");
+//                    String ordinate_n = Double.toString(name_.getOrdinate());
+//                    name1.setAttribute("y", ordinate_n);
+//                    String abscissa_n = Double.toString(name_.getAbscissa());
+//                    name1.setAttribute("x", abscissa_n);
+//                    String content_n = name_.getContent();
+//                    name1.setTextContent(content_n);
+//                    location.appendChild(name1);
+//                }
+//
+//                List<Label> list_l = stategramDAO.selectLabels(id_s, sdgId);
+//                if(list_l!=null) {
+//                    for (Label la : list_l) {
+//                        Element label = doc.createElement("label");
+//                        String ordinate_l = Double.toString(la.getOrdinate());
+//                        label.setAttribute("y", ordinate_l);
+//                        String abscissa_l = Double.toString(la.getAbscissa());
+//                        label.setAttribute("x", abscissa_l);
+//                        String kind_l = la.getKind();
+//                        label.setAttribute("kind", kind_l);
+//                        String content_l = la.getContent();
+//                        label.setTextContent(content_l);
+//                        location.appendChild(label);
+//                    }
+//                }
+//
+//                if (stategramDAO.selectIsCommitted(id_s, sdgId)) {
+//                    Element committed = doc.createElement("committed");
+//                    location.appendChild(committed);
+//                }
+//
+//                if (stategramDAO.selectIsUrgent(id_s, sdgId)) {
+//                    Element urgent = doc.createElement("urgent");
+//                    location.appendChild(urgent);
+//                }
+//
+//
+//                if (l.getIsInit() == true) {
+//                    Element init = doc.createElement("init");
+//                    init.setAttribute("ref", l.getId());
+//                    template.appendChild(init);
+//                }
+//                if (l.getIsFinal() == true) {
+//                    Element fin = doc.createElement("fin");
+//                    fin.setAttribute("ref", l.getId());
+//                    template.appendChild(fin);
+//                }
+//            }
+//        } catch (DataAccessException e) {
+//            e.printStackTrace();
+//            result.setCode("01");
+//            result.setErrmsg("data access exception");
+//            return result;
+//        }
+//
+//        //branchpoint
+//        List<BranchPoint> list_b = stategramDAO.select_all_branch_points(sdgId);
+//        if(list_b!=null) {
+//            for (BranchPoint t : list_b) {
+//                Element branch_point = doc.createElement("branchpoint");
+//                branch_point.setAttribute("y", Double.toString(t.getOrdinate()));
+//                branch_point.setAttribute("x", Double.toString(t.getAbscissa()));
+//                branch_point.setAttribute("id", t.getId());
+//                template.appendChild(branch_point);
+//
+//            }
+//        }
+//
+//
+//        // 迁移
+//        List<Transition> list_t = stategramDAO.select_all_transitions(sdgId);
+//        for (Transition t : list_t) {
+//            Element transition = doc.createElement("transition");
+//            template.appendChild(transition);
+//
+//            Element source = doc.createElement("source");
+//            source.setAttribute("ref", t.getSource());//transition的source
+//            transition.appendChild(source);
+//
+//            Element target = doc.createElement("target");
+//            target.setAttribute("ref", t.getTarget());//transition的target
+//            transition.appendChild(target);
+//
+//            List<Label> list_la = stategramDAO.selectLabels(t.getId(), sdgId);
+//            if(list_la!=null) {
+//                for (Label la : list_la) {
+//                    Element label1 = doc.createElement("label");
+//                    String ordinate_la = Double.toString(la.getOrdinate());
+//                    label1.setAttribute("y", ordinate_la);
+//                    String abscissa_la = Double.toString(la.getAbscissa());
+//                    label1.setAttribute("x", abscissa_la);
+//                    label1.setAttribute("kind", la.getKind());
+//                    label1.setTextContent(la.getContent());
+//                    transition.appendChild(label1);
+//                }
+//            }
+//
+//
+//            List<Nail> list_na = stategramDAO.selectNails(t.getId(), sdgId);
+//            if(list_na!=null) {
+//                for (Nail na : list_na) {
+//                    Element nail1 = doc.createElement("nail");
+//                    String ordinate_na = Double.toString(na.getOrdinate());
+//                    nail1.setAttribute("y", ordinate_na);
+//                    String abscissa_na = Double.toString(na.getAbscissa());
+//                    nail1.setAttribute("x", abscissa_na);
+//                    transition.appendChild(nail1);
+//                }
+//            }
+//
+//        }
+//
+//        Element system = doc.createElement("system");
+//        rootElement.appendChild(system);
+//        system.setTextContent("");
+//
+//        Element queries = doc.createElement("queries");
+//        rootElement.appendChild(queries);
+//
+//        Element query = doc.createElement("query");
+//        queries.appendChild(query);
+//
+//        Element formula = doc.createElement("formula");
+//        query.appendChild(formula);
+//        formula.setTextContent("");
+//
+//        Element comment = doc.createElement("comment");
+//        query.appendChild(comment);
+//        comment.setTextContent("");
+//
+//
+//        // print XML to system console
+//        try (FileOutputStream output =
+//                     new FileOutputStream("E:\\test\\bdd"+bddId+".xml")) {
+//            writeXml(doc, output);
+//        } catch (IOException | TransformerException e) {
+//            e.printStackTrace();
+//            result.setCode("02");
+//            result.setErrmsg("xml file write error");
+//        }
+//
+//
+//        //定义向前端返回的result
+//        if (data != null) {
+//            result.setCode("00");
+//            return result;
+//        } else {
+//            result.setCode("10");
+//            result.setErrmsg("JSON reading error");
+//        }
         return result;
     }
 

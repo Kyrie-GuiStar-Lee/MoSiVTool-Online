@@ -2,14 +2,14 @@ package cn.ecnu.mosiv.dao;
 
 import cn.ecnu.mosiv.Pojo.*;
 import cn.ecnu.mosiv.Pojo.BDD.*;
-import net.sf.json.JSONArray;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Map;
 
+@Mapper
+@Repository
 public interface BddDAO {
 
     void newBlock(@Param("block") Block block);

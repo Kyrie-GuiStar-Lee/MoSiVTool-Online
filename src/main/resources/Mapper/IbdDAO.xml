@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.ecnu.mosiv.dao.IbdDAO">
+
+    <resultMap id="Part" type="cn.ecnu.mosiv.Pojo.IBD.Part">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="ibdId" jdbcType="VARCHAR" property="ibdId"></result>
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
+        <result column="name" jdbcType="VARCHAR" property="name"></result>
+        <result column="description" jdbcType="VARCHAR" property="description"></result>
+    </resultMap>
+
+    <resultMap id="Connector" type="cn.ecnu.mosiv.Pojo.IBD.Connector">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="ibdId" jdbcType="VARCHAR" property="ibdId"></result>
+        <result column="source" jdbcType="VARCHAR" property="source"></result>
+        <result column="target" jdbcType="VARCHAR" property="target"></result>
+        <result column="type" jdbcType="VARCHAR" property="type"></result>
+    </resultMap>
+
+    <resultMap id="IbdPort" type="cn.ecnu.mosiv.Pojo.IBD.IbdPort">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
+        <result column="ibdId" jdbcType="VARCHAR" property="ibdId"></result>
+        <result column="type" jdbcType="VARCHAR" property="type"></result>
+        <result column="name" jdbcType="VARCHAR" property="name"></result>
+        <result column="description" jdbcType="VARCHAR" property="description"></result>
+    </resultMap>
+
+    <insert id="newPart" parameterType="cn.ecnu.mosiv.Pojo.IBD.Part">
+        insert into parts values(#{part.id},
+                                 #{part.ibdId},
+                                 #{part.name},
+                                 #{part.description},
+                                 #{part.abscissa},
+                                 #{part.ordinate})
+    </insert>
+
+    <insert id="newIbdPort" parameterType="cn.ecnu.mosiv.Pojo.IBD.IbdPort">
+        insert into ibdPorts values(#{port.id},
+                                 #{port.bddId},
+                                 #{port.type},
+                                 #{port.abscissa},
+                                 #{port.ordinate})
+    </insert>
+
+    <insert id="newConnector" parameterType="cn.ecnu.mosiv.Pojo.BDD.Connector">
+        insert into connectors values(#{connector.id},
+                                      #{connector.ibdId},
+                                      #{connector.type},
+                                      #{connector.source},
+                                      #{connector.target})
+    </insert>
+
+    <select id="selectPart" resultType="String">
+        select id from blocks where id = #{id} and ibdId = #{ibdId};
+    </select>
+
+    <select id="selectConnector" resultType="String">
+        select id from connectors where id = #{id} and ibdId = #{ibdId};
+    </select>
+
+    <select id="selectIbdPort" resultType="String">
+        select id from ibdPorts where id = #{id} and ibdId = #{ibdId};
+    </select>
+
+    <select id="select_part_ids" parameterType="String" resultType="java.lang.String">
+        select id from parts where ibdId = #{ibdId};
+    </select>
+
+    <select id="select_ibdPort_ids" parameterType="String" resultType="java.lang.String">
+        select id from ibdPorts where ibdId = #{ibdId};
+    </select>
+
+    <select id="select_connector_ids" parameterType="String" resultType="java.lang.String">
+        select id from connectors where ibdId = #{ibdId};
+    </select>
+
+    <select id="select_all_parts" parameterType="String" resultMap="Part">
+        select * from parts where ibdId = #{ibdId};
+    </select>
+
+    <select id="select_all_connectors" parameterType="String" resultMap="Connector">
+        select * from connectors where ibdId = #{ibdId};
+    </select>
+
+    <select id="select_all_ibdPorts" parameterType="String" resultMap="IbdPort">
+        select * from ibdPorts where bddId = #{ibdId};
+    </select>
+
+    <update id="updateDiagram">
+        update diagrams
+            set json = #{ibd.json},
+                base64 = #{ibd.base64}
+            where id = #{ibdId}
+    </update>
+
+    <update id="updatePart" parameterType="cn.ecnu.mosiv.Pojo.IBD.Part">
+        update parts
+            set abscissa = #{part.abscissa},
+                ordinate = #{part.ordinate},
+                name = #{part.name},
+                description = #{part.description}
+            where id = #{part.id}
+            and ibdId = #{part.ibdId}
+    </update>
+
+    <update id="updateConnector" parameterType="cn.ecnu.mosiv.Pojo.IBD.Connector">
+        update connectors
+            set source = #{connector.source},
+                target = #{connector.target},
+                type = #{connector.type}
+            where id = #{connector.id}
+            and ibdId = #{connector.ibdId}
+    </update>
+
+    <update id="updatePort" parameterType="cn.ecnu.mosiv.Pojo.BDD.Port">
+        update ports
+            set abscissa = #{port.abscissa},
+                ordinate = #{port.ordinate},
+                type = #{port.type}
+            where id = #{port.id}
+            and bddId = #{port.bddId}
+    </update>
+
+    <delete id="deletePart">
+        delete from parts where id in(
+        <foreach collection="p_delete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        ) and ibdId = #{ibdId};
+    </delete>
+
+    <delete id="deleteIbdPort" parameterType="java.util.List">
+        delete from ibdPorts where id in(
+        <foreach collection="ip_delete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        )and ibdId = #{ibdId};
+    </delete>
+
+    <delete id="deleteConnector" parameterType="java.util.List">
+        delete from connectors where id in(
+        <foreach collection="c_delete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        )and ibdId = #{ibdId};
+    </delete>
+
+</mapper>
+

@@ -3,7 +3,7 @@
 
 <mapper namespace="cn.ecnu.mosiv.dao.StategramDAO">
 
-    <resultMap id="State" type="cn.ecnu.mosiv.Pojo.Location">
+    <resultMap id="State" type="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Location">
         <result column="id" jdbcType="VARCHAR" property="id"></result>
         <result column="sdg_id" jdbcType="VARCHAR" property="sdgId"></result>
         <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
@@ -15,7 +15,7 @@
         <result column="name" jdbcType="VARCHAR" property="name"></result>
     </resultMap>
 
-    <resultMap id="Transition" type="cn.ecnu.mosiv.Pojo.Transition">
+    <resultMap id="Transition" type="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Transition">
         <result column="id" jdbcType="VARCHAR" property="id"></result>
         <result column="sdg_id" jdbcType="VARCHAR" property="sdgId"></result>
         <result column="source" jdbcType="VARCHAR" property="source"></result>
@@ -29,7 +29,7 @@
         <result column="state_id" jdbcType="VARCHAR" property="stateId"></result>
     </resultMap>
 
-    <resultMap id="Label" type="cn.ecnu.mosiv.Pojo.Label">
+    <resultMap id="Label" type="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Label">
         <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
         <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
         <result column="kind" jdbcType="VARCHAR" property="kind"></result>
@@ -37,14 +37,14 @@
         <result column="component_id" jdbcType="VARCHAR" property="componentId"></result>
     </resultMap>
 
-    <resultMap id="Nail" type="cn.ecnu.mosiv.Pojo.Nail">
+    <resultMap id="Nail" type="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Nail">
         <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
         <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
         <result column="transition_id" jdbcType="VARCHAR" property="transitionId"></result>
         <result column="sdg_id" jdbcType="VARCHAR" property="sdgId"></result>
     </resultMap>
 
-    <resultMap id="BranchPoint" type="cn.ecnu.mosiv.Pojo.BranchPoint">
+    <resultMap id="BranchPoint" type="cn.ecnu.mosiv.Pojo.StateMachineDiagram.BranchPoint">
         <result column="id" jdbcType="VARCHAR" property="id"></result>
         <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
         <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
@@ -56,7 +56,7 @@
         insert into diagrams values(#{stateDiagram.id},#{stateDiagram.name},#{stateDiagram.json},#{stateDiagram.base64},#{stateDiagram.type})
     </insert>
 
-    <insert id="newState" parameterType="cn.ecnu.mosiv.Pojo.Location">
+    <insert id="newState" parameterType="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Location">
         insert into state values(#{location.id},
                                  #{location.sdgId},
                                  #{location.name},
@@ -68,7 +68,7 @@
                                  #{location.isUrgent})
     </insert>
 
-    <insert id="newBranchPoint" parameterType="cn.ecnu.mosiv.Pojo.BranchPoint">
+    <insert id="newBranchPoint" parameterType="cn.ecnu.mosiv.Pojo.StateMachineDiagram.BranchPoint">
         insert into branchpoints values(#{branch_point.id},
                                  #{branch_point.abscissa},
                                  #{branch_point.ordinate},
@@ -84,7 +84,7 @@
                                 )
     </insert>
 
-    <insert id="newLabel" parameterType="cn.ecnu.mosiv.Pojo.Label">
+    <insert id="newLabel" parameterType="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Label">
         insert into labels values(
                                 #{label.abscissa},
                                 #{label.ordinate},
@@ -95,7 +95,7 @@
         )
     </insert>
 
-    <insert id="newNails" parameterType="cn.ecnu.mosiv.Pojo.Nail">
+    <insert id="newNails" parameterType="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Nail">
     insert into nails values
         <foreach collection="nails" item="nail" index="index" separator="," >
             (
@@ -107,7 +107,7 @@
         </foreach>
     </insert>
 
-    <insert id="newTransition" parameterType="cn.ecnu.mosiv.Pojo.Transition">
+    <insert id="newTransition" parameterType="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Transition">
         insert into transition values(#{transition.id},#{transition.sdgId},#{transition.source},#{transition.target})
     </insert>
 
@@ -177,7 +177,7 @@
         and sdg_id = #{sdgId};
     </select>
 
-    <update id="updateState" parameterType="cn.ecnu.mosiv.Pojo.Location">
+    <update id="updateState" parameterType="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Location">
         update state
             set name = #{location.name},
                 abscissa = #{location.abscissa},
@@ -207,7 +207,7 @@
             where id = #{sdgId}
     </update>
 
-    <update id="updateLabel" parameterType="cn.ecnu.mosiv.Pojo.Label">
+    <update id="updateLabel" parameterType="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Label">
         update labels
             set abscissa = #{label.abscissa},
                 ordinate = #{label.ordinate},
@@ -217,7 +217,7 @@
             and sdg_id = #{label.sdgId}
     </update>
 
-    <update id="updateNails" parameterType="cn.ecnu.mosiv.Pojo.Nail">
+    <update id="updateNails" parameterType="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Nail">
         <foreach collection="nails" item="nail" index="index" separator="," >
             update nails
             set abscissa = #{nail.abscissa},
@@ -227,7 +227,7 @@
         </foreach>
     </update>
 
-    <update id="updateTransition" parameterType="cn.ecnu.mosiv.Pojo.Transition">
+    <update id="updateTransition" parameterType="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Transition">
         update transition
             set source = #{transition.source},
                 target = #{transition.target}
@@ -235,7 +235,7 @@
             and sdg_id = #{transition.sdgId}
     </update>
 
-    <update id="updateBranchPoint" parameterType="cn.ecnu.mosiv.Pojo.BranchPoint">
+    <update id="updateBranchPoint" parameterType="cn.ecnu.mosiv.Pojo.StateMachineDiagram.BranchPoint">
         update branchpoints
             set abscissa = #{branch_point.abscissa},
                 ordinate = #{branch_point.ordinate}
