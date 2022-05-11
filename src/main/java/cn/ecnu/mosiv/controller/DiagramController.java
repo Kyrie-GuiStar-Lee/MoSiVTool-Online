@@ -21,7 +21,7 @@ public class DiagramController {
 
     @CrossOrigin
     @ResponseBody
-    @PostMapping(value = "/add_state_diagram")
+    @PostMapping(value = "/addDiagram")
     public Result save_state_diagram(@RequestBody Object object) throws JSONException {
         JSONObject jsonObject = JSONObject.fromObject(object);
         Diagram diagram = new Diagram();

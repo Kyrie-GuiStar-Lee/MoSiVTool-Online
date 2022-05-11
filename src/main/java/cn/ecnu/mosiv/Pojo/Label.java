@@ -1,4 +1,4 @@
-package cn.ecnu.mosiv.Pojo.StateMachineDiagram;
+package cn.ecnu.mosiv.Pojo;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -11,5 +11,5 @@ public class Label {
     private String kind;
     private String content;
     private String componentId;
-    private String sdgId;
+    private String diagramId;
 }

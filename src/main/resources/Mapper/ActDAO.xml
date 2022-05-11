@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.ecnu.mosiv.dao.ActDAO">
+
+    <resultMap id="Node" type="cn.ecnu.mosiv.Pojo.ActivityDiagram.Node">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="actId" jdbcType="VARCHAR" property="actId"></result>
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
+        <result column="nodeType" jdbcType="VARCHAR" property="nodeType"></result>
+        <result column="name" jdbcType="VARCHAR" property="name"></result>
+    </resultMap>
+
+    <resultMap id="Edge" type="cn.ecnu.mosiv.Pojo.ActivityDiagram.Edge">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="actId" jdbcType="VARCHAR" property="actId"></result>
+        <result column="source" jdbcType="VARCHAR" property="source"></result>
+        <result column="target" jdbcType="VARCHAR" property="target"></result>
+        <result column="edgeType" jdbcType="VARCHAR" property="edgeType"></result>
+        <result column="edgeData" jdbcType="VARCHAR" property="edgeData"></result>
+    </resultMap>
+
+    <resultMap id="Name" type="cn.ecnu.mosiv.Pojo.Name">
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
+        <result column="content" jdbcType="VARCHAR" property="content"></result>
+        <result column="componentId" jdbcType="VARCHAR" property="componentId"></result>
+        <result column="diagramId" jdbcType="VARCHAR" property="diagramId"></result>
+    </resultMap>
+
+    <resultMap id="Label" type="cn.ecnu.mosiv.Pojo.Label">
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
+        <result column="kind" jdbcType="VARCHAR" property="kind"></result>
+        <result column="content" jdbcType="VARCHAR" property="content"></result>
+        <result column="componentId" jdbcType="VARCHAR" property="componentId"></result>
+        <result column="diagramId" jdbcType="VARCHAR" property="diagramId"></result>
+    </resultMap>
+
+    <resultMap id="Nail" type="cn.ecnu.mosiv.Pojo.Nail">
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
+        <result column="componentId" jdbcType="VARCHAR" property="componentId"></result>
+        <result column="diagramId" jdbcType="VARCHAR" property="diagramId"></result>
+    </resultMap>
+
+    <insert id="newNode" parameterType="cn.ecnu.mosiv.Pojo.ActivityDiagram.Node">
+        insert into node4ActDiagram values(#{node.id},
+                                 #{node.actId},
+                                 #{node.name},
+                                 #{node.abscissa},
+                                 #{node.ordinate},
+                                 #{node.nodeType})
+    </insert>
+
+
+    <insert id="newName" parameterType="cn.ecnu.mosiv.Pojo.Name">
+        insert into names values(#{name.abscissa},
+                                #{name.ordinate},
+                                #{name.content},
+                                #{name.componentId},
+                                #{name.diagramId}
+                                )
+    </insert>
+
+    <insert id="newLabel" parameterType="cn.ecnu.mosiv.Pojo.Label">
+        insert into labels values(
+                                #{label.abscissa},
+                                #{label.ordinate},
+                                #{label.kind},
+                                #{label.content},
+                                #{label.componentId},
+                                #{label.diagramId}
+        )
+    </insert>
+
+    <insert id="newNails" parameterType="cn.ecnu.mosiv.Pojo.Nail">
+        insert into nails values
+        <foreach collection="nails" item="nail" index="index" separator="," >
+            (
+            #{nail.abscissa},
+            #{nail.ordinate},
+            #{nail.componentId},
+            #{nail.diagramId}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="newEdge" parameterType="cn.ecnu.mosiv.Pojo.ActivityDiagram.Edge">
+        insert into edge4ActDiagram values(#{edge.id},
+                                           #{edge.actId},
+                                           #{edge.source},
+                                           #{edge.target},
+                                           #{edge.edgeType},
+                                           #{edge.edgeData})
+    </insert>
+
+    <select id="selectNode" resultType="String">
+        select id from node4ActDiagram where id = #{id} and actId = #{actId};
+    </select>
+
+    <select id="selectEdge" resultType="String">
+        select id from edge4ActDiagram where id = #{id} and actId = #{actId};
+    </select>
+
+    <select id="select_node_ids" parameterType="String" resultType="java.lang.String">
+        select id from node4ActDiagram where actId = #{actId};
+    </select>
+
+    <select id="select_edge_ids" parameterType="String" resultType="java.lang.String">
+        select id from edge4ActDiagram where actId = #{actId};
+    </select>
+
+    <select id="select_all_nodes" parameterType="String" resultMap="Node">
+        select * from node4ActDiagram where actId = #{actId};
+    </select>
+
+    <select id="select_all_edges" parameterType="String" resultMap="Edge">
+        select * from edge4ActDiagram where actId = #{actId};
+    </select>
+
+    <select id="selectComponentName" resultMap="Name">
+        select * from names
+        where componentId = #{id}
+        and diagramId = #{diagramId};
+    </select>
+
+    <select id="selectLabels" resultMap="Label">
+        select * from labels
+        where componentId = #{id}
+        and diagramId = #{diagramId};
+    </select>
+
+    <select id="selectNails" resultMap="Nail">
+        select * from nails
+        where componentId = #{id}
+        and diagramId = #{diagramId};
+    </select>
+
+    <update id="updateNode" parameterType="cn.ecnu.mosiv.Pojo.ActivityDiagram.Node">
+        update node4ActDiagram
+            set name = #{node.name},
+                abscissa = #{node.abscissa},
+                ordinate = #{node.ordinate},
+                nodeType = #{node.nodeType}
+            where id = #{node.id}
+            and actId = #{node.actId}
+    </update>
+
+
+    <update id="updateName" parameterType="cn.ecnu.mosiv.Pojo.Name">
+        update names
+            set abscissa = #{name.abscissa},
+                ordinate = #{name.ordinate},
+                content = #{name.content}
+            where componentId = #{name.componentId}
+            and diagramId = #{name.diagramId}
+    </update>
+
+    <update id="updateDiagram">
+        update diagrams
+            set json = #{actDiagram.json},
+                base64 = #{actDiagram.base64}
+            where id = #{actId}
+    </update>
+
+    <update id="updateLabel" parameterType="cn.ecnu.mosiv.Pojo.Label">
+        update labels
+            set abscissa = #{label.abscissa},
+                ordinate = #{label.ordinate},
+                kind = #{label.kind},
+                content = #{label.content}
+            where componentId = #{label.componentId}
+            and diagramId = #{label.diagramId}
+    </update>
+
+    <update id="updateNails" parameterType="cn.ecnu.mosiv.Pojo.Nail">
+        <foreach collection="nails" item="nail" index="index" separator="," >
+            update nails
+            set abscissa = #{nail.abscissa},
+                ordinate = #{nail.ordinate}
+            where componentId = #{nail.componentId}
+            and diagramId = #{nail.diagramId}
+        </foreach>
+    </update>
+
+    <update id="updateEdge" parameterType="cn.ecnu.mosiv.Pojo.ActivityDiagram.Edge">
+        update edge4ActDiagram
+            set source = #{edge.source},
+                target = #{edge.target},
+                edgeType = #{edge.edgeType},
+                edgeData = #{edge.edgeData}
+            where id = #{edge.id}
+            and actId = #{edge.actId}
+    </update>
+
+    <delete id="deleteNode">
+        delete from node4ActDiagram where id in(
+        <foreach collection="nodeDelete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        ) and actId = #{actId};
+    </delete>
+
+
+
+    <delete id="deleteName" parameterType="java.util.List">
+        delete from names where componentId in(
+        <foreach collection="nameDelete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        )and diagramId = #{diagramId};
+    </delete>
+
+    <delete id="deleteLabel" parameterType="java.util.List">
+        delete from labels where componentId in(
+        <foreach collection="labelDelete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        )and diagramId = #{diagramId};
+    </delete>
+
+    <delete id="deleteNail" parameterType="java.util.List">
+        delete from nails where componentId in (
+        <foreach collection="nailDelete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        ) and diagramId = #{diagramId}
+    </delete>
+
+    <delete id="deleteEdge" parameterType="java.util.List">
+        delete from transition where id in(
+        <foreach collection="edgeDelete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        )and actId = #{actId};
+    </delete>
+
+</mapper>
+

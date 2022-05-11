@@ -19,7 +19,7 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 
 import net.sf.json.*;
-import cn.ecnu.mosiv.dao.StategramDAO;
+import cn.ecnu.mosiv.dao.SdgDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -31,7 +31,7 @@ import java.util.List;
 public class SdgDataController {
 
     @Autowired
-    StategramDAO stategramDAO;
+    SdgDAO sdgDAO;
 
     //todo 能够导入之前绘制的模型，实现工具的互操作
 
@@ -57,7 +57,7 @@ public class SdgDataController {
 //        System.out.println(str);
         stateDiagram.setJson(str);
 
-        stategramDAO.updateDiagram(stateDiagram,sdgId);
+        sdgDAO.updateDiagram(stateDiagram,sdgId);
 
 
         List<String> current_states = new ArrayList<>();
@@ -96,8 +96,8 @@ public class SdgDataController {
                     name.setAbscissa(name1.getDouble("abscissa"));
                     name.setOrdinate(name1.getDouble("ordinate"));
                     name.setContent(name1.getString("content"));
-                    name.setStateId(name1.getString("state_id"));
-                    name.setSdgId(location.getSdgId());
+                    name.setComponentId(name1.getString("state_id"));
+                    name.setDiagramId(location.getSdgId());
                     location.setName(name.getContent());
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -113,7 +113,7 @@ public class SdgDataController {
                     label.setKind("invariant");
                     label.setContent(label1.getString("content"));
                     label.setComponentId(label1.getString("component_id"));
-                    label.setSdgId(location.getSdgId());
+                    label.setDiagramId(location.getSdgId());
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -123,21 +123,21 @@ public class SdgDataController {
 
                 //如果数据库中没有该状态，则新建；有则更新
                 try {
-                    if (stategramDAO.selectState(location.getId(), sdgId) == null) {
-                        stategramDAO.newState(location);
+                    if (sdgDAO.selectState(location.getId(), sdgId) == null) {
+                        sdgDAO.newState(location);
                         if (name.getContent() != null) {
-                            stategramDAO.newName(name);
+                            sdgDAO.newName(name);
                         }
                         if (label != null) {
-                            stategramDAO.newLabel(label);
+                            sdgDAO.newLabel(label);
                         }
                     } else {
-                        stategramDAO.updateState(location);
+                        sdgDAO.updateState(location);
                         if (name != null) {
-                            stategramDAO.updateName(name);
+                            sdgDAO.updateName(name);
                         }
                         if (label != null) {
-                            stategramDAO.updateLabel(label);
+                            sdgDAO.updateLabel(label);
                         }
                     }
                 } catch (DataAccessException e) {
@@ -167,7 +167,7 @@ public class SdgDataController {
                     label.setKind("select");
                     label.setContent(label1.getString("content"));
                     label.setComponentId(label1.getString("component_id"));
-                    label.setSdgId(transition1.getSdgId());
+                    label.setDiagramId(transition1.getSdgId());
                 } catch (JSONException e) {
                     e.printStackTrace();
 
@@ -182,7 +182,7 @@ public class SdgDataController {
                     label2.setKind("update");
                     label2.setContent(label1.getString("content"));
                     label2.setComponentId(label1.getString("component_id"));
-                    label2.setSdgId(transition1.getSdgId());
+                    label2.setDiagramId(transition1.getSdgId());
                 } catch (JSONException e) {
                     e.printStackTrace();
 
@@ -197,7 +197,7 @@ public class SdgDataController {
                     label3.setKind("guard");
                     label3.setContent(label1.getString("content"));
                     label3.setComponentId(label1.getString("component_id"));
-                    label3.setSdgId(transition1.getSdgId());
+                    label3.setDiagramId(transition1.getSdgId());
                 } catch (JSONException e) {
                     e.printStackTrace();
 
@@ -212,7 +212,7 @@ public class SdgDataController {
                     label4.setKind("synchronisation");
                     label4.setContent(label1.getString("content"));
                     label4.setComponentId(label1.getString("component_id"));
-                    label4.setSdgId(transition1.getSdgId());
+                    label4.setDiagramId(transition1.getSdgId());
                 } catch (JSONException e) {
                     e.printStackTrace();
 
@@ -227,7 +227,7 @@ public class SdgDataController {
                     label5.setKind("probability-weight");
                     label5.setContent(label1.getString("content"));
                     label5.setComponentId(label1.getString("component_id"));
-                    label5.setSdgId(transition1.getSdgId());
+                    label5.setDiagramId(transition1.getSdgId());
                 } catch (JSONException e) {
                     e.printStackTrace();
 
@@ -241,8 +241,8 @@ public class SdgDataController {
                         Nail nail = new Nail();
                         nail.setAbscissa(nails.getJSONObject(t).getDouble("abscissa"));
                         nail.setOrdinate(nails.getJSONObject(t).getDouble("ordinate"));
-                        nail.setTransitionId(transition1.getId());
-                        nail.setSdgId(sdgId);
+                        nail.setComponentId(transition1.getId());
+                        nail.setDiagramId(sdgId);
                         list_n.add(nail);
                     }
 
@@ -269,45 +269,45 @@ public class SdgDataController {
                 current_transitions.add(transition1.getId());
 
                 //如果数据库中没有该transition，则新建；有则更新
-                if (stategramDAO.selectTransition(transition1.getId(), sdgId) == null) {
-                    stategramDAO.newTransition(transition1);
+                if (sdgDAO.selectTransition(transition1.getId(), sdgId) == null) {
+                    sdgDAO.newTransition(transition1);
                     if (label != null) {
-                        stategramDAO.newLabel(label);
+                        sdgDAO.newLabel(label);
                     }
                     if (label2 != null) {
-                        stategramDAO.newLabel(label2);
+                        sdgDAO.newLabel(label2);
                     }
                     if (label3 != null) {
-                        stategramDAO.newLabel(label3);
+                        sdgDAO.newLabel(label3);
                     }
                     if (label4 != null) {
-                        stategramDAO.newLabel(label4);
+                        sdgDAO.newLabel(label4);
                     }
                     if (label5 != null) {
-                        stategramDAO.newLabel(label5);
+                        sdgDAO.newLabel(label5);
                     }
                     if( list_n != null ) {
-                        stategramDAO.newNails(list_n);
+                        sdgDAO.newNails(list_n);
                     }
                 } else {
-                    stategramDAO.updateTransition(transition1);
+                    sdgDAO.updateTransition(transition1);
                     if (label != null) {
-                        stategramDAO.updateLabel(label);
+                        sdgDAO.updateLabel(label);
                     }
                     if (label2 != null) {
-                        stategramDAO.updateLabel(label2);
+                        sdgDAO.updateLabel(label2);
                     }
                     if (label3 != null) {
-                        stategramDAO.updateLabel(label3);
+                        sdgDAO.updateLabel(label3);
                     }
                     if (label4 != null) {
-                        stategramDAO.updateLabel(label4);
+                        sdgDAO.updateLabel(label4);
                     }
                     if (label5 != null) {
-                        stategramDAO.updateLabel(label5);
+                        sdgDAO.updateLabel(label5);
                     }
                     if( list_n != null) {
-                        stategramDAO.updateNails(list_n);
+                        sdgDAO.updateNails(list_n);
                     }
                 }
 
@@ -322,10 +322,10 @@ public class SdgDataController {
                 branchPoint.setOrdinate(object1.getDouble("ordinate"));
 
                 current_branch_points.add(branchPoint.getId());
-                if (stategramDAO.selectBranchPoint(branchPoint.getId(), sdgId) == null) {
-                    stategramDAO.newBranchPoint(branchPoint);
+                if (sdgDAO.selectBranchPoint(branchPoint.getId(), sdgId) == null) {
+                    sdgDAO.newBranchPoint(branchPoint);
                 } else {
-                    stategramDAO.updateBranchPoint(branchPoint);
+                    sdgDAO.updateBranchPoint(branchPoint);
                 }
             }
         }
@@ -335,9 +335,9 @@ public class SdgDataController {
 //        System.out.println(stategramDAO.select_state_ids());
 //        System.out.println(stategramDAO.select_transition_ids());
 
-        List<String> old_states = stategramDAO.select_state_ids(sdgId);
-        List<String> old_transitions = stategramDAO.select_transition_ids(sdgId);
-        List<String> old_branch_points = stategramDAO.select_branch_point_ids(sdgId);
+        List<String> old_states = sdgDAO.select_state_ids(sdgId);
+        List<String> old_transitions = sdgDAO.select_transition_ids(sdgId);
+        List<String> old_branch_points = sdgDAO.select_branch_point_ids(sdgId);
 
 
         for (String t : current_states) {
@@ -361,17 +361,17 @@ public class SdgDataController {
 
         //完成上述操作后，old_states、old_transitions和old_branch_points中剩余的id就是需要删除的state、transition和branch_point的id
         if (old_states.size() > 0) {
-            stategramDAO.deleteState(old_states, sdgId);
-            stategramDAO.deleteName(old_states, sdgId);
-            stategramDAO.deleteLabel(old_states, sdgId);
+            sdgDAO.deleteState(old_states, sdgId);
+            sdgDAO.deleteName(old_states, sdgId);
+            sdgDAO.deleteLabel(old_states, sdgId);
         }
         if (old_transitions.size() > 0) {
-            stategramDAO.deleteTransition(old_transitions, sdgId);
-            stategramDAO.deleteLabel(old_transitions, sdgId);
-            stategramDAO.deleteNail(old_transitions,sdgId);
+            sdgDAO.deleteTransition(old_transitions, sdgId);
+            sdgDAO.deleteLabel(old_transitions, sdgId);
+            sdgDAO.deleteNail(old_transitions,sdgId);
         }
         if (old_branch_points.size() > 0) {
-            stategramDAO.deleteBranchPoint(old_branch_points, sdgId);
+            sdgDAO.deleteBranchPoint(old_branch_points, sdgId);
         }
 
 
@@ -413,7 +413,7 @@ public class SdgDataController {
 
         //状态
         try {
-            List<Location> list_s = stategramDAO.select_all_states(sdgId);
+            List<Location> list_s = sdgDAO.select_all_states(sdgId);
 
             for (Location l : list_s) {
 
@@ -426,7 +426,7 @@ public class SdgDataController {
                 location.setAttribute("id", id_s);
                 template.appendChild(location);
 
-                Name name_ = stategramDAO.selectStateName(id_s, sdgId);
+                Name name_ = sdgDAO.selectComponentName(id_s, sdgId);
                 if(name_!=null) {
                     Element name1 = doc.createElement("name");
                     String ordinate_n = Double.toString(name_.getOrdinate());
@@ -438,7 +438,7 @@ public class SdgDataController {
                     location.appendChild(name1);
                 }
 
-                List<Label> list_l = stategramDAO.selectLabels(id_s, sdgId);
+                List<Label> list_l = sdgDAO.selectLabels(id_s, sdgId);
                 if(list_l!=null) {
                     for (Label la : list_l) {
                         Element label = doc.createElement("label");
@@ -454,12 +454,12 @@ public class SdgDataController {
                     }
                 }
 
-                if (stategramDAO.selectIsCommitted(id_s, sdgId)) {
+                if (sdgDAO.selectIsCommitted(id_s, sdgId)) {
                     Element committed = doc.createElement("committed");
                     location.appendChild(committed);
                 }
 
-                if (stategramDAO.selectIsUrgent(id_s, sdgId)) {
+                if (sdgDAO.selectIsUrgent(id_s, sdgId)) {
                     Element urgent = doc.createElement("urgent");
                     location.appendChild(urgent);
                 }
@@ -484,7 +484,7 @@ public class SdgDataController {
         }
 
         //branchpoint
-        List<BranchPoint> list_b = stategramDAO.select_all_branch_points(sdgId);
+        List<BranchPoint> list_b = sdgDAO.select_all_branch_points(sdgId);
         if(list_b!=null) {
             for (BranchPoint t : list_b) {
                 Element branch_point = doc.createElement("branchpoint");
@@ -498,7 +498,7 @@ public class SdgDataController {
 
 
         // 迁移
-        List<Transition> list_t = stategramDAO.select_all_transitions(sdgId);
+        List<Transition> list_t = sdgDAO.select_all_transitions(sdgId);
         for (Transition t : list_t) {
             Element transition = doc.createElement("transition");
             template.appendChild(transition);
@@ -511,7 +511,7 @@ public class SdgDataController {
             target.setAttribute("ref", t.getTarget());//transition的target
             transition.appendChild(target);
 
-            List<Label> list_la = stategramDAO.selectLabels(t.getId(), sdgId);
+            List<Label> list_la = sdgDAO.selectLabels(t.getId(), sdgId);
             if(list_la!=null) {
                 for (Label la : list_la) {
                     Element label1 = doc.createElement("label");
@@ -526,7 +526,7 @@ public class SdgDataController {
             }
 
 
-            List<Nail> list_na = stategramDAO.selectNails(t.getId(), sdgId);
+            List<Nail> list_na = sdgDAO.selectNails(t.getId(), sdgId);
             if(list_na!=null) {
                 for (Nail na : list_na) {
                     Element nail1 = doc.createElement("nail");
@@ -607,7 +607,7 @@ public class SdgDataController {
 
     @CrossOrigin
     @ResponseBody
-    @GetMapping(value = "/parse_xml")
+    @GetMapping(value = "/parse_xml_sdg")
     public Result XmlParser() {
         Result result = new Result();
 

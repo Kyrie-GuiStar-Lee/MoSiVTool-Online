@@ -10,7 +10,7 @@ import java.util.List;
 
 @Mapper
 @Repository
-public interface StategramDAO {
+public interface SdgDAO {
     void newState(@Param("location") Location location);
     void newBranchPoint(@Param("branch_point") BranchPoint branchPoint);
     void newName(@Param("name") Name name);
@@ -28,9 +28,9 @@ public interface StategramDAO {
     List<BranchPoint> select_all_branch_points(String sdgId);
     Boolean selectIsCommitted(String id, String sdgId);
     Boolean selectIsUrgent(String id, String sdgId);
-    Name selectStateName(@Param("id") String id,@Param("sdgId") String sdgId);
+    Name selectComponentName(@Param("id") String id,@Param("diagramId") String diagramId);
     List<Label> selectLabels(@Param("id") String id,@Param("sdgId") String sdgId);
-    List<Nail> selectNails(@Param("id") String id,@Param("sdgId") String sdgId);
+    List<Nail> selectNails(@Param("id") String id,@Param("diagramId") String diagramId);
     void updateState(@Param("location") Location location);
     void updateName(@Param("name") Name name);
     void updateDiagram(@Param("stateDiagram") Diagram stateDiagram, @Param("sdgId") String sdgId);
@@ -41,7 +41,7 @@ public interface StategramDAO {
     void deleteState(@Param("s_delete") List<String> s_delete,@Param("sdgId") String sdgId);
     void deleteTransition(@Param("t_delete") List<String> t_delete,@Param("sdgId") String sdgId);
     void deleteBranchPoint(@Param("b_delete")List<String> b_delete,@Param("sdgId")String sdgId);
-    void deleteName(@Param("to_delete")List<String> to_delete,@Param("sdgId")String sdgId);
+    void deleteName(@Param("to_delete")List<String> to_delete,@Param("diagramId")String diagramId);
     void deleteLabel(@Param("to_delete")List<String> to_delete,@Param("sdgId")String sdgId);
-    void deleteNail(@Param("to_delete") List<String> to_delete, @Param("sdgId") String sdgId);
+    void deleteNail(@Param("to_delete") List<String> to_delete, @Param("sdgId") String diagramId);
 }

@@ -1,4 +1,4 @@
-package cn.ecnu.mosiv.Pojo.StateMachineDiagram;
+package cn.ecnu.mosiv.Pojo;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -8,7 +8,7 @@ import lombok.Setter;
 public class Nail {
     private double abscissa;
     private double ordinate;
-    private String transitionId;
-    private String sdgId;
+    private String componentId;
+    private String diagramId;
 
 }

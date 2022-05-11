@@ -47,7 +47,7 @@
                                  #{port.ordinate})
     </insert>
 
-    <insert id="newConnector" parameterType="cn.ecnu.mosiv.Pojo.BDD.Connector">
+    <insert id="newConnector" parameterType="cn.ecnu.mosiv.Pojo.IBD.Connector">
         insert into connectors values(#{connector.id},
                                       #{connector.ibdId},
                                       #{connector.type},
@@ -117,7 +117,7 @@
             and ibdId = #{connector.ibdId}
     </update>
 
-    <update id="updatePort" parameterType="cn.ecnu.mosiv.Pojo.BDD.Port">
+    <update id="updatePort" parameterType="cn.ecnu.mosiv.Pojo.IBD.IbdPort">
         update ports
             set abscissa = #{port.abscissa},
                 ordinate = #{port.ordinate},

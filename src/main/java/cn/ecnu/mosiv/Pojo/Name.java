@@ -9,8 +9,8 @@ public class Name{
     private double abscissa;
     private double ordinate;
     private String content;
-    private String stateId;
-    private String sdgId;
+    private String componentId;
+    private String diagramId;
 
 }
 

@@ -63,7 +63,6 @@ public class LoginController {
             result.setCode("10");
             return result;
         }
-
         String username = user.getUsername();
         String password = user.getPassword();
         if (userDao.searchUser(username) == null) {
@@ -79,8 +78,6 @@ public class LoginController {
                 result.setCode("102");
             }
         }
-
-
         return result;
 
     }
