@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.ecnu.mosiv.dao.PkgDAO">
+
+    <resultMap id="Package" type="cn.ecnu.mosiv.Pojo.PackageDiagram.Package">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="diagramId" jdbcType="VARCHAR" property="diagramId"></result>
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
+        <result column="name" jdbcType="VARCHAR" property="name"></result>
+        <result column="description" jdbcType="VARCHAR" property="description"></result>
+    </resultMap>
+
+    <resultMap id="Dependency" type="cn.ecnu.mosiv.Pojo.PackageDiagram.Dependency">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="diagramId" jdbcType="VARCHAR" property="diagramId"></result>
+        <result column="source" jdbcType="VARCHAR" property="source"></result>
+        <result column="target" jdbcType="VARCHAR" property="target"></result>
+        <result column="isPublic" jdbcType="BOOLEAN" property="isPublic"></result>
+        <result column="isPrivate" jdbcType="BOOLEAN" property="isPrivate"></result>
+    </resultMap>
+
+    <insert id="newPackage" parameterType="cn.ecnu.mosiv.Pojo.PackageDiagram">
+        insert into package4pkgdiagram values(#{package.id},
+                                            #{package.diagramId},
+                                            #{package.abscissa},
+                                            #{package.ordinate},
+                                            #{package.name},
+                                            #{package.description})
+    </insert>
+
+    <insert id="newDependency" parameterType="cn.ecnu.mosiv.Pojo.PackageDiagram.Dependency">
+        insert into dependency4pkgdiagram values(#{dependency.id},
+                                                #{dependency.diagramId},
+                                                #{dependency.source},
+                                                #{dependency.target},
+                                                #{dependency.isPublic},
+                                                #{dependency.isPrivate})
+
+    </insert>
+
+    <select id="selectPackage" resultType="String">
+        select id from package4pkgdiagram where id = #{id} and diagramId = #{pkgId};
+    </select>
+
+    <select id="selectDependency" resultType="String">
+        select id from dependency4pkgdiagram where id = #{id} and diagramId = #{pkgId};
+    </select>
+
+    <select id="select_package_ids" parameterType="String" resultType="java.lang.String">
+        select id from package4pkgdiagram where diagramId = #{pkgId};
+    </select>
+
+    <select id="select_dependency_ids" parameterType="String" resultType="java.lang.String">
+        select id from dependency4pkgdiagram where diagramId = #{pkgId};
+    </select>
+
+    <select id="select_all_packages" parameterType="String" resultMap="Package">
+        select * from package4pkgdiagram where diagramId = #{pkgId};
+    </select>
+
+    <select id="select_all_dependencies" parameterType="String" resultMap="Dependency">
+        select * from dependency4pkgdiagram where diagramId = #{pkgId};
+    </select>
+
+    <update id="updateDiagram">
+        update diagrams
+            set json = #{pkg.json},
+                base64 = #{pkg.base64}
+            where id = #{pkgId}
+    </update>
+
+    <update id="updatePackage" parameterType="cn.ecnu.mosiv.Pojo.PackageDiagram.Package">
+        update package4pkgdiagram
+            set abscissa = #{package.abscissa},
+                ordinate = #{package.ordinate},
+                name = #{package.name},
+                description = #{package.description}
+            where id = #{package.id}
+            and diagramId = #{package.diagramId}
+    </update>
+
+    <update id="updateDependency" parameterType="cn.ecnu.mosiv.Pojo.PackageDiagram.Dependency">
+        update dependency4pkgdiagram
+            set source = #{dependency.source},
+                target = #{dependency.target},
+                isPublic = #{dependency.isPublic},
+                isPrivagte = #{dependency.isPrivate}
+            where id = #{dependency.id}
+            and diagramId = #{dependency.diagramId}
+    </update>
+
+    <delete id="deletePackage">
+        delete from package4pkgdiagram where id in(
+        <foreach collection="p_delete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        ) and diagramId = #{pkgId};
+    </delete>
+
+    <delete id="deleteDependency" parameterType="java.util.List">
+        delete from dependency4pkgdiagram where id in(
+        <foreach collection="d_delete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        )and diagramId = #{pkgId};
+    </delete>
+
+</mapper>
+

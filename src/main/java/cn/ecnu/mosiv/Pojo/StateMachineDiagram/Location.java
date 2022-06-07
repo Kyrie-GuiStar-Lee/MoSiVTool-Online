@@ -1,4 +1,4 @@
-package cn.ecnu.mosiv.Pojo;
+package cn.ecnu.mosiv.Pojo.StateMachineDiagram;
 
 import lombok.Getter;
 import lombok.Setter;

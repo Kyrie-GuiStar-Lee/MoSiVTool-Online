@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.ecnu.mosiv.dao.BddDAO">
+
+    <resultMap id="Block" type="cn.ecnu.mosiv.Pojo.BDD.Block">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="bddId" jdbcType="VARCHAR" property="bddId"></result>
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
+        <result column="operation" jdbcType="VARCHAR" property="operation"></result>
+        <result column="constraint" jdbcType="VARCHAR" property="constraint"></result>
+    </resultMap>
+
+    <resultMap id="Relationship" type="cn.ecnu.mosiv.Pojo.BDD.Relationship">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="bddId" jdbcType="VARCHAR" property="bddId"></result>
+        <result column="source" jdbcType="VARCHAR" property="source"></result>
+        <result column="target" jdbcType="VARCHAR" property="target"></result>
+        <result column="type" jdbcType="VARCHAR" property="type"></result>
+    </resultMap>
+
+    <resultMap id="Property" type="cn.ecnu.mosiv.Pojo.BDD.Property">
+        <result column="blockId" jdbcType="VARCHAR" property="blockId"></result>
+        <result column="value" jdbcType="VARCHAR" property="value"></result>
+        <result column="part" jdbcType="VARCHAR" property="part"></result>
+        <result column="references" jdbcType="VARCHAR" property="references"></result>
+        <result column="bddId" jdbcType="VARCHAR" property="bddId"></result>
+    </resultMap>
+
+    <resultMap id="MLComponent" type="cn.ecnu.mosiv.Pojo.BDD.MLComponent">
+        <result column="blockId" jdbcType="VARCHAR" property="blockId"></result>
+        <result column="name" jdbcType="VARCHAR" property="name"></result>
+        <result column="type" jdbcType="VARCHAR" property="type"></result>
+        <result column="description" jdbcType="VARCHAR" property="description"></result>
+        <result column="authors" jdbcType="VARCHAR" property="authors"></result>
+        <result column="intendedUse" jdbcType="VARCHAR" property="intendedUse"></result>
+        <result column="network" jdbcType="VARCHAR" property="network"></result>
+        <result column="input" jdbcType="VARCHAR" property="input"></result>
+        <result column="output" jdbcType="VARCHAR" property="output"></result>
+        <result column="factor" jdbcType="VARCHAR" property="factor"></result>
+        <result column="metric" jdbcType="VARCHAR" property="metric"></result>
+        <result column="analyses" jdbcType="VARCHAR" property="analyses"></result>
+        <result column="additionalInformation" jdbcType="VARCHAR" property="additionalInformation"></result>
+        <result column="ethic" jdbcType="VARCHAR" property="ethic"></result>
+        <result column="bddId" jdbcType="VARCHAR" property="bddId"></result>
+    </resultMap>
+
+    <resultMap id="Port" type="cn.ecnu.mosiv.Pojo.BDD.Port">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
+        <result column="bddId" jdbcType="VARCHAR" property="bddId"></result>
+        <result column="type" jdbcType="VARCHAR" property="type"></result>
+    </resultMap>
+
+
+    <insert id="newBlock" parameterType="cn.ecnu.mosiv.Pojo.BDD.Block">
+        insert into blocks values(#{block.id},
+                                 #{block.abscissa},
+                                 #{block.ordinate},
+                                 #{block.bddId},
+                                 #{block.operation},
+                                 #{block.constraint})
+    </insert>
+
+    <insert id="newPort" parameterType="cn.ecnu.mosiv.Pojo.BDD.Port">
+        insert into ports values(#{port.id},
+                                 #{port.bddId},
+                                 #{port.type},
+                                 #{port.abscissa},
+                                 #{port.ordinate})
+    </insert>
+
+    <insert id="newProperty" parameterType="cn.ecnu.mosiv.Pojo.BDD.Property">
+        insert into properties values(#{property.blockId},
+                                #{property.value},
+                                #{property.part},
+                                #{property.references},
+                                #{property.bddId})
+    </insert>
+
+    <insert id="newMLComponent" parameterType="cn.ecnu.mosiv.Pojo.BDD.MLComponent">
+        insert into mlcomponents values(
+                                #{mlComponent.blockId},
+                                #{mlComponent.name},
+                                #{mlComponent.type},
+                                #{mlComponent.description},
+                                #{mlComponent.authors},
+                                #{mlComponent.intendedUse},
+                                #{mlComponent.network},
+                                #{mlComponent.input},
+                                #{mlComponent.output},
+                                #{mlComponent.factor},
+                                #{mlComponent.metric},
+                                #{mlComponent.analyses},
+                                #{mlComponent.additionalInformation},
+                                #{mlComponent.ethic},
+                                #{mlComponent.bddId}
+        )
+    </insert>
+
+
+    <insert id="newRelationship" parameterType="cn.ecnu.mosiv.Pojo.BDD.Relationship">
+        insert into relationships values(#{relationship.id},#{relationship.bddId},#{relationship.type},#{relationship.source},#{relationship.target})
+    </insert>
+
+    <select id="selectBlock" resultType="String">
+        select id from blocks where id = #{id} and bddId = #{bddId};
+    </select>
+
+    <select id="selectRelationship" resultType="String">
+        select id from relationships where id = #{id} and bddId = #{bddId};
+    </select>
+
+    <select id="selectPort" resultType="String">
+        select id from ports where id = #{id} and bddId = #{bddId};
+    </select>
+
+    <select id="select_block_ids" parameterType="String" resultType="java.lang.String">
+        select id from blocks where bddId = #{bddId};
+    </select>
+
+    <select id="select_port_ids" parameterType="String" resultType="java.lang.String">
+        select id from ports where bddId = #{bddId};
+    </select>
+
+    <select id="select_relationship_ids" parameterType="String" resultType="java.lang.String">
+        select id from relationships where bddId = #{bddId};
+    </select>
+
+    <select id="select_all_blocks" parameterType="String" resultMap="Block">
+        select * from blocks where bddId = #{bddId};
+    </select>
+
+    <select id="select_all_relationships" parameterType="String" resultMap="Relationship">
+        select * from relationships where bddId = #{bddId};
+    </select>
+
+    <select id="select_all_ports" parameterType="String" resultMap="Port">
+        select * from ports where bddId = #{bddId};
+    </select>
+
+    <select id="selectProperties" resultMap="Property">
+        select * from properties
+        where blockId = #{id}
+        and bddId = #{bddId};
+    </select>
+
+    <select id="selectMLComponents" resultMap="MLComponent">
+        select * from mlcomponents
+        where blockId = #{id}
+        and bddId = #{bddId};
+    </select>
+
+    <update id="updateBlock" parameterType="cn.ecnu.mosiv.Pojo.BDD.Block">
+        update blocks
+            set abscissa = #{block.abscissa},
+                ordinate = #{block.ordinate},
+                operation = #{block.operation},
+                constraint = #{block.constraint}
+            where id = #{block.id}
+            and bddId = #{block.bddId}
+    </update>
+
+
+    <update id="updateProperty" parameterType="cn.ecnu.mosiv.Pojo.BDD.Property">
+        update properties
+            set value = #{property.value},
+                part = #{property.part},
+                references = #{property.references}
+            where blockId = #{property.blockId}
+            and bddId = #{property.bddId}
+    </update>
+
+    <update id="updateDiagram">
+        update diagrams
+            set json = #{bdd.json},
+                base64 = #{bdd.base64}
+            where id = #{bddId}
+    </update>
+
+    <update id="updateMLComponent" parameterType="cn.ecnu.mosiv.Pojo.BDD.MLComponent">
+        update mlcomponents
+            set name = #{mlComponent.name},
+                type = #{mlComponent.type},
+                description = #{mlComponent.description},
+                authors = #{mlComponent.authors},
+                intendedUse = #{mlComponent.intendedUse},
+                network = #{mlComponent.network},
+                input = #{mlComponent.input},
+                output = #{mlComponent.output},
+                factor = #{mlComponent.factor},
+                metric = #{mlComponent.metric},
+                analyses = #{mlComponent.analyses},
+                additionalInformation = #{mlComponent.additionalInformation},
+                ethic = #{mlComponent.ethic}
+            where blockId = #{mlComponent.blockId}
+            and bddId = #{mlComponent.bddId}
+    </update>
+
+
+    <update id="updateRelationship" parameterType="cn.ecnu.mosiv.Pojo.BDD.Relationship">
+        update relationships
+            set source = #{relationship.source},
+                target = #{relationship.target},
+                type = #{relationship.type}
+            where id = #{relationship.id}
+            and bddId = #{relationship.bddId}
+    </update>
+
+    <update id="updatePort" parameterType="cn.ecnu.mosiv.Pojo.BDD.Port">
+        update ports
+            set abscissa = #{port.abscissa},
+                ordinate = #{port.ordinate},
+                type = #{port.type}
+            where id = #{port.id}
+            and bddId = #{port.bddId}
+    </update>
+
+    <delete id="deleteBlock">
+        delete from blocks where id in(
+        <foreach collection="b_delete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        ) and bddId = #{bddId};
+    </delete>
+
+    <delete id="deletePort" parameterType="java.util.List">
+        delete from ports where id in(
+        <foreach collection="p_delete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        )and bddId = #{bddId};
+    </delete>
+
+    <delete id="deleteProperty" parameterType="java.util.List">
+        delete from properties where state_id in(
+        <foreach collection="to_delete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        )and bddId = #{bddId};
+    </delete>
+
+    <delete id="deleteMLComponent" parameterType="java.util.List">
+        delete from mlcomponents where component_id in(
+        <foreach collection="to_delete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        )and bddId = #{bddId};
+    </delete>
+
+    <delete id="deleteRelationship" parameterType="java.util.List">
+        delete from relationships where id in(
+        <foreach collection="r_delete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        )and bddId = #{bddId};
+    </delete>
+
+</mapper>
+

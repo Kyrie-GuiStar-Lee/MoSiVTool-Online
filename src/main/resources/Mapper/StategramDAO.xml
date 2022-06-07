@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 
-<mapper namespace="cn.ecnu.mosiv.dao.StategramDAO">
+<mapper namespace="cn.ecnu.mosiv.dao.SdgDAO">
 
-    <resultMap id="State" type="cn.ecnu.mosiv.Pojo.Location">
+    <resultMap id="State" type="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Location">
         <result column="id" jdbcType="VARCHAR" property="id"></result>
         <result column="sdg_id" jdbcType="VARCHAR" property="sdgId"></result>
         <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
@@ -15,7 +15,7 @@
         <result column="name" jdbcType="VARCHAR" property="name"></result>
     </resultMap>
 
-    <resultMap id="Transition" type="cn.ecnu.mosiv.Pojo.Transition">
+    <resultMap id="Transition" type="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Transition">
         <result column="id" jdbcType="VARCHAR" property="id"></result>
         <result column="sdg_id" jdbcType="VARCHAR" property="sdgId"></result>
         <result column="source" jdbcType="VARCHAR" property="source"></result>
@@ -26,7 +26,8 @@
         <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
         <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
         <result column="content" jdbcType="VARCHAR" property="content"></result>
-        <result column="state_id" jdbcType="VARCHAR" property="stateId"></result>
+        <result column="componentId" jdbcType="VARCHAR" property="componentId"></result>
+        <result column="diagramId" jdbcType="VARCHAR" property="diagramId"></result>
     </resultMap>
 
     <resultMap id="Label" type="cn.ecnu.mosiv.Pojo.Label">
@@ -34,29 +35,30 @@
         <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
         <result column="kind" jdbcType="VARCHAR" property="kind"></result>
         <result column="content" jdbcType="VARCHAR" property="content"></result>
-        <result column="component_id" jdbcType="VARCHAR" property="componentId"></result>
+        <result column="componentId" jdbcType="VARCHAR" property="componentId"></result>
+        <result column="diagramId" jdbcType="VARCHAR" property="diagramId"></result>
     </resultMap>
 
     <resultMap id="Nail" type="cn.ecnu.mosiv.Pojo.Nail">
         <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
         <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
-        <result column="transition_id" jdbcType="VARCHAR" property="transitionId"></result>
-        <result column="sdg_id" jdbcType="VARCHAR" property="sdgId"></result>
+        <result column="componentId" jdbcType="VARCHAR" property="componentId"></result>
+        <result column="diagramId" jdbcType="VARCHAR" property="diagramId"></result>
     </resultMap>
 
-    <resultMap id="BranchPoint" type="cn.ecnu.mosiv.Pojo.BranchPoint">
+    <resultMap id="BranchPoint" type="cn.ecnu.mosiv.Pojo.StateMachineDiagram.BranchPoint">
         <result column="id" jdbcType="VARCHAR" property="id"></result>
         <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
         <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
         <result column="sdg_id" jdbcType="VARCHAR" property="sdgId"></result>
     </resultMap>
 
-    <insert id="newStateDiagram" parameterType="cn.ecnu.mosiv.Pojo.StateDiagram" useGeneratedKeys="true" keyColumn="id"
+    <insert id="newStateDiagram" parameterType="cn.ecnu.mosiv.Pojo.Diagram" useGeneratedKeys="true" keyColumn="id"
             keyProperty="id">
-        insert into state_gram values(#{stateDiagram.id},#{stateDiagram.name},#{stateDiagram.json},#{stateDiagram.base64})
+        insert into diagrams values(#{stateDiagram.id},#{stateDiagram.name},#{stateDiagram.json},#{stateDiagram.base64},#{stateDiagram.type})
     </insert>
 
-    <insert id="newState" parameterType="cn.ecnu.mosiv.Pojo.Location">
+    <insert id="newState" parameterType="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Location">
         insert into state values(#{location.id},
                                  #{location.sdgId},
                                  #{location.name},
@@ -68,7 +70,7 @@
                                  #{location.isUrgent})
     </insert>
 
-    <insert id="newBranchPoint" parameterType="cn.ecnu.mosiv.Pojo.BranchPoint">
+    <insert id="newBranchPoint" parameterType="cn.ecnu.mosiv.Pojo.StateMachineDiagram.BranchPoint">
         insert into branchpoints values(#{branch_point.id},
                                  #{branch_point.abscissa},
                                  #{branch_point.ordinate},
@@ -79,8 +81,8 @@
         insert into names values(#{name.abscissa},
                                 #{name.ordinate},
                                 #{name.content},
-                                #{name.stateId},
-                                #{name.sdgId}
+                                #{name.componentId},
+                                #{name.diagramId}
                                 )
     </insert>
 
@@ -91,7 +93,7 @@
                                 #{label.kind},
                                 #{label.content},
                                 #{label.componentId},
-                                #{label.sdgId}
+                                #{label.diagramId}
         )
     </insert>
 
@@ -101,13 +103,13 @@
             (
                                 #{nail.abscissa},
                                 #{nail.ordinate},
-                                #{nail.transitionId},
-                                #{nail.sdgId}
+                                #{nail.componentId},
+                                #{nail.diagramId}
             )
         </foreach>
     </insert>
 
-    <insert id="newTransition" parameterType="cn.ecnu.mosiv.Pojo.Transition">
+    <insert id="newTransition" parameterType="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Transition">
         insert into transition values(#{transition.id},#{transition.sdgId},#{transition.source},#{transition.target})
     </insert>
 
@@ -147,22 +149,22 @@
         select * from branchpoints where sdg_id = #{sdgId};
     </select>
 
-    <select id="selectStateName" resultMap="Name">
+    <select id="selectComponentName" resultMap="Name">
         select * from names
-        where state_id = #{id}
-        and sdg_id = #{sdgId};
+        where componentId = #{id}
+        and diagramId = #{diagramId};
     </select>
 
     <select id="selectLabels" resultMap="Label">
         select * from labels
-        where component_id = #{id}
-        and sdg_id = #{sdgId};
+        where componentId = #{id}
+        and diagramId = #{diagramId};
     </select>
 
     <select id="selectNails" resultMap="Nail">
         select * from nails
-        where transition_id = #{id}
-        and sdg_id = #{sdgId};
+        where componentId = #{id}
+        and diagramId = #{diagramId};
     </select>
 
     <select id="selectIsCommitted" resultType="Boolean">
@@ -177,7 +179,7 @@
         and sdg_id = #{sdgId};
     </select>
 
-    <update id="updateState" parameterType="cn.ecnu.mosiv.Pojo.Location">
+    <update id="updateState" parameterType="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Location">
         update state
             set name = #{location.name},
                 abscissa = #{location.abscissa},
@@ -196,12 +198,12 @@
             set abscissa = #{name.abscissa},
                 ordinate = #{name.ordinate},
                 content = #{name.content}
-            where state_id = #{name.stateId}
-            and sdg_id = #{name.sdgId}
+            where componentId = #{name.componentId}
+            and diagramId = #{name.diagramId}
     </update>
 
     <update id="updateDiagram">
-        update state_gram
+        update diagrams
             set json = #{stateDiagram.json},
                 base64 = #{stateDiagram.base64}
             where id = #{sdgId}
@@ -213,8 +215,8 @@
                 ordinate = #{label.ordinate},
                 kind = #{label.kind},
                 content = #{label.content}
-            where component_id = #{label.componentId}
-            and sdg_id = #{label.sdgId}
+            where componentId = #{label.componentId}
+            and diagramId = #{label.diagramId}
     </update>
 
     <update id="updateNails" parameterType="cn.ecnu.mosiv.Pojo.Nail">
@@ -222,12 +224,12 @@
             update nails
             set abscissa = #{nail.abscissa},
                 ordinate = #{nail.ordinate},
-            where transition_id = #{nail.transitionId}
-            and sdg_id = #{nail.sdgId}
+            where componentId = #{nail.componentId}
+            and diagramId = #{nail.diagramId}
         </foreach>
     </update>
 
-    <update id="updateTransition" parameterType="cn.ecnu.mosiv.Pojo.Transition">
+    <update id="updateTransition" parameterType="cn.ecnu.mosiv.Pojo.StateMachineDiagram.Transition">
         update transition
             set source = #{transition.source},
                 target = #{transition.target}
@@ -235,7 +237,7 @@
             and sdg_id = #{transition.sdgId}
     </update>
 
-    <update id="updateBranchPoint" parameterType="cn.ecnu.mosiv.Pojo.BranchPoint">
+    <update id="updateBranchPoint" parameterType="cn.ecnu.mosiv.Pojo.StateMachineDiagram.BranchPoint">
         update branchpoints
             set abscissa = #{branch_point.abscissa},
                 ordinate = #{branch_point.ordinate}
@@ -260,27 +262,27 @@
     </delete>
 
     <delete id="deleteName" parameterType="java.util.List">
-        delete from names where state_id in(
+        delete from names where componentId in(
         <foreach collection="to_delete" item="id" index="index" separator=",">
             #{id}
         </foreach>
-        )and sdg_id = #{sdgId};
+        )and diagramId = #{diagramId};
     </delete>
 
     <delete id="deleteLabel" parameterType="java.util.List">
-        delete from labels where component_id in(
+        delete from labels where componentId in(
         <foreach collection="to_delete" item="id" index="index" separator=",">
             #{id}
         </foreach>
-        )and sdg_id = #{sdgId};
+        )and diagramId = #{diagramId};
     </delete>
 
     <delete id="deleteNail" parameterType="java.util.List">
-        delete from nails where transition_id in (
+        delete from nails where componentId in (
         <foreach collection="to_delete" item="id" index="index" separator=",">
             #{id}
         </foreach>
-        ) and sdg_id = #{sdgId}
+        ) and diagramId = #{diagramId}
     </delete>
 
     <delete id="deleteTransition" parameterType="java.util.List">

@@ -11,10 +11,10 @@ import java.util.Map;
 
 @Mapper
 @Repository
-public interface ProjectDAO {
 
-    void newProject(@Param("project") Project project);
+public interface DiagramDAO {
 
-    List<Integer> searchProjectByUserId(@Param("userId") int userId);
+    void newDiagram(@Param("diagram") Diagram diagram);
 
+    List<String> searchDiagramByProjectId(@Param("projectId") int projectId);
 }

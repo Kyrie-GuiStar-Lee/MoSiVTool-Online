@@ -1,17 +1,14 @@
-package cn.ecnu.mosiv.Pojo;
+package cn.ecnu.mosiv.Pojo.BDD;
 
 import lombok.Getter;
 import lombok.Setter;
 
-
-
 @Getter
 @Setter
-public class Transition {
-
+public class Relationship {
     private String id;
+    private String bddId;
+    private String type;
     private String source;
     private String target;
-    private String sdgId;
-
 }
