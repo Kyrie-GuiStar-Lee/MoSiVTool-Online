@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.ecnu.mosiv.dao.ParaDAO">
+
+    <resultMap id="Param" type="cn.ecnu.mosiv.Pojo.ParametricDiagram.Param">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="diagramId" jdbcType="VARCHAR" property="diagramId"></result>
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
+        <result column="name" jdbcType="VARCHAR" property="name"></result>
+        <result column="description" jdbcType="VARCHAR" property="description"></result>
+    </resultMap>
+
+    <resultMap id="Connector" type="cn.ecnu.mosiv.Pojo.ParametricDiagram.Connector">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="diagramId" jdbcType="VARCHAR" property="diagramId"></result>
+        <result column="source" jdbcType="VARCHAR" property="source"></result>
+        <result column="target" jdbcType="VARCHAR" property="target"></result>
+    </resultMap>
+
+    <resultMap id="Value" type="cn.ecnu.mosiv.Pojo.ParametricDiagram.Value">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
+        <result column="diagramId" jdbcType="VARCHAR" property="diagramId"></result>
+        <result column="value" jdbcType="DOUBLE" property="value"></result>
+        <result column="name" jdbcType="VARCHAR" property="name"></result>
+        <result column="description" jdbcType="VARCHAR" property="description"></result>
+    </resultMap>
+
+    <resultMap id="ConstraintBlock" type="cn.ecnu.mosiv.Pojo.ParametricDiagram.ConstraintBlock">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="diagramId" jdbcType="VARCHAR" property="diagramId"></result>
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
+        <result column="name" jdbcType="VARCHAR" property="name"></result>
+        <result column="description" jdbcType="VARCHAR" property="description"></result>
+    </resultMap>
+
+    <insert id="newParam" parameterType="cn.ecnu.mosiv.Pojo.ParametricDiagram.Param">
+        insert into param4paradiagram values(#{param.id},
+                                            #{param.name},
+                                            #{param.abscissa},
+                                            #{param.ordinate},
+                                            #{param.diagramId},
+                                            #{param.description})
+    </insert>
+
+    <insert id="newValue" parameterType="cn.ecnu.mosiv.Pojo.ParametricDiagram.Value">
+        insert into value4paradiagram values(#{value.id},
+                                            #{value.name},
+                                            #{value.abscissa},
+                                            #{value.ordinate},
+                                            #{value.diagramId},
+                                            #{value.value}
+                                            #{value.description})
+    </insert>
+
+    <insert id="newConnector" parameterType="cn.ecnu.mosiv.Pojo.ParametricDiagram.Connector">
+        insert into connector4paradiagram values(#{connector.id},
+                                      #{connector.diagramId},
+                                      #{connector.source},
+                                      #{connector.target})
+    </insert>
+
+    <insert id="newConstraintBlock" parameterType="cn.ecnu.mosiv.Pojo.ParametricDiagram.ConstraintBlock">
+        insert into block4paradiagram values(#{constraintBlock.id},
+                                            #{constraintBlock.abscissa},
+                                            #{constraintBlock.ordinate},
+                                            #{constraintBlock.name},
+                                            #{constraintBlock.diagramId},
+                                            #{constraintBlock.description})
+    </insert>
+
+    <select id="selectParam" resultType="String">
+        select id from param4paradiagram where id = #{id} and diagramId = #{paraId};
+    </select>
+
+    <select id="selectConnector" resultType="String">
+        select id from connector4paradiagram where id = #{id} and diagramId = #{paraId};
+    </select>
+
+    <select id="selectValue" resultType="String">
+        select id from value4paradiagram where id = #{id} and diagramId = #{paraId};
+    </select>
+
+    <select id="selectConstraintBlock" resultType="String">
+        select id from block4paradiagram where id = #{id} and diagramId = #{paraId};
+    </select>
+
+    <select id="select_param_ids" parameterType="String" resultType="java.lang.String">
+        select id from param4paradiagram where diagramId = #{paraId};
+    </select>
+
+    <select id="select_value_ids" parameterType="String" resultType="java.lang.String">
+        select id from value4paradiagram where diagramId = #{paraId};
+    </select>
+
+    <select id="select_connector_ids" parameterType="String" resultType="java.lang.String">
+        select id from connector4paradiagram where diagramId = #{paraId};
+    </select>
+
+    <select id="select_constraintBlock_ids" parameterType="String" resultType="java.lang.String">
+        select id from block4paradiagram where diagramId = #{paraId};
+    </select>
+
+    <select id="select_all_params" parameterType="String" resultMap="Param">
+        select * from param4paradiagram where diagramId = #{paraId};
+    </select>
+
+    <select id="select_all_connectors" parameterType="String" resultMap="Connector">
+        select * from connector4paradiagram where diagramId = #{paraId};
+    </select>
+
+    <select id="select_all_values" parameterType="String" resultMap="Value">
+        select * from value4paradiagram where diagramId = #{paraId};
+    </select>
+
+    <select id="select_all_constraintBlocks" parameterType="String" resultMap="ConstraintBlock">
+        select * from block4paradiagram where diagramId = #{paraId};
+    </select>
+
+    <update id="updateDiagram">
+        update diagrams
+            set json = #{para.json},
+                base64 = #{para.base64}
+            where id = #{paraId}
+    </update>
+
+    <update id="updateParam" parameterType="cn.ecnu.mosiv.Pojo.ParametricDiagram.Param">
+        update param4paradiagram
+            set abscissa = #{param.abscissa},
+                ordinate = #{param.ordinate},
+                name = #{param.name},
+                description = #{param.description}
+            where id = #{param.id}
+            and diagramId = #{param.diagramId}
+    </update>
+
+    <update id="updateConnector" parameterType="cn.ecnu.mosiv.Pojo.ParametricDiagram.Connector">
+        update connector4paradiagram
+            set source = #{connector.source},
+                target = #{connector.target},
+            where id = #{connector.id}
+            and diagramId = #{connector.diagramId}
+    </update>
+
+    <update id="updateValue" parameterType="cn.ecnu.mosiv.Pojo.ParametricDiagram.Value">
+        update value4paradiagram
+            set abscissa = #{value.abscissa},
+                ordinate = #{value.ordinate},
+                name = #{value.name},
+                value = #{value.value}
+            where id = #{value.id}
+            and diagramId = #{value.diagramId}
+    </update>
+
+    <update id="updateConstraintBlock" parameterType="cn.ecnu.mosiv.Pojo.ParametricDiagram.ConstraintBlock">
+        update block4paradiagram
+            set abscissa = #{param.abscissa},
+                ordinate = #{param.ordinate},
+                name = #{param.name},
+                description = #{param.description}
+            where id = #{param.id}
+            and diagramId = #{param.diagramId}
+    </update>
+
+    <delete id="deleteParam">
+        delete from param4paradiagram where id in(
+        <foreach collection="p_delete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        ) and diagramId = #{paraId};
+    </delete>
+
+    <delete id="deleteValue" parameterType="java.util.List">
+        delete from value4paradiagram where id in(
+        <foreach collection="v_delete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        )and diagramId = #{paraId};
+    </delete>
+
+    <delete id="deleteConnector" parameterType="java.util.List">
+        delete from connector4paradiagram where id in(
+        <foreach collection="c_delete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        )and diagramId = #{paraId};
+    </delete>
+
+    <delete id="deleteConstraintBlock" parameterType="java.util.List">
+        delete from block4paradiagram where id in(
+        <foreach collection="cb_delete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        )and diagramId = #{paraId};
+    </delete>
+
+</mapper>
+

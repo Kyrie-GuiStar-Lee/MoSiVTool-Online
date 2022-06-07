@@ -13,7 +13,7 @@
 
     <insert id="newDiagram" parameterType="cn.ecnu.mosiv.Pojo.Diagram" useGeneratedKeys="true" keyColumn="id"
             keyProperty="id">
-        insert into diagrams values(#{diagram.id},#{diagram.name},#{diagram.json},#{diagram.base64},#{diagram.type})
+        insert into diagrams values(#{diagram.id},#{diagram.name},#{diagram.json},#{diagram.base64},#{diagram.type},#{diagram.projectId})
     </insert>
 
     <select id="searchDiagramByProjectId" parameterType="int" resultMap="Diagram">

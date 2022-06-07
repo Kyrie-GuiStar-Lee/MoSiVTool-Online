@@ -3,10 +3,12 @@ package cn.ecnu.mosiv.controller;
 import cn.ecnu.mosiv.Pojo.Diagram;
 import cn.ecnu.mosiv.Pojo.Result;
 import cn.ecnu.mosiv.dao.DiagramDAO;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,14 +16,16 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
 
+@Controller
+@Slf4j
 public class DiagramController {
 
     @Autowired
     DiagramDAO diagramDAO;
 
     @CrossOrigin
-    @ResponseBody
     @PostMapping(value = "/addDiagram")
+    @ResponseBody
     public Result save_state_diagram(@RequestBody Object object) throws JSONException {
         JSONObject jsonObject = JSONObject.fromObject(object);
         Diagram diagram = new Diagram();

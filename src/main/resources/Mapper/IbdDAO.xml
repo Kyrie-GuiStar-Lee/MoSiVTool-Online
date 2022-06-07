@@ -117,7 +117,7 @@
             and ibdId = #{connector.ibdId}
     </update>
 
-    <update id="updatePort" parameterType="cn.ecnu.mosiv.Pojo.IBD.IbdPort">
+    <update id="updateIbdPort" parameterType="cn.ecnu.mosiv.Pojo.IBD.IbdPort">
         update ports
             set abscissa = #{port.abscissa},
                 ordinate = #{port.ordinate},
