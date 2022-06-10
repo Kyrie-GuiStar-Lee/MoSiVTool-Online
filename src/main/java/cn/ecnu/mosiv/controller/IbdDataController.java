@@ -1,138 +1,83 @@
 package cn.ecnu.mosiv.controller;
 
-import cn.ecnu.mosiv.Pojo.*;
-import cn.ecnu.mosiv.Pojo.BDD.*;
+import cn.ecnu.mosiv.Pojo.Diagram;
+import cn.ecnu.mosiv.Pojo.IBD.*;
 import cn.ecnu.mosiv.Pojo.Result;
-import cn.ecnu.mosiv.Pojo.StateMachineDiagram.*;
-import cn.ecnu.mosiv.dao.BddDAO;
-import org.apache.tomcat.util.http.fileupload.IOUtils;
+import cn.ecnu.mosiv.dao.IbdDAO;
+import lombok.extern.slf4j.Slf4j;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONException;
+import net.sf.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.*;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.*;
-
-import net.sf.json.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-
 import java.util.ArrayList;
 import java.util.List;
 
 @Controller
-
-public class BddDataController {
+@Slf4j
+public class IbdDataController {
 
     @Autowired
-    BddDAO bddDAO;
+    IbdDAO ibdDAO;
 
     @CrossOrigin
     @ResponseBody
-    @PostMapping(value = "/save_json_bdd")//***这里的url修改过了 2022.1.25
-    public Result save_bdd(@RequestBody List<Object> data) throws JSONException, ParserConfigurationException {
+    @PostMapping(value = "/save_json_ibd")//***这里的url修改过了 2022.1.25
+    public Result save_para(@RequestBody List<Object> data) throws JSONException, ParserConfigurationException {
         Result result = new Result();
-        Diagram bdd = new Diagram();
+        Diagram ibd = new Diagram();
 //        JSONObject data4 = JSONObject.fromObject(data);
 //        data4.getString("")
         JSONArray data1 = JSONArray.fromObject(data);//data1是前端传来的整个的JSON数组
         System.out.println(data1);
 
-        JSONObject data2 = data1.getJSONObject(0);//data2中装的是 bdId 和 base64 数据
-        String bddId = data2.getString("id");
+        JSONObject data2 = data1.getJSONObject(0);//data2中装的是 diagramId 和 base64 数据
+        String ibdId = data2.getString("id");
 
-        bdd.setBase64(data2.getString("base64"));
+        ibd.setBase64(data2.getString("base64"));
 
         //todo 在数据库中根据图ID搜索JSON发送到前端
         String str = data1.toString();
 //        System.out.println(str);
-        bdd.setJson(str);
+        ibd.setJson(str);
 
-        bddDAO.updateDiagram(bdd,bddId);
+        ibdDAO.updateDiagram(ibd,ibdId);
 
 
-        List<String> current_blocks = new ArrayList<>();
-        List<String> current_relationships = new ArrayList<>();
-        List<String> current_ports = new ArrayList<>();
+        List<String> current_parts = new ArrayList<>();
+        List<String> current_connectors = new ArrayList<>();
+        List<String> current_ibdPorts = new ArrayList<>();
         for (int i = 1; i < data.size(); i++) {
             JSONObject object1 = data1.getJSONObject(i);
             //组件的type是block,保存block相关信息
-            if (object1.getString("type").equals("block")) {
-                Block block = new Block();
-                block.setAbscissa(object1.getDouble("abscissa"));
-                block.setOrdinate(object1.getDouble("ordinate"));
-                block.setId(object1.getString("id"));
-                block.setBddId(bddId);
-                block.setOperation(object1.getString("operation"));
-                block.setConstraint(object1.getString("constraint"));
+            if (object1.getString("type").equals("part")) {
+                Part part = new Part();
+                part.setAbscissa(object1.getDouble("abscissa"));
+                part.setOrdinate(object1.getDouble("ordinate"));
+                part.setId(object1.getString("id"));
+                part.setIbdId(ibdId);
+                part.setName(object1.getString("name"));
+                part.setDescription(object1.getString("description"));
 
-                Property property = null;
-                try {
-                    JSONObject property1 = object1.getJSONObject("property");
-                    property = new Property();
-                    property.setBlockId(block.getId());
-                    property.setValue(property1.getString("value"));
-                    property.setPart(property1.getString("part"));
-                    property.setReferences(property1.getString("references"));
-                    property.setBddId(bddId);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-
-                }
-                //保存状态标签的相关信息
-                MLComponent mlComponent = null;
-                try {
-                    JSONObject mlComponent1 = object1.getJSONObject("mlComponent");
-                    System.out.println(mlComponent1+"+"+block.getId());
-                    if(mlComponent1!=null) {
-                        mlComponent.setBlockId(block.getId());
-                        mlComponent.setBddId(bddId);
-                        mlComponent.setName(mlComponent1.getString("name"));
-                        mlComponent.setType(mlComponent1.getString("type"));
-                        mlComponent.setDescription(mlComponent1.getString("description"));
-                        mlComponent.setAuthors(mlComponent1.getString("authors"));
-                        mlComponent.setIntendedUse(mlComponent1.getString("intendedUse"));
-                        mlComponent.setNetwork(mlComponent1.getString("network"));
-                        mlComponent.setInput(mlComponent1.getString("input"));
-                        mlComponent.setOutput(mlComponent1.getString("output"));
-                        mlComponent.setFactor(mlComponent1.getString("factor"));
-                        mlComponent.setMetric(mlComponent1.getString("metric"));
-                        mlComponent.setAnalyses(mlComponent1.getString("analyses"));
-                        mlComponent.setAdditionalInformation(mlComponent1.getString("additionalInformation"));
-                        mlComponent.setEthic(mlComponent1.getString("ethic"));
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-
-                current_blocks.add(block.getId());
+                current_parts.add(part.getId());
 
                 //如果数据库中没有该状态，则新建；有则更新
                 try {
-                    if (bddDAO.selectBlock(block.getId(), bddId) == null) {
-                        bddDAO.newBlock(block);
-                        if (property.getBlockId() != null) {
-                            bddDAO.newProperty(property);
-                        }
-                        if (mlComponent != null) {
-                            bddDAO.newMLComponent(mlComponent);
-                        }
+                    if (ibdDAO.selectPart(part.getId(), ibdId) == null) {
+                        ibdDAO.newPart(part);
                     } else {
-                        bddDAO.updateBlock(block);
-                        if (property != null) {
-                            bddDAO.updateProperty(property);
-                        }
-                        if (mlComponent != null) {
-                            bddDAO.updateMLComponent(mlComponent);
-                        }
+                        ibdDAO.updatePart(part);
                     }
                 } catch (DataAccessException e) {
                     e.printStackTrace();
@@ -143,70 +88,73 @@ public class BddDataController {
 
             }
 
-            //组件的type是relationship，保存relationship的相关信息
-                //目前假设relationship只有generalization, dependency, association三种类型
-            if (object1.getString("type").equals("generalization") || object1.getString("type").equals("dependency")|| object1.getString("type").equals("association")) {
-                Relationship relationship = new Relationship();
-                relationship.setId(object1.getString("id"));
-                relationship.setBddId(bddId);
-                relationship.setType(object1.getString("type"));
-                relationship.setSource(object1.getString("source"));
-                relationship.setTarget(object1.getString("target"));
+            //组件的type是connector，保存connector的相关信息
+            if (object1.getString("type").equals("connector")) {
+                Connector connector = new Connector();
+                connector.setId(object1.getString("id"));
+                connector.setIbdId(ibdId);
+                connector.setSource(object1.getString("source"));
+                connector.setTarget(object1.getString("target"));
+                connector.setType(object1.getString("type"));
 
+                current_connectors.add(connector.getId());
 
-                current_relationships.add(relationship.getId());
-
-                //如果数据库中没有该transition，则新建；有则更新
-                if (bddDAO.selectRelationship(relationship.getId(), bddId) == null) {
-                    bddDAO.newRelationship(relationship);
+                //如果数据库中没有该connector，则新建；有则更新
+                if (ibdDAO.selectConnector(connector.getId(), ibdId) == null) {
+                    ibdDAO.newConnector(connector);
                 } else {
-                    bddDAO.updateRelationship(relationship);
+                    ibdDAO.updateConnector(connector);
                 }
 
             }
 
-            //保存port 相关信息
-                //目前假设port只有standardPort和flowPort两种类型
-            if (object1.getString("type").equals("standardPort")||object1.getString("type").equals("flowPort")) {
-                Port port = new Port();
-                port.setId(object1.getString("id"));
-                port.setBddId(bddId);
-                port.setType(object1.getString("type"));
-                port.setAbscissa(object1.getDouble("abscissa"));
-                port.setOrdinate(object1.getDouble("ordinate"));
+            //保存ibdPort 相关信息
+            if (object1.getString("type").equals("ibdPort")) {
+                IbdPort ibdPort = new IbdPort();
+                ibdPort.setId(object1.getString("id"));
+                ibdPort.setIbdId(ibdId);
+                ibdPort.setAbscissa(object1.getDouble("abscissa"));
+                ibdPort.setOrdinate(object1.getDouble("ordinate"));
+                ibdPort.setName(object1.getString("name"));
+                ibdPort.setDescription(object1.getString("description"));
+                ibdPort.setType(object1.getString("type"));
 
-                current_ports.add(port.getId());
-                if (bddDAO.selectPort(port.getId(), bddId) == null) {
-                    bddDAO.newPort(port);
+                current_ibdPorts.add(ibdPort.getId());
+
+                if (ibdDAO.selectIbdPort(ibdPort.getId(), ibdId) == null) {
+                    ibdDAO.newIbdPort(ibdPort);
                 } else {
-                    bddDAO.updatePort(port);
+                    ibdDAO.updateIbdPort(ibdPort);
                 }
             }
+
+
         }
 
 
-        //判断前端绘图是否删除了之前保存的state、transition和branch_point
+        //判断前端绘图是否删除了之前保存的part,connector和ibdPort
 //        System.out.println(stategramDAO.select_state_ids());
 //        System.out.println(stategramDAO.select_transition_ids());
 
-        List<String> old_blocks = bddDAO.select_block_ids(bddId);
-        List<String> old_relationships = bddDAO.select_relationship_ids(bddId);
-        List<String> old_ports = bddDAO.select_port_ids(bddId);
+        List<String> old_parts = ibdDAO.select_part_ids(ibdId);
+        List<String> old_connectors = ibdDAO.select_connector_ids(ibdId);
+        List<String> old_ibdPorts = ibdDAO.select_ibdPort_ids(ibdId);
 
 
-        for (String t : current_blocks) {
-            if (old_blocks.contains(t)) {
-                old_blocks.remove(t);
+
+        for (String t : current_parts) {
+            if (old_parts.contains(t)) {
+                old_parts.remove(t);
             }
         }
-        for (String t : current_relationships) {
-            if (old_relationships.contains(t)) {
-                old_relationships.remove(t);
+        for (String t : current_connectors) {
+            if (old_connectors.contains(t)) {
+                old_connectors.remove(t);
             }
         }
-        for (String t : current_ports) {
-            if (old_ports.contains(t)) {
-                old_ports.remove(t);
+        for (String t : current_ibdPorts) {
+            if (old_ibdPorts.contains(t)) {
+                old_ibdPorts.remove(t);
             }
         }
 
@@ -214,16 +162,14 @@ public class BddDataController {
 //        System.out.println(old_transitions);
 
         //完成上述操作后，old_states、old_transitions和old_branch_points中剩余的id就是需要删除的state、transition和branch_point的id
-        if (old_blocks.size() > 0) {
-            bddDAO.deleteBlock(old_blocks, bddId);
-            bddDAO.deleteProperty(old_blocks, bddId);
-            bddDAO.deleteMLComponent(old_blocks, bddId);
+        if (old_parts.size() > 0) {
+            ibdDAO.deletePart(old_parts, ibdId);
         }
-        if (old_relationships.size() > 0) {
-            bddDAO.deleteRelationship(old_relationships, bddId);
+        if (old_connectors.size() > 0) {
+            ibdDAO.deleteConnector(old_connectors, ibdId);
         }
-        if (old_ports.size() > 0) {
-            bddDAO.deletePort(old_ports, bddId);
+        if (old_ibdPorts.size() > 0) {
+            ibdDAO.deleteIbdPort(old_ibdPorts, ibdId);
         }
 
 
@@ -436,47 +382,5 @@ public class BddDataController {
 //            result.setErrmsg("JSON reading error");
 //        }
         return result;
-    }
-
-    @CrossOrigin
-    @ResponseBody
-    @RequestMapping(value = "/download_xml_bdd")//***这里的url修改过了 2022.2.9
-    public Result XmlWriter(@RequestParam String sdgId, HttpServletResponse response)
-            throws ParserConfigurationException, TransformerException {
-        Result result = new Result();
-
-        //todo 判断要传的xml文件的名称
-        File file = new File("E:\\test\\test-dom.xml");
-        try(InputStream inputStream =  new FileInputStream(file);
-            OutputStream outputStream = response.getOutputStream();){
-            response.setContentType("application/x-download");
-            response.addHeader("Content-Disposition", "attachment;filename=test.xml");
-            IOUtils.copy(inputStream, outputStream);
-            outputStream.flush();
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-
-
-
-        return result;
-    }
-
-    // write doc to output stream
-    private static void writeXml(Document doc,
-                                 OutputStream output)
-            throws TransformerException {
-
-        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-        Transformer transformer = transformerFactory.newTransformer();
-
-        // pretty print
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-
-        DOMSource source = new DOMSource(doc);
-        StreamResult result = new StreamResult(output);
-
-        transformer.transform(source, result);
-
     }
 }
