@@ -5,11 +5,13 @@ import cn.ecnu.mosiv.Pojo.Diagram;
 import cn.ecnu.mosiv.Pojo.Result;
 import cn.ecnu.mosiv.dao.BddDAO;
 import cn.ecnu.mosiv.dao.ParaDAO;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,6 +25,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Controller
+@Slf4j
 public class ParaDataController {
 
     @Autowired

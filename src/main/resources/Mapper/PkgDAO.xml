@@ -21,7 +21,7 @@
         <result column="isPrivate" jdbcType="BOOLEAN" property="isPrivate"></result>
     </resultMap>
 
-    <insert id="newPackage" parameterType="cn.ecnu.mosiv.Pojo.PackageDiagram">
+    <insert id="newPackage" parameterType="cn.ecnu.mosiv.Pojo.PackageDiagram.Package">
         insert into package4pkgdiagram values(#{package.id},
                                             #{package.diagramId},
                                             #{package.abscissa},

@@ -90,21 +90,24 @@ public class BddDataController {
                 MLComponent mlComponent = null;
                 try {
                     JSONObject mlComponent1 = object1.getJSONObject("mlComponent");
-                    mlComponent.setBlockId(block.getId());
-                    mlComponent.setBddId(bddId);
-                    mlComponent.setName(mlComponent1.getString("name"));
-                    mlComponent.setType(mlComponent1.getString("type"));
-                    mlComponent.setDescription(mlComponent1.getString("description"));
-                    mlComponent.setAuthors(mlComponent1.getString("authors"));
-                    mlComponent.setIntendedUse(mlComponent1.getString("intendedUse"));
-                    mlComponent.setNetwork(mlComponent1.getString("network"));
-                    mlComponent.setInput(mlComponent1.getString("input"));
-                    mlComponent.setOutput(mlComponent1.getString("output"));
-                    mlComponent.setFactor(mlComponent1.getString("factor"));
-                    mlComponent.setMetric(mlComponent1.getString("metric"));
-                    mlComponent.setAnalyses(mlComponent1.getString("analyses"));
-                    mlComponent.setAdditionalInformation(mlComponent1.getString("additionalInformation"));
-                    mlComponent.setEthic(mlComponent1.getString("ethic"));
+                    System.out.println(mlComponent1+"+"+block.getId());
+                    if(mlComponent1!=null) {
+                        mlComponent.setBlockId(block.getId());
+                        mlComponent.setBddId(bddId);
+                        mlComponent.setName(mlComponent1.getString("name"));
+                        mlComponent.setType(mlComponent1.getString("type"));
+                        mlComponent.setDescription(mlComponent1.getString("description"));
+                        mlComponent.setAuthors(mlComponent1.getString("authors"));
+                        mlComponent.setIntendedUse(mlComponent1.getString("intendedUse"));
+                        mlComponent.setNetwork(mlComponent1.getString("network"));
+                        mlComponent.setInput(mlComponent1.getString("input"));
+                        mlComponent.setOutput(mlComponent1.getString("output"));
+                        mlComponent.setFactor(mlComponent1.getString("factor"));
+                        mlComponent.setMetric(mlComponent1.getString("metric"));
+                        mlComponent.setAnalyses(mlComponent1.getString("analyses"));
+                        mlComponent.setAdditionalInformation(mlComponent1.getString("additionalInformation"));
+                        mlComponent.setEthic(mlComponent1.getString("ethic"));
+                    }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }

@@ -4,11 +4,13 @@ import cn.ecnu.mosiv.Pojo.Diagram;
 import cn.ecnu.mosiv.Pojo.IBD.*;
 import cn.ecnu.mosiv.Pojo.Result;
 import cn.ecnu.mosiv.dao.IbdDAO;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,6 +24,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Controller
+@Slf4j
 public class IbdDataController {
 
     @Autowired
@@ -29,7 +33,7 @@ public class IbdDataController {
 
     @CrossOrigin
     @ResponseBody
-    @PostMapping(value = "/save_json_para")//***这里的url修改过了 2022.1.25
+    @PostMapping(value = "/save_json_ibd")//***这里的url修改过了 2022.1.25
     public Result save_para(@RequestBody List<Object> data) throws JSONException, ParserConfigurationException {
         Result result = new Result();
         Diagram ibd = new Diagram();
