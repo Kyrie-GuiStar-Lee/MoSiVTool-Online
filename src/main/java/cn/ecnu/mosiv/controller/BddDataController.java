@@ -90,8 +90,8 @@ public class BddDataController {
                 MLComponent mlComponent = null;
                 try {
                     JSONObject mlComponent1 = object1.getJSONObject("mlComponent");
-                    if(mlComponent1.equals(null)) {
-                        mlComponent.setBlockId(block.getId());
+                    if(mlComponent1!=null) {
+                        mlComponent.setBlockId(mlComponent1.getString("blockId"));
                         mlComponent.setBddId(bddId);
                         mlComponent.setName(mlComponent1.getString("name"));
                         mlComponent.setType(mlComponent1.getString("type"));
