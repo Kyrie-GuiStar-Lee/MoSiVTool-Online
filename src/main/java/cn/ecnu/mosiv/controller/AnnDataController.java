@@ -1,10 +1,9 @@
 package cn.ecnu.mosiv.controller;
 
 import cn.ecnu.mosiv.Pojo.*;
-import cn.ecnu.mosiv.Pojo.BDD.*;
+import cn.ecnu.mosiv.Pojo.ANN.*;
 import cn.ecnu.mosiv.Pojo.Result;
-import cn.ecnu.mosiv.Pojo.StateMachineDiagram.*;
-import cn.ecnu.mosiv.dao.BddDAO;
+import cn.ecnu.mosiv.dao.AnnDAO;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.web.bind.annotation.*;
@@ -29,109 +28,65 @@ import java.util.List;
 
 @Controller
 
-public class BddDataController {
+public class AnnDataController {
 
     @Autowired
-    BddDAO bddDAO;
+    AnnDAO annDAO;
 
     @CrossOrigin
     @ResponseBody
-    @PostMapping(value = "/save_json_bdd")//***这里的url修改过了 2022.1.25
-    public Result save_bdd(@RequestBody List<Object> data) throws JSONException, ParserConfigurationException {
+    @PostMapping(value = "/save_json_ann")//***这里的url修改过了 2022.1.25
+    public Result save_ann(@RequestBody List<Object> data) throws JSONException, ParserConfigurationException {
         Result result = new Result();
-        Diagram bdd = new Diagram();
+        Diagram ann = new Diagram();
 //        JSONObject data4 = JSONObject.fromObject(data);
 //        data4.getString("")
         JSONArray data1 = JSONArray.fromObject(data);//data1是前端传来的整个的JSON数组
         System.out.println(data1);
 
         JSONObject data2 = data1.getJSONObject(0);//data2中装的是 bdId 和 base64 数据
-        String bddId = data2.getString("id");
+        String annId = data2.getString("id");
 
-        bdd.setBase64(data2.getString("base64"));
+        ann.setBase64(data2.getString("base64"));
 
         //todo 在数据库中根据图ID搜索JSON发送到前端
         String str = data1.toString();
 //        System.out.println(str);
-        bdd.setJson(str);
+        ann.setJson(str);
 
-        bddDAO.updateDiagram(bdd,bddId);
+        annDAO.updateDiagram(ann,annId);
 
 
-        List<String> current_blocks = new ArrayList<>();
-        List<String> current_relationships = new ArrayList<>();
-        List<String> current_ports = new ArrayList<>();
+        List<String> current_layers = new ArrayList<>();
+        List<String> current_propagations = new ArrayList<>();
         for (int i = 1; i < data.size(); i++) {
             JSONObject object1 = data1.getJSONObject(i);
-            //组件的type是block,保存block相关信息
-            if (object1.getString("type").equals("block")) {
-                Block block = new Block();
-                block.setAbscissa(object1.getDouble("abscissa"));
-                block.setOrdinate(object1.getDouble("ordinate"));
-                block.setId(object1.getString("id"));
-                block.setBddId(bddId);
-                block.setOperation(object1.getString("operation"));
-                block.setConstraint(object1.getString("constraint"));
-
-                Property property = null;
-                try {
-                    JSONObject property1 = object1.getJSONObject("property");
-                    property = new Property();
-                    property.setBlockId(block.getId());
-                    property.setValue(property1.getString("value"));
-                    property.setPart(property1.getString("part"));
-                    property.setReferences(property1.getString("references"));
-                    property.setBddId(bddId);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-
-                }
-                //保存状态标签的相关信息
-                MLComponent mlComponent = null;
-                try {
-                    JSONObject mlComponent1 = object1.getJSONObject("mlComponent");
-                    if(mlComponent1.equals(null)) {
-                        mlComponent.setBlockId(block.getId());
-                        mlComponent.setBddId(bddId);
-                        mlComponent.setName(mlComponent1.getString("name"));
-                        mlComponent.setType(mlComponent1.getString("type"));
-                        mlComponent.setDescription(mlComponent1.getString("description"));
-                        mlComponent.setAuthors(mlComponent1.getString("authors"));
-                        mlComponent.setIntendedUse(mlComponent1.getString("intendedUse"));
-                        mlComponent.setNetwork(mlComponent1.getString("network"));
-                        mlComponent.setInput(mlComponent1.getString("input"));
-                        mlComponent.setOutput(mlComponent1.getString("output"));
-                        mlComponent.setFactor(mlComponent1.getString("factor"));
-                        mlComponent.setMetric(mlComponent1.getString("metric"));
-                        mlComponent.setAnalyses(mlComponent1.getString("analyses"));
-                        mlComponent.setAdditionalInformation(mlComponent1.getString("additionalInformation"));
-                        mlComponent.setEthic(mlComponent1.getString("ethic"));
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+            //组件的type是layer,保存layer相关信息
+            if (object1.getString("type").equals("layer")) {
+                Layer layer = new Layer();
+                layer.setName(object1.getString("name"));
+                layer.setType(object1.getString("type"));
+                layer.setId(object1.getString("id"));
+                layer.setDiagramId(annId);
+                layer.setAbscissa(object1.getDouble("abscissa"));
+                layer.setOrdinate(object1.getDouble("ordinate"));
+                layer.setDescription(object1.getString("description"));
+                layer.setInput(object1.getString("input"));
+                layer.setBias(object1.getString("bias"));
+                layer.setLoss(object1.getString("loss"));
+                layer.setOutput(object1.getString("output"));
+                layer.setWeights(object1.getString("weights"));
+                layer.setData(object1.getString("data"));
 
 
-                current_blocks.add(block.getId());
+                current_layers.add(layer.getId());
 
                 //如果数据库中没有该状态，则新建；有则更新
                 try {
-                    if (bddDAO.selectBlock(block.getId(), bddId) == null) {
-                        bddDAO.newBlock(block);
-                        if (property.getBlockId() != null) {
-                            bddDAO.newProperty(property);
-                        }
-                        if (mlComponent != null) {
-                            bddDAO.newMLComponent(mlComponent);
-                        }
+                    if (annDAO.selectLayer(layer.getId(), annId) == null) {
+                        annDAO.newLayer(layer);
                     } else {
-                        bddDAO.updateBlock(block);
-                        if (property != null) {
-                            bddDAO.updateProperty(property);
-                        }
-                        if (mlComponent != null) {
-                            bddDAO.updateMLComponent(mlComponent);
-                        }
+                        annDAO.updateLayer(layer);
                     }
                 } catch (DataAccessException e) {
                     e.printStackTrace();
@@ -142,45 +97,66 @@ public class BddDataController {
 
             }
 
-            //组件的type是relationship，保存relationship的相关信息
-                //目前假设relationship只有generalization, dependency, association三种类型
-            if (object1.getString("type").equals("generalization") || object1.getString("type").equals("dependency")|| object1.getString("type").equals("association")) {
-                Relationship relationship = new Relationship();
-                relationship.setId(object1.getString("id"));
-                relationship.setBddId(bddId);
-                relationship.setType(object1.getString("type"));
-                relationship.setSource(object1.getString("source"));
-                relationship.setTarget(object1.getString("target"));
+            //组件的type是propagation，保存propagation的相关信息
+            if (object1.getString("type").equals("propagation")){
+                Propagation propagation = new Propagation();
+                propagation.setId(object1.getString("id"));
+                propagation.setDiagramId(annId);
+                propagation.setSource(object1.getString("source"));
+                propagation.setTarget(object1.getString("target"));
 
 
-                current_relationships.add(relationship.getId());
+                current_propagations.add(propagation.getId());
 
                 //如果数据库中没有该transition，则新建；有则更新
-                if (bddDAO.selectRelationship(relationship.getId(), bddId) == null) {
-                    bddDAO.newRelationship(relationship);
+                if (annDAO.selectPropagation(propagation.getId(), annId) == null) {
+                    annDAO.newPropagation(propagation);
                 } else {
-                    bddDAO.updateRelationship(relationship);
+                    annDAO.updatePropagation(propagation);
                 }
 
             }
 
-            //保存port 相关信息
-                //目前假设port只有standardPort和flowPort两种类型
-            if (object1.getString("type").equals("standardPort")||object1.getString("type").equals("flowPort")) {
-                Port port = new Port();
-                port.setId(object1.getString("id"));
-                port.setBddId(bddId);
-                port.setType(object1.getString("type"));
-                port.setAbscissa(object1.getDouble("abscissa"));
-                port.setOrdinate(object1.getDouble("ordinate"));
+            //保存Attribute相关信息
+            if (object1.getString("type").equals("attribute")) {
+                Attribute attribute = new Attribute();
+                attribute.setDiagramId(annId);
+                attribute.setInputType(object1.getString("inputType"));
+                attribute.setOutputType(object1.getString("outputType"));
+                attribute.setNumOfConnectors(object1.getInt("numOfConnectors"));
+                attribute.setNumOfLayers(object1.getInt("numOfLayers"));
 
-                current_ports.add(port.getId());
-                if (bddDAO.selectPort(port.getId(), bddId) == null) {
-                    bddDAO.newPort(port);
+                if (annDAO.selectAttribute(annId) == null) {
+                    annDAO.newAttribute(attribute);
                 } else {
-                    bddDAO.updatePort(port);
+                    annDAO.updateAttribute(attribute);
                 }
             }
+
+            if (object1.getString("type").equals("compile")) {
+                Compile compile = new Compile();
+                compile.setData(object1.getString("data"));
+                compile.setDiagramId(annId);
+
+                if (annDAO.selectCompile(annId) == null) {
+                    annDAO.newCompile(compile);
+                } else {
+                    annDAO.updateCompile(compile);
+                }
+            }
+
+            if (object1.getString("type").equals("trustworthy")) {
+                TrustWorthy trustWorthy = new TrustWorthy();
+                trustWorthy.setData(object1.getString("data"));
+                trustWorthy.setDiagramId(object1.getString("diagramId"));
+
+                if (annDAO.selectTrustWorthy(annId) == null) {
+                    annDAO.newTrustworthy(trustWorthy);
+                } else {
+                    annDAO.updateTrustworthy(trustWorthy);
+                }
+            }
+
         }
 
 
@@ -188,41 +164,26 @@ public class BddDataController {
 //        System.out.println(stategramDAO.select_state_ids());
 //        System.out.println(stategramDAO.select_transition_ids());
 
-        List<String> old_blocks = bddDAO.select_block_ids(bddId);
-        List<String> old_relationships = bddDAO.select_relationship_ids(bddId);
-        List<String> old_ports = bddDAO.select_port_ids(bddId);
+        List<String> old_layers = annDAO.select_layer_ids(annId);
+        List<String> old_propagations = annDAO.select_propagation_ids(annId);
 
 
-        for (String t : current_blocks) {
-            if (old_blocks.contains(t)) {
-                old_blocks.remove(t);
+        for (String t : current_layers) {
+            if (old_layers.contains(t)) {
+                old_layers.remove(t);
             }
         }
-        for (String t : current_relationships) {
-            if (old_relationships.contains(t)) {
-                old_relationships.remove(t);
-            }
-        }
-        for (String t : current_ports) {
-            if (old_ports.contains(t)) {
-                old_ports.remove(t);
+        for (String t : current_propagations) {
+            if (old_propagations.contains(t)) {
+                old_propagations.remove(t);
             }
         }
 
-//        System.out.println(old_states);
-//        System.out.println(old_transitions);
-
-        //完成上述操作后，old_states、old_transitions和old_branch_points中剩余的id就是需要删除的state、transition和branch_point的id
-        if (old_blocks.size() > 0) {
-            bddDAO.deleteBlock(old_blocks, bddId);
-            bddDAO.deleteProperty(old_blocks, bddId);
-            bddDAO.deleteMLComponent(old_blocks, bddId);
+        if (old_layers.size() > 0) {
+            annDAO.deleteLayer(old_layers, annId);
         }
-        if (old_relationships.size() > 0) {
-            bddDAO.deleteRelationship(old_relationships, bddId);
-        }
-        if (old_ports.size() > 0) {
-            bddDAO.deletePort(old_ports, bddId);
+        if (old_propagations.size() > 0) {
+            annDAO.deletePropagation(old_propagations, annId);
         }
 
 
@@ -417,7 +378,7 @@ public class BddDataController {
 //
 //        // print XML to system console
 //        try (FileOutputStream output =
-//                     new FileOutputStream("E:\\test\\bdd"+bddId+".xml")) {
+//                     new FileOutputStream("E:\\test\\bdd"+annId+".xml")) {
 //            writeXml(doc, output);
 //        } catch (IOException | TransformerException e) {
 //            e.printStackTrace();
@@ -439,7 +400,7 @@ public class BddDataController {
 
     @CrossOrigin
     @ResponseBody
-    @RequestMapping(value = "/download_xml_bdd")//***这里的url修改过了 2022.2.9
+    @RequestMapping(value = "/download_xml_ann")//***这里的url修改过了 2022.2.9
     public Result XmlWriter(@RequestParam String sdgId, HttpServletResponse response)
             throws ParserConfigurationException, TransformerException {
         Result result = new Result();

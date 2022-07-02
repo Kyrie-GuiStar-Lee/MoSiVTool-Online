@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.ecnu.mosiv.dao.AnnDAO">
+
+    <resultMap id="Layer" type="cn.ecnu.mosiv.Pojo.ANN.Layer">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="diagramId" jdbcType="VARCHAR" property="diagramId"></result>
+        <result column="abscissa" jdbcType="DOUBLE" property="abscissa"></result>
+        <result column="ordinate" jdbcType="DOUBLE" property="ordinate"></result>
+        <result column="description" jdbcType="VARCHAR" property="description"></result>
+        <result column="type" jdbcType="VARCHAR" property="type"></result>
+        <result column="input" jdbcType="VARCHAR" property="input"></result>
+        <result column="output" jdbcType="VARCHAR" property="output"></result>
+        <result column="bias" jdbcType="VARCHAR" property="bias"></result>
+        <result column="loss" jdbcType="VARCHAR" property="loss"></result>
+        <result column="weights" jdbcType="VARCHAR" property="weights"></result>
+        <result column="data" jdbcType="VARCHAR" property="data"></result>
+    </resultMap>
+
+    <resultMap id="Propagation" type="cn.ecnu.mosiv.Pojo.ANN.Propagation">
+        <result column="id" jdbcType="VARCHAR" property="id"></result>
+        <result column="diagramId" jdbcType="VARCHAR" property="diagramId"></result>
+        <result column="source" jdbcType="VARCHAR" property="source"></result>
+        <result column="target" jdbcType="VARCHAR" property="target"></result>
+    </resultMap>
+
+
+    <insert id="newLayer" parameterType="cn.ecnu.mosiv.Pojo.ANN.Layer">
+        insert into layer4ann values(#{layer.name},
+                                    #{layer.type},
+                                    #{layer.id},
+                                    #{layer.diagramId},
+                                    #{layer.abscissa},
+                                    #{layer.ordinate},
+                                    #{layer.description},
+                                    #{layer.input},
+                                    #{layer.bias},
+                                    #{layer.loss},
+                                    #{layer.output},
+                                    #{layer.weights},
+                                    #{layer.data})
+    </insert>
+
+    <insert id="newPropagation" parameterType="cn.ecnu.mosiv.Pojo.ANN.Propagation">
+        insert into propagation4ann values(#{propagation.id},
+                                            #{propagation.diagramId},
+                                            #{propagation.source},
+                                            #{propagation.target})
+    </insert>
+
+    <insert id="newAttribute" parameterType="cn.ecnu.mosiv.Pojo.ANN.Attribute">
+        insert into attribute4ann values(#{attribute.diagramId},
+                                        #{attribute.numOfLayers},
+                                        #{attribute.numOfConnectors},
+                                        #{attribute.inputType},
+                                        #{attribute.outputType})
+    </insert>
+
+    <insert id="newTrustWorthy" parameterType="cn.ecnu.mosiv.Pojo.ANN.TrustWorthy">
+        insert into trustworthy4ann values(#{trustworthy.diagramId},#{trustworthy.data})
+    </insert>
+
+    <insert id="newCompile" parameterType="cn.ecnu.mosiv.Pojo.ANN.Compile">
+        insert into compile4ann values(#{compile.diagramId},#{compile.data})
+    </insert>
+
+
+
+    <select id="selectLayer" resultType="String">
+        select id from layer4ann where id = #{id} and diagramId = #{annId};
+    </select>
+
+    <select id="selectPropagation" resultType="String">
+        select id from propagation4ann where id = #{id} and diagramId = #{annId};
+    </select>
+
+    <select id="selectAttribute" resultType="String">
+        select data from attribute4ann where diagramId = #{annId};
+    </select>
+
+    <select id="selectCompile" resultType="String">
+        select data from compile4ann where diagramId = #{annId};
+    </select>
+
+    <select id="selectTrustWorthy" resultType="String">
+        select data from trustworthy4ann where diagramId = #{annId};
+    </select>
+
+    <select id="select_layer_ids" parameterType="String" resultType="java.lang.String">
+        select id from layer4ann where diagramId = #{annId};
+    </select>
+
+    <select id="select_propagation_ids" parameterType="String" resultType="java.lang.String">
+        select id from propagation4ann where diagramId = #{annId};
+    </select>
+
+    <select id="select_all_layers" parameterType="String" resultMap="Layer">
+        select * from layer4ann where diagramId = #{annId};
+    </select>
+
+    <select id="select_all_propagations" parameterType="String" resultMap="Propagation">
+        select * from propagation4ann where diagramId = #{annId};
+    </select>
+
+    <update id="updateLayer" parameterType="cn.ecnu.mosiv.Pojo.ANN.Layer">
+        update layer4ann
+            set name = #{layer.name},
+                type = #{layer.type},
+                abscissa = #{layer.abscissa},
+                ordinate = #{layer.ordinate},
+                description = #{layer.description},
+                input = #{layer.input},
+                bias = #{layer.bias},
+                loss = #{layer.loss},
+                output = #{layer.output},
+                weights = #{layer.weights},
+                data = #{layer.data}
+            where id = #{layer.id}
+            and diagramId = #{layer.diagramId}
+    </update>
+
+    <update id="updatePropagation" parameterType="cn.ecnu.mosiv.Pojo.ANN.Propagation">
+        update propagation4ann
+            set source = #{propagation.source},
+                target = #{propagation.target}
+            where id = #{propagation.id}
+            and diagramId = #{propagation.diagramId}
+    </update>
+
+    <update id="updateTrustWorthy" parameterType="cn.ecnu.mosiv.Pojo.ANN.TrustWorthy">
+        update trustworthy4ann
+            set data = #{trustworthy.data}
+            where diagramId = #{trustworthy.diagramId}
+    </update>
+
+    <update id="updateTrustCompile" parameterType="cn.ecnu.mosiv.Pojo.ANN.Compile">
+        update compile4ann
+            set data = #{compile.data}
+            where diagramId = #{compile.diagramId}
+    </update>
+
+    <update id="updateAttribute" parameterType="cn.ecnu.mosiv.Pojo.ANN.Attribute">
+        update attribute4ann
+            set data = #{attribute.data}
+            where diagramId = #{attribute.diagramId}
+    </update>
+
+
+    <delete id="deleteLayer">
+        delete from layer4ann where id in(
+        <foreach collection="l_delete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        ) and diagramId = #{diagramId};
+    </delete>
+
+    <delete id="deletePropagation" parameterType="java.util.List">
+        delete from propagation4ann where id in(
+        <foreach collection="p_delete" item="id" index="index" separator=",">
+            #{id}
+        </foreach>
+        )and diagramId = #{diagramId};
+    </delete>
+
+</mapper>
+
